@@ -27,6 +27,7 @@ dependencies {
 	modCompileOnly files("libs/AxolotlClient-3.0.6+1.8.9.jar")
 	modCompileOnly files("libs/AxolotlClient-3.0.6.jar")
 	modCompileOnly files("libs/AxolotlClient-config-2.1.13+1.8.9.jar")
+	modCompileOnly files("libs/AxolotlClientConfig-common-2.1.13.jar")
 
 	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.10.2"
