@@ -1,0 +1,64 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	// Must match the fabric-loom version.
+	id 'legacy-looming' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings legacy.yarn(project.minecraft_version, project.yarn_build)
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.legacyfabric.legacy-fabric-api:legacy-fabric-api:${project.fabric_version}"
+
+	// AxolotlClient 3.0.6+1.8.9 (LGPL-3.0-or-later), used only to compile against. It must be installed next to
+	// this mod at runtime, so it is not bundled.
+	modCompileOnly files("libs/AxolotlClient-3.0.6+1.8.9.jar")
+	modCompileOnly files("libs/AxolotlClient-3.0.6.jar")
+	modCompileOnly files("libs/AxolotlClient-config-2.1.13+1.8.9.jar")
+
+	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.10.2"
+}
+
+test {
+	useJUnitPlatform()
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = "UTF-8"
+	if (JavaVersion.current().isJava9Compatible()) {
+		options.release = 8
+	}
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
+	withSourcesJar()
+}
+
+jar {
+	from("LICENSE.AxolotlClient") {
+		rename { "${it}_${project.archivesBaseName}" }
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "axolotlextras",
+	"version": "${version}",
+	"name": "AxolotlClient Extras",
+	"description": "Adds a Bed Wars resource counter, no fog, centered inventory, transparent UI and a quickplay menu to AxolotlClient. Every feature has an on/off switch in the AxolotlClient menu.",
+	"authors": ["AlexWeber64"],
+	"contact": {},
+	"license": "LGPL-3.0-or-later",
+	"environment": "client",
+	"entrypoints": {
+		"axolotlclient.module": ["io.github.alexweber64.axolotlextras.ExtrasModule"]
+	},
+	"mixins": ["axolotlextras.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.14.7",
+		"minecraft": "1.8.9",
+		"legacy-fabric-api": ">=1.7.0",
+		"axolotlclient": ">=3.0.6"
+	}
+}
