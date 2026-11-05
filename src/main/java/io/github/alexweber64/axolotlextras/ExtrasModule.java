@@ -61,6 +61,12 @@ public class ExtrasModule extends AbstractModule {
 	/** Bed Wars tab list shows the kill/death ratio to the left of the health number. On by default. */
 	public static final BooleanOption KDR_TAB = new BooleanOption("axolotlextras.kdrTab", true);
 
+	/**
+	 * Shows Hypixel's own text for deaths, broken beds, eliminated teams and disconnects instead of AxolotlClient's short
+	 * rewritten ones, with the stats it added still shown next to them. On by default.
+	 */
+	public static final BooleanOption NORMAL_MESSAGES = new BooleanOption("axolotlextras.normalMessages", true);
+
 	/** Blocks AxolotlClient's calls to its own server and the Discord SDK download. On by default. */
 	public static final BooleanOption PRIVACY_LOCK = new BooleanOption("axolotlextras.privacyLock", true);
 
@@ -81,7 +87,7 @@ public class ExtrasModule extends AbstractModule {
 
 	@Override
 	public void init() {
-		CATEGORY.add(PRIVACY_LOCK, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
+		CATEGORY.add(PRIVACY_LOCK, NORMAL_MESSAGES, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
 			QUICKPLAY_HYPIXEL_ONLY);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 

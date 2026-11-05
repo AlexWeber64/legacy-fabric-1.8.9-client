@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
 
 import io.github.alexweber64.axolotlextras.ExtrasModule;
 import io.github.alexweber64.axolotlextras.bedwars.KdrMath;
@@ -17,12 +18,15 @@ import io.github.axolotlclient.modules.hypixel.bedwars.BedwarsGame;
 import io.github.axolotlclient.modules.hypixel.bedwars.BedwarsPlayer;
 import io.github.axolotlclient.modules.hypixel.bedwars.BedwarsPlayerStats;
 import io.github.axolotlclient.modules.hypixel.bedwars.BedwarsTeam;
+import io.github.axolotlclient.util.events.impl.ReceiveChatMessageEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.text.LiteralText;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -34,6 +38,9 @@ public abstract class BedwarsGameMixin {
 	@Shadow
 	@Final
 	private Map<String, BedwarsPlayer> players;
+
+	@Shadow
+	public abstract BedwarsPlayer getSelf();
 
 	@Shadow
 	public abstract Optional<BedwarsPlayer> getPlayer(UUID uuid);
@@ -75,6 +82,36 @@ public abstract class BedwarsGameMixin {
 		mc.textRenderer.drawWithShadow(kdr, x, (float) y, 0xAAAAAA);
 	}
 
+	/**
+	 * AxolotlClient replaces Hypixel's death message with its own short style. With "Normal Hypixel Messages" on, Hypixel's
+	 * own text is put back, and the gold final kill count AxolotlClient showed after a teammate's final kill is added after
+	 * the killer's name (real stats only).
+	 */
+	@Inject(method = "died(Ljava/util/regex/Matcher;Ljava/lang/String;Lio/github/axolotlclient/util/events/impl/ReceiveChatMessageEvent;Lio/github/axolotlclient/modules/hypixel/bedwars/BedwarsDeathType;)V",
+		at = @At("RETURN"))
+	private void axolotlextras$hypixelDeathText(Matcher m, String rawMessage, ReceiveChatMessageEvent event,
+		BedwarsDeathType type, CallbackInfo ci) {
+		if (!ExtrasModule.NORMAL_MESSAGES.get()) {
+			return;
+		}
+		event.setNewMessage(null);
+		if (type == BedwarsDeathType.SELF_UNKNOWN || type == BedwarsDeathType.SELF_VOID
+			|| !rawMessage.contains("FINAL KILL!")) {
+			return;
+		}
+		BedwarsPlayer killer = getPlayer(m.group(2)).orElse(null);
+		BedwarsPlayer me = getSelf();
+		BedwarsPlayerStats stats = realStats(killer);
+		if (killer == null || me == null || stats == null || killer.getTeam() != me.getTeam()) {
+			return;
+		}
+		String original = event.getFormattedMessage().asFormattedString();
+		String changed = MessageFix.appendAfterLastName(original, killer.getName(), " §6" + stats.getFinalKills());
+		if (!changed.equals(original)) {
+			event.setNewMessage(new LiteralText(changed));
+		}
+	}
+
 	/** The gold number after the killer of a final kill is their final kill count, so it only stays when that is real. */
 	@Inject(method = "formatDeath", at = @At("RETURN"), cancellable = true)
 	private void axolotlextras$noMadeUpFinalKills(BedwarsPlayer player, BedwarsPlayer killer, BedwarsDeathType type,
@@ -95,7 +132,13 @@ public abstract class BedwarsGameMixin {
 	/** The per-player stat lines under "TEAM ELIMINATED" are kept only for players whose stats are real. */
 	@Inject(method = "formatEliminated", at = @At("RETURN"), cancellable = true)
 	private void axolotlextras$noMadeUpEliminatedStats(BedwarsTeam team, CallbackInfoReturnable<String> cir) {
-		StringBuilder message = new StringBuilder(MessageFix.firstLine(cir.getReturnValue()));
+		cir.setReturnValue(MessageFix.firstLine(cir.getReturnValue()) + axolotlextras$eliminatedLines(team));
+	}
+
+	/** One line per player of the team, each starting with a line break. Only players whose stats are real. */
+	@Unique
+	private String axolotlextras$eliminatedLines(BedwarsTeam team) {
+		StringBuilder message = new StringBuilder();
 		List<BedwarsPlayer> members = new ArrayList<>();
 		for (BedwarsPlayer p : players.values()) {
 			if (p.getTeam() == team) {
@@ -119,7 +162,59 @@ public abstract class BedwarsGameMixin {
 				.append("§7 FKDR: §f").append(KdrMath.ratio(stats.getFinalKills(), stats.getFinalDeaths()))
 				.append("§7 BBLR: §f").append(KdrMath.ratio(stats.getBedsBroken(), stats.getLosses()));
 		}
-		cir.setReturnValue(message.toString());
+		return message.toString();
+	}
+
+	/**
+	 * With "Normal Hypixel Messages" on, a broken bed shows Hypixel's own text. The breaker's beds broken count AxolotlClient
+	 * showed in gold is added after their name when they are on your team and the stats are real.
+	 */
+	@Inject(method = "bedDestroyed", at = @At("RETURN"))
+	private void axolotlextras$hypixelBedText(ReceiveChatMessageEvent event, BedwarsTeam team, BedwarsPlayer breaker,
+		CallbackInfo ci) {
+		if (!ExtrasModule.NORMAL_MESSAGES.get()) {
+			return;
+		}
+		event.setNewMessage(null);
+		BedwarsPlayer me = getSelf();
+		BedwarsPlayerStats stats = realStats(breaker);
+		if (breaker == null || me == null || stats == null || breaker.getTeam() != me.getTeam()) {
+			return;
+		}
+		String original = event.getFormattedMessage().asFormattedString();
+		String changed = MessageFix.appendAfterLastName(original, breaker.getName(), " §6" + stats.getBedsBroken());
+		if (!changed.equals(original)) {
+			event.setNewMessage(new LiteralText(changed));
+		}
+	}
+
+	/** Hypixel's own "team eliminated" text, with AxolotlClient's per-player stat lines added under it (real stats only). */
+	@Inject(method = "teamEliminated", at = @At("RETURN"))
+	private void axolotlextras$hypixelEliminatedText(ReceiveChatMessageEvent event, BedwarsTeam team, CallbackInfo ci) {
+		if (!ExtrasModule.NORMAL_MESSAGES.get()) {
+			return;
+		}
+		event.setNewMessage(null);
+		String lines = axolotlextras$eliminatedLines(team);
+		if (!lines.isEmpty()) {
+			event.setNewMessage(new LiteralText(event.getFormattedMessage().asFormattedString() + lines));
+		}
+	}
+
+	/** Hypixel's own text when a player disconnects. */
+	@Inject(method = "disconnected", at = @At("RETURN"))
+	private void axolotlextras$hypixelDisconnectText(ReceiveChatMessageEvent event, BedwarsPlayer player, CallbackInfo ci) {
+		if (ExtrasModule.NORMAL_MESSAGES.get()) {
+			event.setNewMessage(null);
+		}
+	}
+
+	/** Hypixel's own text when a player reconnects. */
+	@Inject(method = "reconnected", at = @At("RETURN"))
+	private void axolotlextras$hypixelReconnectText(ReceiveChatMessageEvent event, BedwarsPlayer player, CallbackInfo ci) {
+		if (ExtrasModule.NORMAL_MESSAGES.get()) {
+			event.setNewMessage(null);
+		}
 	}
 
 	private static BedwarsPlayerStats realStats(BedwarsPlayer player) {

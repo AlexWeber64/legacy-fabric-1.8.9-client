@@ -77,7 +77,7 @@ Last updated: 2026-11-05.
 - Death messages (2026-11-05): found in your Hypixel log that AxolotlClient's Bed Wars module rewrites death, bed and
   elimination messages, and appends gold numbers (like 9185, 554) that are your final kill and bed counts taken from made-up
   stats, because the Hypixel API key is empty. The numbers and the per-player lines under "TEAM ELIMINATED" are now only shown
-  when the stats are real. The rest of the rewritten style (`R1 name /rekt/ B2 name`, victim first) is unchanged, see below.
+  when the stats are real. Then, at your request, Hypixel's own text is shown again for deaths, broken beds, eliminated teams and disconnects (option Normal Hypixel Messages, default on), keeping the stats next to them: a teammate's final kill count or beds broken after their name, and the stat lines under an eliminated team. Built and the hook applied at startup in a minimized launch, not yet seen in a real game.
 - Minimized test launches: `scratchpad\scripts\Launch-Minimized.ps1` starts an instance with its windows minimized and not
   activated, and only touches processes of that instance (never Lunar). First minimized launch worked: startup log showed the
   Privacy Lock patches loaded and no mixin errors. Limits: no input is possible while minimized, a minimized game ignores the

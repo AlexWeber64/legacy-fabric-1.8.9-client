@@ -31,6 +31,20 @@ class MessageFixTest {
 	}
 
 	@Test
+	void aCountGoesRightAfterTheKillerAndTheColourIsRestored() {
+		String line = S + "bAlice" + S + "7 was knocked into the void by " + S + "cBob" + S + "7. " + S + "6" + S + "lFINAL KILL!";
+		String expected = S + "bAlice" + S + "7 was knocked into the void by " + S + "cBob" + " " + S + "6" + "42" + S + "c"
+			+ S + "7. " + S + "6" + S + "lFINAL KILL!";
+		assertEquals(expected, MessageFix.appendAfterLastName(line, "Bob", " " + S + "6" + "42"));
+	}
+
+	@Test
+	void aMissingNameLeavesTheLineAlone() {
+		String line = S + "bAlice" + S + "7 fell.";
+		assertEquals(line, MessageFix.appendAfterLastName(line, "Bob", " 1"));
+	}
+
+	@Test
 	void firstLineStopsAtTheFirstBreak() {
 		assertEquals("TEAM ELIMINATED", MessageFix.firstLine("TEAM ELIMINATED\nline two\nline three"));
 		assertEquals("one line", MessageFix.firstLine("one line"));
