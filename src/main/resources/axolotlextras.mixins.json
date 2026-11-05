@@ -8,13 +8,19 @@
 		"BooleanWidgetMixin",
 		"BoxHudEntryMixin",
 		"CategoryWidgetMixin",
+		"ConfigListMixin",
+		"ConfigSliderMixin",
 		"ButtonWidgetMixin",
 		"FeatureDisablerMixin",
 		"GameRendererMixin",
 		"GameSdkDownloaderMixin",
 		"InventoryScreenMixin",
+		"ListWidgetMixin",
 		"NetworkHelperMixin",
-		"ScreenMixin"
+		"ScreenMixin",
+		"SearchFieldMixin",
+		"TextFieldWidgetMixin",
+		"VanillaSliderMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -44,8 +44,7 @@ public abstract class ButtonWidgetMixin {
 			return;
 		}
 		hovered = mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
-		MenuSkin.button(client, x, y, width, height, message, active, hovered, 0);
-		// Sliders draw their handle here, on top of the new look.
-		mouseDragged(client, mouseX, mouseY);
+		// Sliders draw their handle in the middle, under the label.
+		MenuSkin.button(client, x, y, width, height, message, active, hovered, 0, () -> mouseDragged(client, mouseX, mouseY));
 	}
 }

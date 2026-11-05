@@ -91,13 +91,17 @@ Last updated: 2026-11-05.
 
 - UI round 2 (2026-11-06): Quickplay redesigned (a card per game with its icon: bed for Bed Wars, ender eye for SkyWars), a
   Modern Menus skin for every button, AxolotlClient's category buttons and ON/OFF switches, the HUD editor boxes and a dark menu
-  background. Checked in game, fullscreen at 2880x1800. Not restyled yet: text fields (the Search box and color fields),
-  scrollbars and sliders of AxolotlClient's option lists, and the vanilla title screen.
+  background. Checked in game, fullscreen at 2880x1800.
+- UI round 3 (2026-11-06): text fields (the Search box and colour fields), scrollbars and sliders restyled too, in AxolotlClient's
+  option pages and the vanilla menus. Checked in game. AxolotlClient's list draws its own scrollbar, so that one is switched off
+  and replaced. Not restyled: the vanilla title screen buttons are covered by the button skin but its panorama and logo are not,
+  and the colour picker popup of AxolotlClient was not opened.
 - Raw mouse input (2026-11-06): cause found. AxolotlClient's own "Raw Mouse Input" option was ON; it rescales and truncates the
   movement (checked: slow steps and a fast move of the same distance gave 9.5 and 10.4 degrees with it on, 18.9 and 18.9 with
   it off). It is now switched off and kept off whenever the Raw Input mod is installed. A second issue is still open: the Raw Input
   mod adds up every mouse device it finds, and a test with injected movement counted it twice, so the sensitivity may be about
-  double what it should be. A probe that shows what your real mouse reports is in the scratchpad `jiun-probe.cmd`.
+  double what it should be. A probe that shows what your real mouse reports is in the scratchpad `ji
+un-probe.cmd`.
 - Confirmed by the user on 2026-11-06: Freelook and Toggle Sprint work.
 
 ## In progress
