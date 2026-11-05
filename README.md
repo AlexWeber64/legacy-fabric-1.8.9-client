@@ -10,6 +10,7 @@ HUD editor.
 | Bed Wars Resources (HUD) | Iron, gold, diamonds and emeralds as `inventory + ender chest = total`. Opening the ender chest always replaces the ender chest count with what is really in it. Punching the ender chest with resources in hand adds what leaves your inventory within half a second (inferred, since the client never sees the deposit). Everything is forgotten when you leave the world, leave Bed Wars, or a game starts. |
 | Ignore Server Blocks (default on) | Stops AxolotlClient from switching Freelook, Toggle Sneak, Time Changer, Full Bright and Low Fire off by server address, and re-enables anything a server switches off through its `block_mods` message. Servers may still have their own rules. |
 | Toggle Sprint Without HUD (default on) | Keeps the Toggle Sprint key working when the Toggle Sprint HUD module is switched off. |
+| Upgrade Display (HUD) | Bed Wars upgrades as text, like Lunar's: a bold "Upgrades" heading, one line per bought upgrade with the diamond price of the next tier on the right, then a "Traps" heading. Built from the "Name purchased Thing" chat lines. Only prices that are verified are shown (currently Reinforced Armor). Separate from AxolotlClient's icon overlay, which can be switched off in the HUD editor. |
 | No Fog | Turns fog off after vanilla sets it up, on land and under water. |
 | Centered Inventory | Keeps the inventory in the middle of the screen while a potion effect is active. |
 | Transparent UI | Skips the dark gradient screens draw over the world. Screens without a world keep their background. |

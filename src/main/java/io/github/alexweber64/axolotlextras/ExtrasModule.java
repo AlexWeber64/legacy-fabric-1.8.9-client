@@ -2,6 +2,7 @@ package io.github.alexweber64.axolotlextras;
 
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
+import io.github.alexweber64.axolotlextras.bedwars.UpgradeDisplayHud;
 import io.github.alexweber64.axolotlextras.quickplay.QuickplayScreen;
 import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
@@ -52,6 +53,7 @@ public class ExtrasModule extends AbstractModule {
 
 	private static KeyBinding quickplayKey;
 	private static ResourceCounterHud resourceCounter;
+	private static UpgradeDisplayHud upgradeDisplay;
 
 	@Override
 	public void init() {
@@ -66,17 +68,27 @@ public class ExtrasModule extends AbstractModule {
 		resourceCounter.init();
 		resourceCounter.onBoundsUpdate();
 
+		upgradeDisplay = new UpgradeDisplayHud();
+		HudManager.getInstance().add(upgradeDisplay);
+		upgradeDisplay.init();
+		upgradeDisplay.onBoundsUpdate();
+
 		quickplayKey = new KeyBinding("key.axolotlextras.quickplay", Keyboard.KEY_Y, "category.axolotlclient");
 		KeyBindingHelper.registerKeyBinding(quickplayKey);
 
 		// Loading a different world (including joining another server or game) forgets the remembered counts.
-		Events.WORLD_LOAD_EVENT.register(event -> resourceCounter.resetAll());
+		Events.WORLD_LOAD_EVENT.register(event -> {
+			resourceCounter.resetAll();
+			upgradeDisplay.resetAll();
+		});
 
 		Events.RECEIVE_CHAT_MESSAGE_EVENT.register(event -> {
 			String line = event.getFormattedMessage().asUnformattedString();
 			if (ResourceMath.isGameStartMessage(line)) {
 				resourceCounter.onGameStart();
+				upgradeDisplay.resetAll();
 			}
+			upgradeDisplay.onChatLine(line);
 		});
 	}
 
