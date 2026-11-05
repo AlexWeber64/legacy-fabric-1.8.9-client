@@ -1,11 +1,14 @@
 package io.github.alexweber64.axolotlextras;
 
+import io.github.alexweber64.axolotlextras.bedwars.ChatStat;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
+import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.bedwars.UpgradeDisplayHud;
 import io.github.alexweber64.axolotlextras.quickplay.QuickplayScreen;
 import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
+import io.github.axolotlclient.AxolotlClientConfig.options.EnumOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.OptionCategory;
 import io.github.axolotlclient.modules.AbstractModule;
 import io.github.axolotlclient.modules.freelook.Freelook;
@@ -57,13 +60,24 @@ public class ExtrasModule extends AbstractModule {
 	/** Bed Wars tab list shows the kill/death ratio to the left of the health number. On by default. */
 	public static final BooleanOption KDR_TAB = new BooleanOption("axolotlextras.kdrTab", true);
 
+	/** Blocks AxolotlClient's calls to its own server and the Discord SDK download. On by default. */
+	public static final BooleanOption PRIVACY_LOCK = new BooleanOption("axolotlextras.privacyLock", true);
+
+	/** Prints every player's chosen stat in the chat when a Bed Wars game starts. On by default. */
+	public static final BooleanOption CHAT_STATS = new BooleanOption("axolotlextras.chatStats", true);
+
+	/** Which stat goes in that chat list. */
+	public static final EnumOption CHAT_STAT = new EnumOption("axolotlextras.chatStat", ChatStat.keys(), "kdr");
+
+	private static final StatAnnouncer STAT_ANNOUNCER = new StatAnnouncer();
+
 	private static KeyBinding quickplayKey;
 	private static ResourceCounterHud resourceCounter;
 	private static UpgradeDisplayHud upgradeDisplay;
 
 	@Override
 	public void init() {
-		CATEGORY.add(IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
+		CATEGORY.add(PRIVACY_LOCK, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
 			QUICKPLAY_HYPIXEL_ONLY);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 
@@ -86,6 +100,7 @@ public class ExtrasModule extends AbstractModule {
 		Events.WORLD_LOAD_EVENT.register(event -> {
 			resourceCounter.resetAll();
 			upgradeDisplay.resetAll();
+			STAT_ANNOUNCER.reset();
 		});
 
 		Events.RECEIVE_CHAT_MESSAGE_EVENT.register(event -> {
@@ -93,6 +108,9 @@ public class ExtrasModule extends AbstractModule {
 			if (ResourceMath.isGameStartMessage(line)) {
 				resourceCounter.onGameStart();
 				upgradeDisplay.onGameStart();
+				if (CHAT_STATS.get()) {
+					STAT_ANNOUNCER.onGameStart();
+				}
 			}
 			upgradeDisplay.onChatLine(line);
 		});
@@ -100,6 +118,7 @@ public class ExtrasModule extends AbstractModule {
 
 	@Override
 	public void tick() {
+		STAT_ANNOUNCER.tick(client, ChatStat.byKey(CHAT_STAT.get()));
 		if (IGNORE_SERVER_BLOCKS.get() && anyServerBlock()) {
 			// A server message (the "block_mods" channel) or an earlier address check switched something off.
 			FeatureDisabler.clear();

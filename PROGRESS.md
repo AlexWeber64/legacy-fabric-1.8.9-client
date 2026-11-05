@@ -68,7 +68,18 @@ Last updated: 2026-11-05.
   config (`axolotlextras.bedwars.mixins.json`, not required) so a failure there only logs. Needs a Hypixel API key, and your
   config has `hypixel_api_key` empty.
 
+- Privacy and safety audit (2026-11-05), see `PRIVACY-AUDIT.md`: all four third-party jars match Modrinth releases, class scans
+  found no remote access, stealer or command execution machinery, and the only AxolotlClient server contact (badges, sending
+  your UUID) is blocked by the new Privacy Lock (default on). The lock is built and installed but not yet run in game.
+- Chat Stats At Start (2026-11-05): when a Bed Wars game starts, one chat line per team with every player's KDR (or FKDR,
+  WLR, BBLR, stars, set with Chat Stat). Written, unit tested for the formatting, never run in game.
+
 ## In progress
+
+- Making the client UI nicer: not started on code. AxolotlClient 3.0.6 for 1.8.9 has no style options at all (its menu is the
+  plain vanilla looking one), so this means building screens, and that needs visual checks in a window.
+- Raw mouse input feels odd: the RawInput mod sums every mouse-type device it finds (your Razer's two interfaces plus the
+  touchpad) and replaces Minecraft's mouse movement. Waiting for a description of the symptom, and a test with the touchpad off.
 
 - Ornithe instance `1.8.9-ornithe-oldanim` (Prism, separate from the other two) for trying OldAnimations (1.7 visuals).
   Written by hand, never launched yet. Contents: Fabric Loader 0.20.1 on Ornithe generation 2 intermediary for 1.8.9, Flap
@@ -106,7 +117,9 @@ Needs a decision:
 - Ignore Server Blocks removes a safeguard that AxolotlClient ships on purpose. Whether Hypixel or another server allows
   Freelook, Toggle Sneak or the others is the server's rule, not something the client can settle. I could not read
   Hypixel's official page (403), so I did not confirm it. Switch the option off to get the old behaviour back.
-- AxolotlClient tries to contact its own backend even offline and logs "Error while logging in!". Harmless.
+- AxolotlClient's badges feature was on by default and contacted its own server (it sent your player UUID, and asked about
+  other players' UUIDs). The Privacy Lock now blocks that, see `PRIVACY-AUDIT.md`. The "Error while logging in!" log line
+  from earlier test sessions was this call failing.
 - Your clone config is live: it was changed by your own play, and I changed Toggle Sprint to enabled with an empty
   placeholder.
 - Backups: the previous add-on jar is in `instances/1.8.9-lunarlike/minecraft/mods-backup`, config backups sit next to

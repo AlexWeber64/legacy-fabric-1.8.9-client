@@ -6,7 +6,9 @@
 	"client": [
 		"FeatureDisablerMixin",
 		"GameRendererMixin",
+		"GameSdkDownloaderMixin",
 		"InventoryScreenMixin",
+		"NetworkHelperMixin",
 		"ScreenMixin"
 	],
 	"injectors": {
