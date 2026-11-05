@@ -15,7 +15,7 @@ Last updated: 2026-11-05.
 | Potion Effects | AxolotlClient | Done, enabled |
 | Zoom | AxolotlClient | Done, enabled |
 | Time Changer | AxolotlClient | Done, enabled |
-| Upgrade Display | Extras (text list like Lunar's), AxolotlClient has an icon version | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your pasted list, except Cushioned Boots |
+| Upgrade Display | Extras (text list like Lunar's), AxolotlClient has an icon version | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your lists, team size detected automatically (lobby line checked against a screenshot, in-game team lines from memory) |
 | Toggle Sprint | AxolotlClient (Toggle Sprint HUD) | Works in singleplayer, see "In progress" for the Hypixel side |
 | Freelook | AxolotlClient | Works in singleplayer, Hypixel check removed (untested there) |
 | Raw Mouse Input | RawInput mod | Done |
@@ -58,6 +58,9 @@ Last updated: 2026-11-05.
     Control run with the option off: Freelook was blocked (player facing changed to 41.6, camera stayed first person).
   - Log had no mixin or add-on errors, only the expected unknown host and AxolotlClient login errors.
 
+- Upgrade Display team size detection, two steps: the waiting lobby "Mode: Doubles" line (checked against your screenshot), then the
+  in-game team count (8 team lines mean solo/doubles, 4 or 2 mean 3s/4s/4v4), which wins once it can be read. The in-game team
+  line format is from memory and not yet seen.
 - Upgrade Display module (text layout from your Lunar screenshot). unit tests pass. Built and installed in the
   clone, never rendered in game.
 

@@ -71,10 +71,23 @@ class UpgradeTrackerTest {
 	}
 
 	@Test
-	void unknownPricesAreNotGuessed() {
+	void bootsPricesDependOnTeamSize() {
 		UpgradeTracker t = new UpgradeTracker();
 		t.onMessage("Steve purchased Cushioned Boots I");
+		assertEquals(2, t.upgradeRows(SMALL).get(0).cost);
+		assertEquals(4, t.upgradeRows(UpgradeTracker.Mode.BIG_TEAMS).get(0).cost);
+		t.onMessage("Steve purchased Cushioned Boots II");
 		assertEquals(-1, t.upgradeRows(SMALL).get(0).cost);
+	}
+
+	@Test
+	void noPricesWhileTheTeamSizeIsUnknown() {
+		UpgradeTracker t = new UpgradeTracker();
+		t.onMessage("Steve purchased Cushioned Boots I");
+		t.onMessage("Steve purchased Reinforced Armor I");
+		for (UpgradeTracker.Row row : t.upgradeRows(null)) {
+			assertEquals(-1, row.cost);
+		}
 	}
 
 	@Test

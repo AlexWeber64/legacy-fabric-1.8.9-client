@@ -92,7 +92,7 @@ public class ExtrasModule extends AbstractModule {
 			String line = event.getFormattedMessage().asUnformattedString();
 			if (ResourceMath.isGameStartMessage(line)) {
 				resourceCounter.onGameStart();
-				upgradeDisplay.resetAll();
+				upgradeDisplay.onGameStart();
 			}
 			upgradeDisplay.onChatLine(line);
 		});

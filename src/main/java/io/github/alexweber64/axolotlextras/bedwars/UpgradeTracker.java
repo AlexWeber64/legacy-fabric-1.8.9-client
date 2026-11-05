@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
  * Remembers which Bed Wars team upgrades and traps your team bought, from the "Name purchased Thing" chat lines.
  * Pure logic, no Minecraft classes.
  *
- * <p>Costs of the next tier come from a pasted list of Hypixel's diamond prices. Cushioned Boots was not in that list, so
- * it has no price and the display shows none rather than a guess.
+ * <p>Costs of the next tier come from a list of Hypixel's diamond prices and the Cushioned Boots prices, both given by the
+ * player. When the team size is not known (mode null) no price is shown.
  */
 public final class UpgradeTracker {
 
@@ -41,6 +41,8 @@ public final class UpgradeTracker {
 	private static final int[] MINER_BIG = {4, 6};
 	private static final int[] FORGE_SMALL = {2, 4, 6, 8};
 	private static final int[] FORGE_BIG = {4, 8, 12, 16};
+	private static final int[] BOOTS_SMALL = {1, 2};
+	private static final int[] BOOTS_BIG = {3, 4};
 
 	private boolean sharpness;
 	private int armor;
@@ -122,19 +124,20 @@ public final class UpgradeTracker {
 		return 0;
 	}
 
+	/** @param mode the team size group, or null when it is not known yet (then no prices are given) */
 	public List<Row> upgradeRows(Mode mode) {
 		List<Row> rows = new ArrayList<>();
 		if (sharpness) {
 			rows.add(new Row("Sharpened Swords", -1));
 		}
 		if (armor > 0) {
-			rows.add(new Row("Reinforced Armor " + armor, cost(mode == Mode.BIG_TEAMS ? ARMOR_BIG : ARMOR_SMALL, armor)));
+			rows.add(new Row("Reinforced Armor " + armor, cost(mode, ARMOR_SMALL, ARMOR_BIG, armor)));
 		}
 		if (miner > 0) {
-			rows.add(new Row("Maniac Miner " + miner, cost(mode == Mode.BIG_TEAMS ? MINER_BIG : MINER_SMALL, miner)));
+			rows.add(new Row("Maniac Miner " + miner, cost(mode, MINER_SMALL, MINER_BIG, miner)));
 		}
 		if (forge > 0) {
-			rows.add(new Row(FORGES[forge - 1], cost(mode == Mode.BIG_TEAMS ? FORGE_BIG : FORGE_SMALL, forge)));
+			rows.add(new Row(FORGES[forge - 1], cost(mode, FORGE_SMALL, FORGE_BIG, forge)));
 		}
 		if (healPool) {
 			rows.add(new Row("Heal Pool", -1));
@@ -143,7 +146,7 @@ public final class UpgradeTracker {
 			rows.add(new Row("Dragon Buff", -1));
 		}
 		if (boots > 0) {
-			rows.add(new Row("Cushioned Boots " + boots, -1));
+			rows.add(new Row("Cushioned Boots " + boots, cost(mode, BOOTS_SMALL, BOOTS_BIG, boots)));
 		}
 		return rows;
 	}
@@ -152,7 +155,12 @@ public final class UpgradeTracker {
 		return new ArrayList<>(traps);
 	}
 
-	private static int cost(int[] table, int level) {
-		return table != null && level >= 0 && level < table.length ? table[level] : -1;
+	/** Price of the tier after the one you have (level counts from 1, so it indexes the next tier), or -1. */
+	private static int cost(Mode mode, int[] small, int[] big, int level) {
+		if (mode == null) {
+			return -1;
+		}
+		int[] table = mode == Mode.BIG_TEAMS ? big : small;
+		return level >= 0 && level < table.length ? table[level] : -1;
 	}
 }

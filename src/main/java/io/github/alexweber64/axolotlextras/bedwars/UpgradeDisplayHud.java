@@ -1,5 +1,6 @@
 package io.github.alexweber64.axolotlextras.bedwars;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
@@ -7,7 +8,10 @@ import io.github.axolotlclient.AxolotlClientConfig.options.EnumOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.Option;
 import io.github.axolotlclient.modules.hud.gui.entry.TextHudEntry;
 import io.github.axolotlclient.modules.hud.util.DrawPosition;
+import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.scoreboard.ScoreboardPlayerScore;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.util.Identifier;
 
 /**
@@ -18,7 +22,7 @@ public class UpgradeDisplayHud extends TextHudEntry {
 
 	public static final Identifier ID = new Identifier("axolotlextras", "upgradedisplay");
 
-	private static final String[] MODES = {"small_teams", "big_teams"};
+	private static final String[] MODES = {"auto", "small_teams", "big_teams"};
 	private static final int LINE = 11;
 	private static final int SECTION_GAP = 5;
 	private static final int PAD = 4;
@@ -30,15 +34,26 @@ public class UpgradeDisplayHud extends TextHudEntry {
 	private final UpgradeTracker tracker = new UpgradeTracker();
 	private boolean inBedWars;
 	private boolean wasInBedWars;
+	/** Team size read from the sidebar, kept until the world changes. Null until it could be read. */
+	private UpgradeTracker.Mode detectedMode;
+	/** True once the in-game team count has settled the team size, so the lobby's mode line no longer matters. */
+	private boolean modeConfirmed;
 
 	public UpgradeDisplayHud() {
 		super(120, 40, true);
 	}
 
-	/** Forgets every upgrade and trap: they belong to the game or world that just ended. */
+	/** Forgets everything: the upgrades, the traps and the team size belong to the world that just ended. */
 	public void resetAll() {
 		tracker.reset();
+		detectedMode = null;
+		modeConfirmed = false;
 		wasInBedWars = false;
+	}
+
+	/** A game just started: upgrades start over, the team size read in the lobby still holds. */
+	public void onGameStart() {
+		tracker.reset();
 	}
 
 	/** Called from the chat event with the unformatted line. */
@@ -64,6 +79,17 @@ public class UpgradeDisplayHud extends TextHudEntry {
 			resetAll();
 		}
 		wasInBedWars = inBedWars;
+		if (inBedWars && !modeConfirmed) {
+			List<String> lines = sidebarLines(sidebar);
+			// The in-game team count is the second check and wins: it settles solo/doubles against 3s/4s/4v4.
+			UpgradeTracker.Mode byTeams = ModeDetector.fromTeamLines(lines);
+			if (byTeams != null) {
+				detectedMode = byTeams;
+				modeConfirmed = true;
+			} else if (detectedMode == null) {
+				detectedMode = ModeDetector.fromModeLine(lines);
+			}
+		}
 	}
 
 	@Override
@@ -89,11 +115,33 @@ public class UpgradeDisplayHud extends TextHudEntry {
 		sample.onMessage("Steve purchased Cushioned Boots I");
 		sample.onMessage("Steve purchased Reinforced Armor I");
 		sample.onMessage("Steve purchased It's a Trap!");
-		draw(sample.upgradeRows(currentMode()), sample.trapNames());
+		UpgradeTracker.Mode sampleMode = currentMode() == null ? UpgradeTracker.Mode.BIG_TEAMS : currentMode();
+		draw(sample.upgradeRows(sampleMode), sample.trapNames());
 	}
 
+	/** The chosen team size group, or the detected one on "auto" (null while unknown, then no prices show). */
 	private UpgradeTracker.Mode currentMode() {
-		return mode.get().equals(MODES[1]) ? UpgradeTracker.Mode.BIG_TEAMS : UpgradeTracker.Mode.SMALL_TEAMS;
+		String chosen = mode.get();
+		if (chosen.equals(MODES[1])) {
+			return UpgradeTracker.Mode.SMALL_TEAMS;
+		}
+		if (chosen.equals(MODES[2])) {
+			return UpgradeTracker.Mode.BIG_TEAMS;
+		}
+		return detectedMode;
+	}
+
+	/** The sidebar as the player sees it: each score's name with its team prefix and suffix. */
+	private List<String> sidebarLines(ScoreboardObjective sidebar) {
+		Scoreboard scoreboard = client.world.getScoreboard();
+		List<String> lines = new ArrayList<>();
+		for (ScoreboardPlayerScore score : scoreboard.getAllPlayerScores(sidebar)) {
+			String name = score.getPlayerName();
+			if (name != null && !name.startsWith("#")) {
+				lines.add(Team.decorateName(scoreboard.getPlayerTeam(name), name));
+			}
+		}
+		return lines;
 	}
 
 	private void draw(List<UpgradeTracker.Row> upgrades, List<String> traps) {
