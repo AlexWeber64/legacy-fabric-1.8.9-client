@@ -13,7 +13,7 @@ HUD editor.
 | No Fog | Turns fog off after vanilla sets it up, on land and under water. |
 | Centered Inventory | Keeps the inventory in the middle of the screen while a potion effect is active. |
 | Transparent UI | Skips the dark gradient screens draw over the world. Screens without a world keep their background. |
-| Quickplay Menu | Press Y (rebindable) to open a grid of `/play` buttons. Only on hypixel.net unless "Hypixel Only" is switched off. The command names are unverified, see `QuickplayEntries.java`. |
+| Quickplay Menu | Press Y (rebindable) to open a grid of `/play` buttons. Only on hypixel.net unless "Hypixel Only" is switched off. The mode names match Hypixel's public API game list, see `QuickplayEntries.java`. |
 
 ## Requirements
 

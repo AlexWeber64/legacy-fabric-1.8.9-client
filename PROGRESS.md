@@ -23,7 +23,7 @@ Last updated: 2026-11-05.
 | Keep Inventory Centered | Extras | Done, tested in game |
 | Transparent UI | Extras | Done, tested in game (my reading of the setting: no dark layer over the world) |
 | Resource Counter (Bed Wars) | Extras | Done, tested in singleplayer with a simulated Bed Wars sidebar |
-| Hypixel Quickplay | Extras | Menu and command sending done, only Doubles confirmed |
+| Hypixel Quickplay | Extras | Done, every mode name found in Hypixel's public API game list, Doubles confirmed by you |
 | 1.7 Visuals | nothing yet | Not done |
 
 ## Completed
@@ -46,6 +46,10 @@ Last updated: 2026-11-05.
     back on within a tick.
   - **Toggle Sprint Without HUD** (default on): the toggle key keeps working when the Toggle Sprint HUD module is off.
 
+- Quickplay mode names checked against `api.hypixel.net/v2/resources/games` (all Bed Wars and SkyWars names used are listed there).
+- Toggle Sprint key rebound to your sprint key (backtick, key 41) in the clone's `options.txt`, so it behaves like Lunar's
+  toggle. Backup: `options.txt.before-sprintkey`. Sneak toggle stays on I, Freelook on V.
+
 ## In progress
 
 - In game test of the two new switches. I did not launch the game because you are playing on Lunar Client. To test, I need
@@ -54,16 +58,22 @@ Last updated: 2026-11-05.
 
 ## To do
 
+Needs a game window (waiting for your go-ahead):
+
 1. In game test of Ignore Server Blocks (join a server with `hypixel` in its address, check Freelook is not greyed out)
-   and Toggle Sprint Without HUD (module off, key K still toggles).
-2. 1.7 Visuals: OldAnimations is Ornithe-only, so this needs a port or a smaller module with the main animations (sword
-   block pose, eating and bow animation, damage tint, and so on). Decide scope first.
-3. Verify the other Quickplay `/play` names (Bed Wars Solo, 3v3v3v3, 4v4v4v4, 4v4, and SkyWars) against a real server.
-4. Test the Resource Counter and Upgrade Display in a real Bed Wars game. The counter shows whenever the sidebar title
-   contains "BED WARS", which includes the lobby.
-5. Optional optimization mod (not started). The benchmark notes list Phosphor-Legacy and Ksyxis as candidates, neither installed.
-6. Optional: a nicer menu look. Currently it reuses AxolotlClient's own UI.
-7. Optional: bind Toggle Sprint to your sprint key (currently K, sneak toggle is I, Freelook is V). Rebind under Controls.
+   and Toggle Sprint Without HUD (module off, sprint key still toggles).
+2. Test the Resource Counter and Upgrade Display in a real Bed Wars game. The counter shows whenever the sidebar title
+   contains "BED WARS", which includes the lobby. I did not guess a lobby/game check without seeing the real sidebars.
+3. Optimization mod (not started). The benchmark notes list Phosphor-Legacy and Ksyxis as candidates, neither installed.
+   Any of them needs before and after fps runs, which need the game open.
+4. Optional: a nicer menu look. Currently it reuses AxolotlClient's own UI. Needs visual checks.
+
+Needs a decision:
+
+5. 1.7 Visuals: OldAnimations lives on an `ornithe` branch only (Ornithe mappings, not Legacy Fabric), 100+ options,
+   Kotlin-DSL Gradle build. A port means re-mapping its mixins to yarn 1.8.9 and checking each animation by eye. I did not
+   start it because none of it can be verified without the window. Options: port a small set (sword block pose, bow and
+   eat animation, hurt tint), or try the Ornithe build on a separate Ornithe instance.
 
 ## Risks and notes
 
