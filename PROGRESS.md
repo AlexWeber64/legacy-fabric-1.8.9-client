@@ -50,18 +50,31 @@ Last updated: 2026-11-05.
 - Toggle Sprint key rebound to your sprint key (backtick, key 41) in the clone's `options.txt`, so it behaves like Lunar's
   toggle. Backup: `options.txt.before-sprintkey`. Sneak toggle stays on I, Freelook on V.
 
+- In game tests on 2026-11-05 (instance `1.8.9-lunarlike`, singleplayer, Toggle Sprint HUD module switched off):
+  - Toggle Sprint Without HUD: walking 2 s covered 8.63 blocks, with the toggle on 11.50, after toggling off again 8.84.
+    The toggle is on the sprint key (backtick).
+  - Ignore Server Blocks: after a direct connect to `hypixel.invalid` (a Hypixel-named address that cannot resolve, so no
+    real server was contacted), Freelook still worked with the option on (camera orbited, player facing stayed 0.0).
+    Control run with the option off: Freelook was blocked (player facing changed to 41.6, camera stayed first person).
+  - Log had no mixin or add-on errors, only the expected unknown host and AxolotlClient login errors.
+
 ## In progress
 
-- In game test of the two new switches. I did not launch the game because you are playing on Lunar Client. To test, I need
-  to open the Minecraft window, so tell me when that is fine.
-- Toggle Sprint on a real server: unknown. Singleplayer works, Hypixel is untested.
+- Ornithe instance `1.8.9-ornithe-oldanim` (Prism, separate from the other two) for trying OldAnimations (1.7 visuals).
+  Written by hand, never launched yet. Contents: Fabric Loader 0.20.1 on Ornithe generation 2 intermediary for 1.8.9, Flap
+  0.0.8, Ornithe Standard Libraries 0.22.2 (beta), OldAnimations 1.2.0, Java 21 override, 2 to 4 GB memory. Hashes of both mod
+  jars match Modrinth's. I did not run the official installer: its release page has no binaries and the sandbox refused a
+  build from source, so I wrote the same files its source describes (`prism_pack.rs`). Untested whether Prism accepts it.
+  OldAnimations 1.2.0 lists no dependencies on Modrinth but its code calls OSL, so OSL is included. AxolotlClient is not in
+  this instance, and Mod Menu is not installed either, so I do not know yet where OldAnimations' options show up.
+- Not tested: the server "block_mods" message path of Ignore Server Blocks (needs a server that sends it), and anything on a
+  real Hypixel connection (the test account is offline, so I did not join Hypixel).
 
 ## To do
 
 Needs a game window (waiting for your go-ahead):
 
-1. In game test of Ignore Server Blocks (join a server with `hypixel` in its address, check Freelook is not greyed out)
-   and Toggle Sprint Without HUD (module off, sprint key still toggles).
+1. Try Freelook, Toggle Sprint and the toggles on real Hypixel with your own account (I can't log in for you).
 2. Test the Resource Counter and Upgrade Display in a real Bed Wars game. The counter shows whenever the sidebar title
    contains "BED WARS", which includes the lobby. I did not guess a lobby/game check without seeing the real sidebars.
 3. Optimization mod (not started). The benchmark notes list Phosphor-Legacy and Ksyxis as candidates, neither installed.
@@ -70,7 +83,10 @@ Needs a game window (waiting for your go-ahead):
 
 Needs a decision:
 
-5. 1.7 Visuals: OldAnimations lives on an `ornithe` branch only (Ornithe mappings, not Legacy Fabric), 100+ options,
+5. First launch of `1.8.9-ornithe-oldanim` (needs a window): check it starts, find where OldAnimations options are, and
+   compare with the Legacy Fabric clone for fps. If it works, the open question is how to combine it with your AxolotlClient
+   setup, since AxolotlClient has no Ornithe build for 1.8.9 that I have checked.
+6. 1.7 Visuals (older notes): OldAnimations lives on an `ornithe` branch only (Ornithe mappings, not Legacy Fabric), 100+ options,
    Kotlin-DSL Gradle build. A port means re-mapping its mixins to yarn 1.8.9 and checking each animation by eye. I did not
    start it because none of it can be verified without the window. Options: port a small set (sword block pose, bow and
    eat animation, hurt tint), or try the Ornithe build on a separate Ornithe instance.
