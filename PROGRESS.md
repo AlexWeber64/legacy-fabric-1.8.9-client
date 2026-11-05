@@ -74,6 +74,15 @@ Last updated: 2026-11-05.
 - Chat Stats At Start (2026-11-05): when a Bed Wars game starts, one chat line per team with every player's KDR (or FKDR,
   WLR, BBLR, stars, set with Chat Stat). Written, unit tested for the formatting, never run in game.
 
+- Death messages (2026-11-05): found in your Hypixel log that AxolotlClient's Bed Wars module rewrites death, bed and
+  elimination messages, and appends gold numbers (like 9185, 554) that are your final kill and bed counts taken from made-up
+  stats, because the Hypixel API key is empty. The numbers and the per-player lines under "TEAM ELIMINATED" are now only shown
+  when the stats are real. The rest of the rewritten style (`R1 name /rekt/ B2 name`, victim first) is unchanged, see below.
+- Minimized test launches: `scratchpad\scripts\Launch-Minimized.ps1` starts an instance with its windows minimized and not
+  activated, and only touches processes of that instance (never Lunar). First minimized launch worked: startup log showed the
+  Privacy Lock patches loaded and no mixin errors. Limits: no input is possible while minimized, a minimized game ignores the
+  close request (it has to be stopped), and it logs a GL error every frame.
+
 ## In progress
 
 - Making the client UI nicer: not started on code. AxolotlClient 3.0.6 for 1.8.9 has no style options at all (its menu is the

@@ -62,9 +62,13 @@ Extras option "Privacy Lock" (on by default) cancels, inside AxolotlClient:
   badges (other players just show no badge).
 - `GameSdkDownloader.downloadSdk`, and switches RPC off.
 
-It was written, built and the target methods were checked in the distributed jars, but I have not been able to run it in
-the game yet. To confirm it later: with the game closed, start it, join a world, and check the log has no line
-"Sucessfully logged in at AxolotlClient" or "Error while logging in".
+Checked so far: the target methods exist in the distributed jars, and a minimized launch of the instance (2026-11-05)
+logged "[Extras] Privacy Lock patches loaded" at startup. At startup the add-on loads the patched AxolotlClient classes
+on purpose, so a patch that fails to apply is logged as an error and shown as a red chat message when you join a world.
+Not yet seen: a world join with the lock on (that is when AxolotlClient used to call its server). When you next play on the
+clone, the log should have no "Sucessfully logged in at AxolotlClient" and no "Error while logging in" line. Your last
+Hypixel session in that instance (21:59, before the lock existed) does have "Error while logging in!", the call to the
+server failing.
 
 ## Not covered
 

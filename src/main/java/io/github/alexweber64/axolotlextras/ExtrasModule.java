@@ -19,6 +19,7 @@ import io.github.axolotlclient.util.events.Events;
 import net.legacyfabric.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.text.LiteralText;
 import org.lwjgl.input.Keyboard;
 
 /**
@@ -71,6 +72,9 @@ public class ExtrasModule extends AbstractModule {
 
 	private static final StatAnnouncer STAT_ANNOUNCER = new StatAnnouncer();
 
+	/** Set at startup when a Privacy Lock patch could not be applied. */
+	private static boolean privacyPatchFailed;
+
 	private static KeyBinding quickplayKey;
 	private static ResourceCounterHud resourceCounter;
 	private static UpgradeDisplayHud upgradeDisplay;
@@ -101,6 +105,10 @@ public class ExtrasModule extends AbstractModule {
 			resourceCounter.resetAll();
 			upgradeDisplay.resetAll();
 			STAT_ANNOUNCER.reset();
+			if (privacyPatchFailed) {
+				client.inGameHud.getChatHud().addMessage(new LiteralText(
+					"§c[Extras] The Privacy Lock could not be applied: AxolotlClient may contact its server. See the log."));
+			}
 		});
 
 		Events.RECEIVE_CHAT_MESSAGE_EVENT.register(event -> {
@@ -114,6 +122,39 @@ public class ExtrasModule extends AbstractModule {
 			}
 			upgradeDisplay.onChatLine(line);
 		});
+
+		verifyPatches();
+	}
+
+	/**
+	 * Loads the AxolotlClient classes the Privacy Lock patches right away (without running them), so a patch that does
+	 * not apply shows up in the log at startup, and as a chat warning, instead of being found out later.
+	 */
+	private static void verifyPatches() {
+		String[] privacyTargets = {
+			"io.github.axolotlclient.util.NetworkHelper",
+			"io.github.axolotlclient.modules.rpc.gameSdk.GameSdkDownloader"
+		};
+		for (String name : privacyTargets) {
+			try {
+				Class.forName(name, false, ExtrasModule.class.getClassLoader());
+			} catch (ClassNotFoundException | LinkageError | RuntimeException e) {
+				privacyPatchFailed = true;
+				AxolotlClient.LOGGER.error("[Extras] PRIVACY LOCK NOT APPLIED to " + name + ": " + e);
+			}
+		}
+		if (!privacyPatchFailed) {
+			AxolotlClient.LOGGER.info("[Extras] Privacy Lock patches loaded: AxolotlClient server calls and the Discord SDK download are blocked while the option is on.");
+		}
+		for (String name : new String[] {
+			"io.github.axolotlclient.modules.hypixel.bedwars.BedwarsGame",
+			"io.github.axolotlclient.modules.hypixel.bedwars.BedwarsPlayerStats"}) {
+			try {
+				Class.forName(name, false, ExtrasModule.class.getClassLoader());
+			} catch (ClassNotFoundException | LinkageError | RuntimeException e) {
+				AxolotlClient.LOGGER.error("[Extras] Bed Wars patches did not apply to " + name + ": " + e);
+			}
+		}
 	}
 
 	@Override
