@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
  * Remembers which Bed Wars team upgrades and traps your team bought, from the "Name purchased Thing" chat lines.
  * Pure logic, no Minecraft classes.
  *
- * <p>Costs of the next tier are only filled in where they are known. A null cost table means "not known", and the
- * display then shows no cost rather than a guess.
+ * <p>Costs of the next tier come from a pasted list of Hypixel's diamond prices. Cushioned Boots was not in that list, so
+ * it has no price and the display shows none rather than a guess.
  */
 public final class UpgradeTracker {
 
@@ -34,9 +34,13 @@ public final class UpgradeTracker {
 	private static final Pattern TRAP = Pattern.compile("^(.+?) Trap!?$");
 	private static final String[] FORGES = {"Iron Forge", "Golden Forge", "Emerald Forge", "Molten Forge"};
 
-	/** Diamond prices, tier by tier. Only Reinforced Armor is filled in, the rest were not verified. */
+	/** Diamond price of each tier, in order. "Small" is solo and doubles, "big" is 3v3v3v3 and 4v4v4v4. */
 	private static final int[] ARMOR_SMALL = {2, 4, 8, 16};
 	private static final int[] ARMOR_BIG = {5, 10, 20, 30};
+	private static final int[] MINER_SMALL = {2, 4};
+	private static final int[] MINER_BIG = {4, 6};
+	private static final int[] FORGE_SMALL = {2, 4, 6, 8};
+	private static final int[] FORGE_BIG = {4, 8, 12, 16};
 
 	private boolean sharpness;
 	private int armor;
@@ -127,10 +131,10 @@ public final class UpgradeTracker {
 			rows.add(new Row("Reinforced Armor " + armor, cost(mode == Mode.BIG_TEAMS ? ARMOR_BIG : ARMOR_SMALL, armor)));
 		}
 		if (miner > 0) {
-			rows.add(new Row("Maniac Miner " + miner, -1));
+			rows.add(new Row("Maniac Miner " + miner, cost(mode == Mode.BIG_TEAMS ? MINER_BIG : MINER_SMALL, miner)));
 		}
 		if (forge > 0) {
-			rows.add(new Row(FORGES[forge - 1], -1));
+			rows.add(new Row(FORGES[forge - 1], cost(mode == Mode.BIG_TEAMS ? FORGE_BIG : FORGE_SMALL, forge)));
 		}
 		if (healPool) {
 			rows.add(new Row("Heal Pool", -1));

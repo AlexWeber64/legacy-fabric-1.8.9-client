@@ -42,6 +42,35 @@ class UpgradeTrackerTest {
 	}
 
 	@Test
+	void minerAndForgeShowTheNextPriceForBothTeamSizes() {
+		UpgradeTracker t = new UpgradeTracker();
+		t.onMessage("Steve purchased Maniac Miner I");
+		t.onMessage("Steve purchased Iron Forge");
+		UpgradeTracker.Mode big = UpgradeTracker.Mode.BIG_TEAMS;
+		assertEquals(4, t.upgradeRows(SMALL).get(0).cost);
+		assertEquals(6, t.upgradeRows(big).get(0).cost);
+		assertEquals(4, t.upgradeRows(SMALL).get(1).cost);
+		assertEquals(8, t.upgradeRows(big).get(1).cost);
+		t.onMessage("Steve purchased Maniac Miner II");
+		t.onMessage("Steve purchased Golden Forge");
+		t.onMessage("Steve purchased Emerald Forge");
+		t.onMessage("Steve purchased Molten Forge");
+		assertEquals(-1, t.upgradeRows(SMALL).get(0).cost);
+		assertEquals(-1, t.upgradeRows(SMALL).get(1).cost);
+	}
+
+	@Test
+	void singleLevelUpgradesHaveNoNextPrice() {
+		UpgradeTracker t = new UpgradeTracker();
+		t.onMessage("Steve purchased Sharpened Swords");
+		t.onMessage("Steve purchased Heal Pool");
+		t.onMessage("Steve purchased Dragon Buff");
+		for (UpgradeTracker.Row row : t.upgradeRows(SMALL)) {
+			assertEquals(-1, row.cost);
+		}
+	}
+
+	@Test
 	void unknownPricesAreNotGuessed() {
 		UpgradeTracker t = new UpgradeTracker();
 		t.onMessage("Steve purchased Cushioned Boots I");

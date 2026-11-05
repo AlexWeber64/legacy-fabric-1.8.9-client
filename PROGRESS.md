@@ -15,7 +15,7 @@ Last updated: 2026-11-05.
 | Potion Effects | AxolotlClient | Done, enabled |
 | Zoom | AxolotlClient | Done, enabled |
 | Time Changer | AxolotlClient | Done, enabled |
-| Upgrade Display | Extras (text list like Lunar's), AxolotlClient has an icon version | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Only Reinforced Armor has a price |
+| Upgrade Display | Extras (text list like Lunar's), AxolotlClient has an icon version | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your pasted list, except Cushioned Boots |
 | Toggle Sprint | AxolotlClient (Toggle Sprint HUD) | Works in singleplayer, see "In progress" for the Hypixel side |
 | Freelook | AxolotlClient | Works in singleplayer, Hypixel check removed (untested there) |
 | Raw Mouse Input | RawInput mod | Done |
@@ -58,7 +58,7 @@ Last updated: 2026-11-05.
     Control run with the option off: Freelook was blocked (player facing changed to 41.6, camera stayed first person).
   - Log had no mixin or add-on errors, only the expected unknown host and AxolotlClient login errors.
 
-- Upgrade Display module (text layout from your Lunar screenshot). 21 unit tests pass in total. Built and installed in the
+- Upgrade Display module (text layout from your Lunar screenshot). unit tests pass. Built and installed in the
   clone, never rendered in game.
 
 - KDR Level Head and KDR In Tab (2026-11-05): written, built, installed in the clone, never run in game. Lives in its own mixin
