@@ -51,13 +51,19 @@ public class ExtrasModule extends AbstractModule {
 	/** Lets the Toggle Sprint key work while its HUD module is switched off. On by default. */
 	public static final BooleanOption TOGGLE_WITHOUT_HUD = new BooleanOption("axolotlextras.toggleWithoutHud", true);
 
+	/** Bed Wars level head shows the kill/death ratio instead of the configured stat (FKDR by default). On by default. */
+	public static final BooleanOption KDR_LEVEL_HEAD = new BooleanOption("axolotlextras.kdrLevelHead", true);
+
+	/** Bed Wars tab list shows the kill/death ratio to the left of the health number. On by default. */
+	public static final BooleanOption KDR_TAB = new BooleanOption("axolotlextras.kdrTab", true);
+
 	private static KeyBinding quickplayKey;
 	private static ResourceCounterHud resourceCounter;
 	private static UpgradeDisplayHud upgradeDisplay;
 
 	@Override
 	public void init() {
-		CATEGORY.add(IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
+		CATEGORY.add(IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
 			QUICKPLAY_HYPIXEL_ONLY);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 

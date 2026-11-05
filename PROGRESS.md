@@ -61,6 +61,10 @@ Last updated: 2026-11-05.
 - Upgrade Display module (text layout from your Lunar screenshot). 21 unit tests pass in total. Built and installed in the
   clone, never rendered in game.
 
+- KDR Level Head and KDR In Tab (2026-11-05): written, built, installed in the clone, never run in game. Lives in its own mixin
+  config (`axolotlextras.bedwars.mixins.json`, not required) so a failure there only logs. Needs a Hypixel API key, and your
+  config has `hypixel_api_key` empty.
+
 ## In progress
 
 - Ornithe instance `1.8.9-ornithe-oldanim` (Prism, separate from the other two) for trying OldAnimations (1.7 visuals).

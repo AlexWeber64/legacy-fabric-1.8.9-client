@@ -11,7 +11,7 @@
 	"entrypoints": {
 		"axolotlclient.module": ["io.github.alexweber64.axolotlextras.ExtrasModule"]
 	},
-	"mixins": ["axolotlextras.mixins.json"],
+	"mixins": ["axolotlextras.mixins.json", "axolotlextras.bedwars.mixins.json"],
 	"depends": {
 		"fabricloader": ">=0.14.7",
 		"minecraft": "1.8.9",
