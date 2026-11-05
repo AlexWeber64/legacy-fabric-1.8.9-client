@@ -3,12 +3,15 @@ package io.github.alexweber64.axolotlextras;
 import io.github.alexweber64.axolotlextras.bedwars.ChatStat;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
+import io.github.alexweber64.axolotlextras.ui.ExtrasScreen;
+import io.github.alexweber64.axolotlextras.ui.RoundedRect;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.bedwars.UpgradeDisplayHud;
 import io.github.alexweber64.axolotlextras.quickplay.QuickplayScreen;
 import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.EnumOption;
+import io.github.axolotlclient.AxolotlClientConfig.options.GenericOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.OptionCategory;
 import io.github.axolotlclient.modules.AbstractModule;
 import io.github.axolotlclient.modules.freelook.Freelook;
@@ -67,6 +70,10 @@ public class ExtrasModule extends AbstractModule {
 	 */
 	public static final BooleanOption NORMAL_MESSAGES = new BooleanOption("axolotlextras.normalMessages", true);
 
+	/** How round the corners of the HUD boxes are. */
+	public static final EnumOption HUD_CORNERS = new EnumOption("axolotlextras.hudCorners", RoundedRect.CORNERS,
+		RoundedRect.CORNERS[2]);
+
 	/** Blocks AxolotlClient's calls to its own server and the Discord SDK download. On by default. */
 	public static final BooleanOption PRIVACY_LOCK = new BooleanOption("axolotlextras.privacyLock", true);
 
@@ -82,12 +89,15 @@ public class ExtrasModule extends AbstractModule {
 	private static boolean privacyPatchFailed;
 
 	private static KeyBinding quickplayKey;
+	private static KeyBinding menuKey;
 	private static ResourceCounterHud resourceCounter;
 	private static UpgradeDisplayHud upgradeDisplay;
 
 	@Override
 	public void init() {
-		CATEGORY.add(PRIVACY_LOCK, NORMAL_MESSAGES, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
+		CATEGORY.add(new GenericOption("axolotlextras.openMenu", "axolotlextras.openMenuLabel",
+			(x, y) -> client.setScreen(new ExtrasScreen(client.currentScreen))));
+		CATEGORY.add(HUD_CORNERS, PRIVACY_LOCK, NORMAL_MESSAGES, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
 			QUICKPLAY_HYPIXEL_ONLY);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 
@@ -102,6 +112,9 @@ public class ExtrasModule extends AbstractModule {
 		HudManager.getInstance().add(upgradeDisplay);
 		upgradeDisplay.init();
 		upgradeDisplay.onBoundsUpdate();
+
+		menuKey = new KeyBinding("key.axolotlextras.menu", Keyboard.KEY_F8, "category.axolotlclient");
+		KeyBindingHelper.registerKeyBinding(menuKey);
 
 		quickplayKey = new KeyBinding("key.axolotlextras.quickplay", Keyboard.KEY_Y, "category.axolotlclient");
 		KeyBindingHelper.registerKeyBinding(quickplayKey);
@@ -166,6 +179,9 @@ public class ExtrasModule extends AbstractModule {
 	@Override
 	public void tick() {
 		STAT_ANNOUNCER.tick(client, ChatStat.byKey(CHAT_STAT.get()));
+		if (menuKey != null && menuKey.wasPressed() && client.currentScreen == null) {
+			client.setScreen(new ExtrasScreen(null));
+		}
 		if (IGNORE_SERVER_BLOCKS.get() && anyServerBlock()) {
 			// A server message (the "block_mods" channel) or an earlier address check switched something off.
 			FeatureDisabler.clear();

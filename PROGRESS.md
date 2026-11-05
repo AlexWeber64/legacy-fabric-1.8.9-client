@@ -83,6 +83,12 @@ Last updated: 2026-11-05.
   Privacy Lock patches loaded and no mixin errors. Limits: no input is possible while minimized, a minimized game ignores the
   close request (it has to be stopped), and it logs a GL error every frame.
 
+- Nicer UI (2026-11-06), first round, tested fullscreen at 2880x1800 (GUI scale 5): rounded corners on all HUD boxes (HUD Corners
+  option) and a new Extras Menu (F8) with sections, switches, search, scrolling and descriptions. Closing it crashed the game
+  once (wrong mod id when saving the config); fixed, and the close and the config save were checked afterwards.
+- Test launches are now fullscreen: `fullscreen:true` is set in the clone's `options.txt` (backup `options.txt.before-fullscreen`),
+  and the test scripts convert menu clicks from GUI units, so they work at any resolution.
+
 ## In progress
 
 - Making the client UI nicer: not started on code. AxolotlClient 3.0.6 for 1.8.9 has no style options at all (its menu is the
@@ -109,7 +115,7 @@ Needs a game window (waiting for your go-ahead):
    contains "BED WARS", which includes the lobby. I did not guess a lobby/game check without seeing the real sidebars.
 3. Optimization mod (not started). The benchmark notes list Phosphor-Legacy and Ksyxis as candidates, neither installed.
    Any of them needs before and after fps runs, which need the game open.
-4. Optional: a nicer menu look. Currently it reuses AxolotlClient's own UI. Needs visual checks.
+4. More UI: the Extras Menu and HUD corners are done. Ideas not started: restyle AxolotlClient's own options screen, the HUD editor, and the Quickplay menu to match, a Bed Wars preview in the menu.
 
 Needs a decision:
 

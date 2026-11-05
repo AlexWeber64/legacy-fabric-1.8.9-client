@@ -4,6 +4,7 @@
 	"package": "io.github.alexweber64.axolotlextras.mixin",
 	"compatibilityLevel": "JAVA_8",
 	"client": [
+		"BoxHudEntryMixin",
 		"FeatureDisablerMixin",
 		"GameRendererMixin",
 		"GameSdkDownloaderMixin",
