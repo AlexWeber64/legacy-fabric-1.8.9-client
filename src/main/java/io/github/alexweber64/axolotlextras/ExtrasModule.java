@@ -19,6 +19,7 @@ import io.github.axolotlclient.modules.hud.HudManager;
 import io.github.axolotlclient.modules.hud.gui.hud.simple.ToggleSprintHud;
 import io.github.axolotlclient.util.FeatureDisabler;
 import io.github.axolotlclient.util.events.Events;
+import net.fabricmc.loader.api.FabricLoader;
 import net.legacyfabric.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.option.KeyBinding;
@@ -70,6 +71,9 @@ public class ExtrasModule extends AbstractModule {
 	 */
 	public static final BooleanOption NORMAL_MESSAGES = new BooleanOption("axolotlextras.normalMessages", true);
 
+	/** Flat rounded buttons and a dark background in the menus, and the restyled HUD editor boxes. On by default. */
+	public static final BooleanOption MODERN_MENUS = new BooleanOption("axolotlextras.modernMenus", true);
+
 	/** How round the corners of the HUD boxes are. */
 	public static final EnumOption HUD_CORNERS = new EnumOption("axolotlextras.hudCorners", RoundedRect.CORNERS,
 		RoundedRect.CORNERS[2]);
@@ -88,6 +92,9 @@ public class ExtrasModule extends AbstractModule {
 	/** Set at startup when a Privacy Lock patch could not be applied. */
 	private static boolean privacyPatchFailed;
 
+	/** True when the Raw Input mod is installed, which makes AxolotlClient's own raw mouse option redundant and harmful. */
+	private static boolean rawMouseGuard;
+
 	private static KeyBinding quickplayKey;
 	private static KeyBinding menuKey;
 	private static ResourceCounterHud resourceCounter;
@@ -97,7 +104,7 @@ public class ExtrasModule extends AbstractModule {
 	public void init() {
 		CATEGORY.add(new GenericOption("axolotlextras.openMenu", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new ExtrasScreen(client.currentScreen))));
-		CATEGORY.add(HUD_CORNERS, PRIVACY_LOCK, NORMAL_MESSAGES, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
+		CATEGORY.add(MODERN_MENUS, HUD_CORNERS, PRIVACY_LOCK, NORMAL_MESSAGES, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
 			QUICKPLAY_HYPIXEL_ONLY);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 
@@ -142,6 +149,8 @@ public class ExtrasModule extends AbstractModule {
 			upgradeDisplay.onChatLine(line);
 		});
 
+		rawMouseGuard = FabricLoader.getInstance().isModLoaded("rawinput");
+
 		verifyPatches();
 	}
 
@@ -178,6 +187,12 @@ public class ExtrasModule extends AbstractModule {
 
 	@Override
 	public void tick() {
+		if (rawMouseGuard && AxolotlClient.CONFIG.rawMouseInput.get()) {
+			// AxolotlClient's own "Raw Mouse Input" is not raw input: it rescales the movement and cuts it to whole numbers,
+			// so slow movements lose most of their distance while fast ones keep theirs (it feels like acceleration).
+			AxolotlClient.CONFIG.rawMouseInput.set(false);
+			AxolotlClient.LOGGER.info("[Extras] Turned off AxolotlClient's Raw Mouse Input option: the Raw Input mod does the real thing.");
+		}
 		STAT_ANNOUNCER.tick(client, ChatStat.byKey(CHAT_STAT.get()));
 		if (menuKey != null && menuKey.wasPressed() && client.currentScreen == null) {
 			client.setScreen(new ExtrasScreen(null));

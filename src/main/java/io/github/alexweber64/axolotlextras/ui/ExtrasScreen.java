@@ -59,7 +59,7 @@ public class ExtrasScreen extends Screen {
 			ExtrasModule.CHAT_STAT, ExtrasModule.KDR_LEVEL_HEAD, ExtrasModule.KDR_TAB);
 		section("axolotlextras.section.controls", ExtrasModule.TOGGLE_WITHOUT_HUD, ExtrasModule.QUICKPLAY,
 			ExtrasModule.QUICKPLAY_HYPIXEL_ONLY);
-		section("axolotlextras.section.look", ExtrasModule.HUD_CORNERS, ExtrasModule.NO_FOG,
+		section("axolotlextras.section.look", ExtrasModule.MODERN_MENUS, ExtrasModule.HUD_CORNERS, ExtrasModule.NO_FOG,
 			ExtrasModule.KEEP_INVENTORY_CENTERED, ExtrasModule.TRANSPARENT_UI);
 	}
 

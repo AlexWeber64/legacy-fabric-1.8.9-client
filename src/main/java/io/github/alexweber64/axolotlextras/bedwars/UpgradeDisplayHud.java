@@ -216,6 +216,17 @@ public class UpgradeDisplayHud extends TextHudEntry {
 		return options;
 	}
 
+	/** Left edge, upper middle: clear of the FPS and toggle sprint boxes that sit in the corner. */
+	@Override
+	public double getDefaultX() {
+		return 0.01;
+	}
+
+	@Override
+	public double getDefaultY() {
+		return 0.32;
+	}
+
 	@Override
 	public Identifier getId() {
 		return ID;

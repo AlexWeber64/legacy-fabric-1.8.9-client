@@ -89,6 +89,17 @@ Last updated: 2026-11-05.
 - Test launches are now fullscreen: `fullscreen:true` is set in the clone's `options.txt` (backup `options.txt.before-fullscreen`),
   and the test scripts convert menu clicks from GUI units, so they work at any resolution.
 
+- UI round 2 (2026-11-06): Quickplay redesigned (a card per game with its icon: bed for Bed Wars, ender eye for SkyWars), a
+  Modern Menus skin for every button, AxolotlClient's category buttons and ON/OFF switches, the HUD editor boxes and a dark menu
+  background. Checked in game, fullscreen at 2880x1800. Not restyled yet: text fields (the Search box and color fields),
+  scrollbars and sliders of AxolotlClient's option lists, and the vanilla title screen.
+- Raw mouse input (2026-11-06): cause found. AxolotlClient's own "Raw Mouse Input" option was ON; it rescales and truncates the
+  movement (checked: slow steps and a fast move of the same distance gave 9.5 and 10.4 degrees with it on, 18.9 and 18.9 with
+  it off). It is now switched off and kept off whenever the Raw Input mod is installed. A second issue is still open: the Raw Input
+  mod adds up every mouse device it finds, and a test with injected movement counted it twice, so the sensitivity may be about
+  double what it should be. A probe that shows what your real mouse reports is in the scratchpad `jiun-probe.cmd`.
+- Confirmed by the user on 2026-11-06: Freelook and Toggle Sprint work.
+
 ## In progress
 
 - Making the client UI nicer: not started on code. AxolotlClient 3.0.6 for 1.8.9 has no style options at all (its menu is the

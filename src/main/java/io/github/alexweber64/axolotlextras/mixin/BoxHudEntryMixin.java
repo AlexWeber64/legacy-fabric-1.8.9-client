@@ -1,8 +1,10 @@
 package io.github.alexweber64.axolotlextras.mixin;
 
+import io.github.alexweber64.axolotlextras.ExtrasModule;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
 import io.github.axolotlclient.AxolotlClientConfig.Color;
 import io.github.axolotlclient.modules.hud.gui.entry.BoxHudEntry;
+import io.github.axolotlclient.modules.hud.util.DrawUtil;
 import io.github.axolotlclient.modules.hud.util.Rectangle;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,5 +19,15 @@ public class BoxHudEntryMixin {
 			target = "Lio/github/axolotlclient/modules/hud/gui/entry/BoxHudEntry;fillRect(Lio/github/axolotlclient/modules/hud/util/Rectangle;Lio/github/axolotlclient/AxolotlClientConfig/Color;)V"))
 	private void axolotlextras$roundedBackground(Rectangle rect, Color color) {
 		RoundedRect.fill(rect, color);
+	}
+
+	/** In the HUD editor each box also got a square black outline. The restyled box draws its own outline. */
+	@Redirect(method = "renderPlaceholder",
+		at = @At(value = "INVOKE",
+			target = "Lio/github/axolotlclient/modules/hud/gui/entry/BoxHudEntry;outlineRect(Lio/github/axolotlclient/modules/hud/util/Rectangle;Lio/github/axolotlclient/AxolotlClientConfig/Color;)V"))
+	private void axolotlextras$noSquareOutline(Rectangle rect, Color color) {
+		if (!ExtrasModule.MODERN_MENUS.get()) {
+			DrawUtil.outlineRect(rect, color);
+		}
 	}
 }

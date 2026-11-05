@@ -1,5 +1,8 @@
 package io.github.alexweber64.axolotlextras.quickplay;
 
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
+
 /**
  * The games shown in the quickplay menu. The commands are Hypixel's "/play" mode names. Only
  * "bedwars_eight_two" (Bed Wars Doubles) has been confirmed by a player. Every mode name below also appears in
@@ -21,22 +24,25 @@ public final class QuickplayEntries {
 
 	public static final class Group {
 		public final String title;
+		/** The item drawn next to the game's name. */
+		public final Item icon;
 		public final Entry[] entries;
 
-		Group(String title, Entry... entries) {
+		Group(String title, Item icon, Entry... entries) {
 			this.title = title;
+			this.icon = icon;
 			this.entries = entries;
 		}
 	}
 
 	public static final Group[] GROUPS = {
-		new Group("Bed Wars",
+		new Group("Bed Wars", Items.BED,
 			new Entry("Solo", "bedwars_eight_one"),
 			new Entry("Doubles", "bedwars_eight_two"),
 			new Entry("3v3v3v3", "bedwars_four_three"),
 			new Entry("4v4v4v4", "bedwars_four_four"),
 			new Entry("4v4", "bedwars_two_four")),
-		new Group("SkyWars",
+		new Group("SkyWars", Items.EYE_OF_ENDER,
 			new Entry("Solo Normal", "solo_normal"),
 			new Entry("Solo Insane", "solo_insane"),
 			new Entry("Teams Normal", "teams_normal"),

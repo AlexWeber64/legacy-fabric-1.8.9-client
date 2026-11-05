@@ -60,6 +60,20 @@ public final class RoundedRect {
 		}
 	}
 
+	/** Draws the 1 pixel outline of a rounded rectangle, following the same corner steps as {@link #fillShape}. */
+	public static void outlineShape(int x, int y, int width, int height, int[] insets, int argb) {
+		int[][] s = strips(x, y, width, height, insets);
+		for (int i = 0; i < s.length; i++) {
+			int[] r = s[i];
+			if (s.length == 1 || i == 0 || i == s.length - 1) {
+				DrawUtil.fillRect(r[0], r[1], r[2], r[3], argb);
+			} else {
+				DrawUtil.fillRect(r[0], r[1], 1, r[3], argb);
+				DrawUtil.fillRect(r[0] + r[2] - 1, r[1], 1, r[3], argb);
+			}
+		}
+	}
+
 	/** Fills a HUD box background, rounded when the HUD corner option asks for it. */
 	public static void fill(Rectangle rect, Color color) {
 		int[] insets = insetsFor(ExtrasModule.HUD_CORNERS.get());

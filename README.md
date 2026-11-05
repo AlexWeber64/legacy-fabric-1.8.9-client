@@ -10,6 +10,8 @@ HUD editor.
 | Bed Wars Resources (HUD) | Iron, gold, diamonds and emeralds as `inventory + ender chest = total`. Opening the ender chest always replaces the ender chest count with what is really in it. Punching the ender chest with resources in hand adds what leaves your inventory within half a second (inferred, since the client never sees the deposit). Everything is forgotten when you leave the world, leave Bed Wars, or a game starts. |
 | Extras Menu (F8) | A settings screen for all of the above in one scrolling list: switches with their descriptions, a search box, sections. Opens with F8 (rebindable) or from the Extras section of the AxolotlClient options. Changes apply at once and are saved when it closes. |
 | HUD Corners (default medium) | Rounds the corners of every AxolotlClient HUD box (also the Resource Counter and Upgrade Display), or keeps them square. |
+| Modern Menus (default on) | Flat rounded buttons in every menu (vanilla, AxolotlClient's options and the HUD editor), AxolotlClient's category buttons and ON/OFF switches restyled to match, a dark background instead of dirt, and a restyled HUD editor with rounded outlined boxes. Turn it off to get the normal look. |
+| Raw mouse guard (automatic) | When the Raw Input mod is installed, AxolotlClient's own "Raw Mouse Input" option is switched off and kept off. That option is not raw input: it rescales the movement and cuts it to whole numbers, which makes slow movements lose distance (it feels like acceleration). |
 | Normal Hypixel Messages (default on) | Shows Hypixel's own text for deaths, broken beds, eliminated teams and disconnects instead of AxolotlClient's short rewritten style (`P1 name /rekt/ W2 name`). The stats AxolotlClient added stay next to them, when real stats are loaded (Hypixel API key needed): a teammate's final kill count after their name on a final kill, their beds broken count after a bed they broke, and the per-player stat lines under an eliminated team. |
 | Privacy Lock (default on) | Stops AxolotlClient from sending your player UUID (and the UUIDs of players around you) to its own server, and from downloading Discord's game SDK. See `PRIVACY-AUDIT.md`. |
 | Chat Stats At Start (default on) | When a Bed Wars game starts, prints one chat line per team with every player's chosen stat (KDR, FKDR, WLR, BBLR or stars, set with Chat Stat). Needs AxolotlClient's Bed Wars module and a Hypixel API key. Local chat only, nothing is sent. |
@@ -20,7 +22,7 @@ HUD editor.
 | No Fog | Turns fog off after vanilla sets it up, on land and under water. |
 | Centered Inventory | Keeps the inventory in the middle of the screen while a potion effect is active. |
 | Transparent UI | Skips the dark gradient screens draw over the world. Screens without a world keep their background. |
-| Quickplay Menu | Press Y (rebindable) to open a grid of `/play` buttons. Only on hypixel.net unless "Hypixel Only" is switched off. The mode names match Hypixel's public API game list, see `QuickplayEntries.java`. |
+| Quickplay Menu | Press Y (rebindable) to open a card per game, with the game icon and a button per mode, that send the `/play` command. Only on hypixel.net unless "Hypixel Only" is switched off. The mode names match Hypixel's public API game list, see `QuickplayEntries.java`. |
 
 ## Requirements
 
