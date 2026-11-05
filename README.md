@@ -7,7 +7,7 @@ HUD editor.
 
 | Feature | What it does |
 |---|---|
-| Bed Wars Resources (HUD) | Iron, gold, diamonds and emeralds as `inventory + ender chest = total`. The ender chest count is what it held the last time you opened it, and is cleared when a game starts or the client restarts. |
+| Bed Wars Resources (HUD) | Iron, gold, diamonds and emeralds as `inventory + ender chest = total`. Opening the ender chest always replaces the ender chest count with what is really in it. Punching the ender chest with resources in hand adds what leaves your inventory within half a second (inferred, since the client never sees the deposit). Everything is forgotten when you leave the world, leave Bed Wars, or a game starts. |
 | No Fog | Turns fog off after vanilla sets it up, on land and under water. |
 | Centered Inventory | Keeps the inventory in the middle of the screen while a potion effect is active. |
 | Transparent UI | Skips the dark gradient screens draw over the world. Screens without a world keep their background. |

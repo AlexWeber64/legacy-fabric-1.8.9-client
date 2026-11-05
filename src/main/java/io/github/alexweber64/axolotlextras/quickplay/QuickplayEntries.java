@@ -1,9 +1,10 @@
 package io.github.alexweber64.axolotlextras.quickplay;
 
 /**
- * The games shown in the quickplay menu. The commands are Hypixel's "/play" mode names. They come from memory and
- * old community lists and have not been checked against a current official list, so a wrong one will simply get an
- * error message from the server. Edit them here if Hypixel renames a mode.
+ * The games shown in the quickplay menu. The commands are Hypixel's "/play" mode names. Only
+ * "bedwars_eight_two" (Bed Wars Doubles) has been confirmed by a player. The rest come from memory and old community
+ * lists and have not been checked against a current official list, so a wrong one will simply get an error message
+ * from the server. Edit them here if Hypixel renames a mode.
  */
 public final class QuickplayEntries {
 

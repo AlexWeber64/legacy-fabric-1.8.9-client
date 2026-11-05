@@ -59,6 +59,9 @@ public class ExtrasModule extends AbstractModule {
 		quickplayKey = new KeyBinding("key.axolotlextras.quickplay", Keyboard.KEY_Y, "category.axolotlclient");
 		KeyBindingHelper.registerKeyBinding(quickplayKey);
 
+		// Loading a different world (including joining another server or game) forgets the remembered counts.
+		Events.WORLD_LOAD_EVENT.register(event -> resourceCounter.resetAll());
+
 		Events.RECEIVE_CHAT_MESSAGE_EVENT.register(event -> {
 			String line = event.getFormattedMessage().asUnformattedString();
 			if (ResourceMath.isGameStartMessage(line)) {
