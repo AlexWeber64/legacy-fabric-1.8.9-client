@@ -7,7 +7,10 @@ import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.OptionCategory;
 import io.github.axolotlclient.modules.AbstractModule;
+import io.github.axolotlclient.modules.freelook.Freelook;
 import io.github.axolotlclient.modules.hud.HudManager;
+import io.github.axolotlclient.modules.hud.gui.hud.simple.ToggleSprintHud;
+import io.github.axolotlclient.util.FeatureDisabler;
 import io.github.axolotlclient.util.events.Events;
 import net.legacyfabric.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.network.ServerInfo;
@@ -41,12 +44,19 @@ public class ExtrasModule extends AbstractModule {
 	/** The quickplay menu only sends /play commands, which only mean something on Hypixel. */
 	public static final BooleanOption QUICKPLAY_HYPIXEL_ONLY = new BooleanOption("axolotlextras.quickplayHypixelOnly", true);
 
+	/** Stops AxolotlClient's per-server switch-off of Freelook, Toggle Sneak, Time Changer, Full Bright and Low Fire. On by default. */
+	public static final BooleanOption IGNORE_SERVER_BLOCKS = new BooleanOption("axolotlextras.ignoreServerBlocks", true);
+
+	/** Lets the Toggle Sprint key work while its HUD module is switched off. On by default. */
+	public static final BooleanOption TOGGLE_WITHOUT_HUD = new BooleanOption("axolotlextras.toggleWithoutHud", true);
+
 	private static KeyBinding quickplayKey;
 	private static ResourceCounterHud resourceCounter;
 
 	@Override
 	public void init() {
-		CATEGORY.add(NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY, QUICKPLAY_HYPIXEL_ONLY);
+		CATEGORY.add(IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
+			QUICKPLAY_HYPIXEL_ONLY);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD
@@ -72,10 +82,30 @@ public class ExtrasModule extends AbstractModule {
 
 	@Override
 	public void tick() {
+		if (IGNORE_SERVER_BLOCKS.get() && anyServerBlock()) {
+			// A server message (the "block_mods" channel) or an earlier address check switched something off.
+			FeatureDisabler.clear();
+		}
+		if (TOGGLE_WITHOUT_HUD.get() && client.world != null) {
+			ToggleSprintHud toggleSprint = (ToggleSprintHud) HudManager.getInstance().get(ToggleSprintHud.ID);
+			if (toggleSprint != null && !toggleSprint.isEnabled()) {
+				// HudManager only ticks enabled modules, and the toggle key is handled in that tick.
+				toggleSprint.tick();
+			}
+		}
 		if (quickplayKey != null && quickplayKey.wasPressed() && QUICKPLAY.get() && client.currentScreen == null
 			&& client.world != null && client.player != null && quickplayAllowedHere()) {
 			client.setScreen(new QuickplayScreen());
 		}
+	}
+
+	private static boolean anyServerBlock() {
+		ToggleSprintHud toggleSprint = (ToggleSprintHud) HudManager.getInstance().get(ToggleSprintHud.ID);
+		return Freelook.getInstance().enabled.getForceDisabled()
+			|| AxolotlClient.CONFIG.timeChangerEnabled.getForceDisabled()
+			|| AxolotlClient.CONFIG.fullBright.getForceDisabled()
+			|| AxolotlClient.CONFIG.lowFire.getForceDisabled()
+			|| (toggleSprint != null && toggleSprint.toggleSneak.getForceDisabled());
 	}
 
 	private boolean quickplayAllowedHere() {
