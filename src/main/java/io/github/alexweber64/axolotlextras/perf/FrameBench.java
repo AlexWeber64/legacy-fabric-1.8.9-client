@@ -139,9 +139,10 @@ public final class FrameBench {
 		}
 		ClientPlayerEntity player = client.player;
 		sceneTicks++;
-		KeyBinding.setKeyPressed(client.options.forwardKey.getCode(), true);
+		ForcedInput.install(client);
+		ForcedInput.forward = true;
+		ForcedInput.jump = true;
 		KeyBinding.setKeyPressed(client.options.sprintKey.getCode(), true);
-		KeyBinding.setKeyPressed(client.options.jumpKey.getCode(), true);
 		float direction = (sceneTicks / 80) % 2 == 0 ? 1f : -1f;
 		player.prevYaw = player.yaw;
 		player.yaw += 3.5f * direction;
@@ -169,9 +170,8 @@ public final class FrameBench {
 		}
 		scene = false;
 		MinecraftClient client = MinecraftClient.getInstance();
-		KeyBinding.setKeyPressed(client.options.forwardKey.getCode(), false);
+		ForcedInput.releaseAll();
 		KeyBinding.setKeyPressed(client.options.sprintKey.getCode(), false);
-		KeyBinding.setKeyPressed(client.options.jumpKey.getCode(), false);
 	}
 
 	/** Called once per frame, at the start of the game renderer. */

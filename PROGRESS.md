@@ -24,7 +24,7 @@ Last updated: 2026-11-05.
 | Transparent UI | Extras | Done, tested in game (my reading of the setting: no dark layer over the world) |
 | Resource Counter (Bed Wars) | Extras | Done, tested in singleplayer with a simulated Bed Wars sidebar |
 | Hypixel Quickplay | Extras | Done, every mode name found in Hypixel's public API game list, Doubles confirmed by you |
-| 1.7 Visuals | nothing yet | Not done |
+| 1.7 Visuals | Extras (ported from OldAnimations) | Four switches, off by default, checked in game with before/after screenshots 2026-11-06. Not ported: third person item positions, the third person sneak model, old damage tint, glint and the 100 other OldAnimations options |
 
 ## Completed
 
@@ -138,10 +138,32 @@ Needs a decision:
 5. First launch of `1.8.9-ornithe-oldanim` (needs a window): check it starts, find where OldAnimations options are, and
    compare with the Legacy Fabric clone for fps. If it works, the open question is how to combine it with your AxolotlClient
    setup, since AxolotlClient has no Ornithe build for 1.8.9 that I have checked.
-6. 1.7 Visuals (older notes): OldAnimations lives on an `ornithe` branch only (Ornithe mappings, not Legacy Fabric), 100+ options,
+6. 1.7 Visuals (older notes, now done in a smaller form, see "1.7 visuals" below): OldAnimations lives on an `ornithe` branch only (Ornithe mappings, not Legacy Fabric), 100+ options,
    Kotlin-DSL Gradle build. A port means re-mapping its mixins to yarn 1.8.9 and checking each animation by eye. I did not
    start it because none of it can be verified without the window. Options: port a small set (sword block pose, bow and
    eat animation, hurt tint), or try the Ornithe build on a separate Ornithe instance.
+
+## 1.7 visuals (2026-11-06)
+
+Ported from OldAnimations (AxolotlClient, LGPL-3.0, source from its `ornithe` branch) into the add-on, as an optional mixin config
+(`axolotlextras.visuals.mixins.json`, required false, so a failing patch cannot stop the game from starting). Each has its own switch
+in the Extras Menu (F8, section "1.7 visuals"), all off by default. Checked in a test instance with a window minimized, using
+screenshots taken from inside the game (`perf/BenchDriver`), options off against on:
+
+- Block Hitting: with a hit followed at once by blocking, vanilla shows the block pose with no swing; with the switch on the sword swings through the screen. Vanilla 1.8.9 also throws away left clicks while you hold right click, and this does not change that (it is visual only, nothing is sent).
+- 1.7 Item Positions: sword, bow (drawn and idle), fishing rod are larger and sit differently; blocks look the same as before. I cannot compare with a real 1.7 client here, so the values are OldAnimations' own, moved to the 1.8 models.
+- 1.7 Sneaking: logged per tick: the camera height drops at once on sneak and rises 1.54, 1.587, 1.604, 1.614, 1.618, 1.619 after letting go (60 percent of the gap per tick, the 1.7 rate).
+- 1.7 Sword Block (outside view): the sword is held across the chest with the arm out in front, instead of upright at the side.
+
+Left out on purpose: attacking while blocking (a gameplay change, not a visual) and the third person sneak model and item
+positions (many pieces, easy to get wrong without a 1.7 client to compare).
+
+Test tool changes: the test driver can now give items, select slots, turn the camera, hold keys, switch these options, and
+save screenshots, all from a steps file with no keyboard or mouse input. The sprint, jump, forward and sneak keys cannot be
+pressed in code because AxolotlClient reads the real keyboard for them, so a small wrapper input (`perf/ForcedInput`) forces
+them. Caveat for the earlier optimization tests: their movement scene pressed forward the old way, so the player turned and
+jumped but did not really run forward. The conclusion (Phosphor makes no measurable difference) is based on that scene; a
+rerun with real running would also load new chunks, which is where a lighting engine matters most.
 
 ## Optimization findings (2026-11-06)
 

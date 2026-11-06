@@ -40,6 +40,18 @@ public class ExtrasModule extends AbstractModule {
 
 	public static final OptionCategory CATEGORY = new OptionCategory("axolotlextras");
 
+	/** 1.7: the sword, food and bow animations keep swinging when you swing while holding right click. */
+	public static final BooleanOption OLD_BLOCK_HITTING = new BooleanOption("axolotlextras.oldBlockHitting", false);
+
+	/** 1.7: held item positions in first person, the bow pose and the fishing rod flip. */
+	public static final BooleanOption OLD_FIRST_PERSON = new BooleanOption("axolotlextras.oldFirstPerson", false);
+
+	/** 1.7: the camera goes down at once when you sneak and comes back up slowly when you stop. */
+	public static final BooleanOption OLD_SNEAK = new BooleanOption("axolotlextras.oldSneak", false);
+
+	/** 1.7: the sword block pose seen from outside (the arm straight up in front, the sword turned flat). */
+	public static final BooleanOption OLD_THIRD_PERSON = new BooleanOption("axolotlextras.oldThirdPerson", false);
+
 	/** Removes the fog on land and under water. */
 	public static final BooleanOption NO_FOG = new BooleanOption("axolotlextras.noFog", false);
 
@@ -107,7 +119,7 @@ public class ExtrasModule extends AbstractModule {
 		CATEGORY.add(new GenericOption("axolotlextras.openMenu", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new ExtrasScreen(client.currentScreen))));
 		CATEGORY.add(MODERN_MENUS, HUD_CORNERS, PRIVACY_LOCK, NORMAL_MESSAGES, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
-			QUICKPLAY_HYPIXEL_ONLY);
+			QUICKPLAY_HYPIXEL_ONLY, OLD_BLOCK_HITTING, OLD_FIRST_PERSON, OLD_SNEAK, OLD_THIRD_PERSON);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD

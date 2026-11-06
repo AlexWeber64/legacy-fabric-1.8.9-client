@@ -1,0 +1,15 @@
+{
+	"required": false,
+	"minVersion": "0.8",
+	"package": "io.github.alexweber64.axolotlextras.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"client": [
+		"BiPedModelMixin",
+		"HeldItemFeatureMixin",
+		"HeldItemRendererMixin",
+		"SneakCameraMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

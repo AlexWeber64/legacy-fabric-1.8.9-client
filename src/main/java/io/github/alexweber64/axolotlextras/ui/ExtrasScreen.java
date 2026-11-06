@@ -61,6 +61,8 @@ public class ExtrasScreen extends Screen {
 			ExtrasModule.QUICKPLAY_HYPIXEL_ONLY);
 		section("axolotlextras.section.look", ExtrasModule.MODERN_MENUS, ExtrasModule.HUD_CORNERS, ExtrasModule.NO_FOG,
 			ExtrasModule.KEEP_INVENTORY_CENTERED, ExtrasModule.TRANSPARENT_UI);
+		section("axolotlextras.section.oldvisuals", ExtrasModule.OLD_BLOCK_HITTING, ExtrasModule.OLD_FIRST_PERSON,
+			ExtrasModule.OLD_SNEAK, ExtrasModule.OLD_THIRD_PERSON);
 	}
 
 	private void section(String headingKey, Object... options) {
