@@ -3,6 +3,7 @@ package io.github.alexweber64.axolotlextras;
 import io.github.alexweber64.axolotlextras.bedwars.ChatStat;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
+import io.github.alexweber64.axolotlextras.perf.BenchDriver;
 import io.github.alexweber64.axolotlextras.perf.FrameBench;
 import io.github.alexweber64.axolotlextras.ui.ExtrasScreen;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
@@ -153,6 +154,8 @@ public class ExtrasModule extends AbstractModule {
 				String[] parts = line.split(" ");
 				if (parts.length == 3 && parts[2].matches("[0-9]{1,4}")) {
 					FrameBench.start(parts[1], Integer.parseInt(parts[2]));
+				} else if (parts.length == 4 && parts[2].matches("[0-9]{1,4}") && parts[3].matches("[0-9]{1,3}")) {
+					FrameBench.start(parts[1], Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
 				}
 			}
 		});
@@ -202,6 +205,8 @@ public class ExtrasModule extends AbstractModule {
 			AxolotlClient.LOGGER.info("[Extras] Turned off AxolotlClient's Raw Mouse Input option: the Raw Input mod does the real thing.");
 		}
 		STAT_ANNOUNCER.tick(client, ChatStat.byKey(CHAT_STAT.get()));
+		BenchDriver.tick(client);
+		FrameBench.onTick(client);
 		if (menuKey != null && menuKey.wasPressed() && client.currentScreen == null) {
 			client.setScreen(new ExtrasScreen(null));
 		}

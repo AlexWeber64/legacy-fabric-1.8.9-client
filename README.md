@@ -31,6 +31,12 @@ In a singleplayer world, a chat line `AXBENCH label seconds` records frame times
 frame time goes to `<label>.csv`). It does nothing on servers and nothing else is sent anywhere. See `PROGRESS.md` for what it
 showed about optimization mods.
 
+For hands-off runs, if `config/axolotl-extras-bench/run.txt` exists it is read and deleted, and its lines are carried out one
+by one: `world <folder>` (open a singleplayer world from the title screen), `cmd /kill ...` (only `/kill`, `/gamerule`, `/time`
+and `/tp` are accepted), `bench <label> <seconds> [particles]` (with a particle count it also plays a movement scene: the player
+sprints and jumps in circles, particles are spawned around the player, and 64 client side entities appear around the start:
+32 villagers with name tags, 16 named armor stands, 16 item drops), `done` and `quit`. Singleplayer only.
+
 ## Requirements
 
 - Minecraft 1.8.9, Fabric Loader 0.14.7 or newer, Legacy Fabric API 1.7.0 or newer
