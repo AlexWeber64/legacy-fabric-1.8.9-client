@@ -24,6 +24,13 @@ HUD editor.
 | Transparent UI | Skips the dark gradient screens draw over the world. Screens without a world keep their background. |
 | Quickplay Menu | Press Y (rebindable) to open a card per game, with the game icon and a button per mode, that send the `/play` command. Only on hypixel.net unless "Hypixel Only" is switched off. The mode names match Hypixel's public API game list, see `QuickplayEntries.java`. |
 
+## Frame recorder (developer tool)
+
+In a singleplayer world, a chat line `AXBENCH label seconds` records frame times for that long and then logs average fps, 1% and
+0.1% lows, p99 and worst frame, plus garbage collections, and appends them to `config/axolotl-extras-bench/results.txt` (every
+frame time goes to `<label>.csv`). It does nothing on servers and nothing else is sent anywhere. See `PROGRESS.md` for what it
+showed about optimization mods.
+
 ## Requirements
 
 - Minecraft 1.8.9, Fabric Loader 0.14.7 or newer, Legacy Fabric API 1.7.0 or newer

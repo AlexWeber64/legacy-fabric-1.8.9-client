@@ -100,8 +100,7 @@ Last updated: 2026-11-05.
   movement (checked: slow steps and a fast move of the same distance gave 9.5 and 10.4 degrees with it on, 18.9 and 18.9 with
   it off). It is now switched off and kept off whenever the Raw Input mod is installed. A second issue is still open: the Raw Input
   mod adds up every mouse device it finds, and a test with injected movement counted it twice, so the sensitivity may be about
-  double what it should be. A probe that shows what your real mouse reports is in the scratchpad `ji
-un-probe.cmd`.
+  double what it should be. A probe that shows what your real mouse reports is in the scratchpad (`ji\run-probe.cmd`).
 - Confirmed by the user on 2026-11-06: Freelook and Toggle Sprint work.
 
 ## In progress
@@ -128,8 +127,8 @@ Needs a game window (waiting for your go-ahead):
 1. Try Freelook, Toggle Sprint and the toggles on real Hypixel with your own account (I can't log in for you).
 2. Test the Resource Counter and Upgrade Display in a real Bed Wars game. The counter shows whenever the sidebar title
    contains "BED WARS", which includes the lobby. I did not guess a lobby/game check without seeing the real sidebars.
-3. Optimization mod (not started). The benchmark notes list Phosphor-Legacy and Ksyxis as candidates, neither installed.
-   Any of them needs before and after fps runs, which need the game open.
+3. Optimization mod: measured, and not built. See "Optimization findings" below. No further work unless a real Bed Wars
+   game on your machine shows frame drops that the numbers below do not explain.
 4. More UI: the Extras Menu and HUD corners are done. Ideas not started: restyle AxolotlClient's own options screen, the HUD editor, and the Quickplay menu to match, a Bed Wars preview in the menu.
 
 Needs a decision:
@@ -141,6 +140,31 @@ Needs a decision:
    Kotlin-DSL Gradle build. A port means re-mapping its mixins to yarn 1.8.9 and checking each animation by eye. I did not
    start it because none of it can be verified without the window. Options: port a small set (sword block pose, bow and
    eat animation, hurt tint), or try the Ornithe build on a separate Ornithe instance.
+
+## Optimization findings (2026-11-06)
+
+Measured on a separate copy of the clone (`1.8.9-perf`, 2880x1800 fullscreen, fps uncapped) with an in-game frame recorder
+(`perf/FrameBench`, started by an `AXBENCH label seconds` chat line in a singleplayer world only; it writes the summary to the
+log and to `config/axolotl-extras-bench/`). Nothing is sent anywhere.
+
+- Plain scene, 30 s: 219 fps on a cold start, then 246 and 251 fps warmed up (1% low 121, then 142 and 152).
+- 128 villagers in view: 139 fps average, 1% low 88.
+- Lighting stress (a 30x10x30 glowstone block toggled every 1.5 s): 217 and 222 fps, 1% low 108 and 116.
+- Phosphor-Legacy 0.1.5 (the one lighting engine mod for 1.8.9 on Legacy Fabric): 224 fps standing and 219 fps under the
+  lighting stress, about the same as without it. Its 1% lows were better (185 to 189 against 108 to 152) and it ran 3 garbage
+  collections instead of 16, but worst frames got longer (28 to 33 ms) and the run to run spread is about as large as the
+  difference, so I did not adopt it. It is removed from the test instance.
+- Where the time goes (60 stack samples of the render thread): in the entity scene 25 of 60 samples sit in `glCallList`
+  (entity models are old display lists, so this is graphics driver cost), 10 in `glDrawArrays`; in the plain scene `glDrawArrays`
+  for terrain and the chunk renderer lead. Nothing in Minecraft's own Java code stands out, so a Java side optimization
+  would not move these numbers. Rewriting the model renderer to use buffers is a large change with a risk of visual bugs.
+- The larger factor is the machine. With no game running, CPU use was already above 100 percent of one core: OneDrive about 83
+  percent of a core, CrossDeviceService 29, Rainmeter 5, plus the Explorer windows on synced folders. The power plan is Balanced.
+  Those cause the run to run swings (219 against 251 fps for the same scene) and would cause frame drops in a game.
+
+What is likely to help in a real game, none of it a mod: pause OneDrive while playing, close Rainmeter, switch Windows to the
+High performance (or Best performance) power plan, and use the discrete GPU for `javaw.exe` in Windows graphics settings if the
+laptop has one. At 250 fps there is no headroom problem for Bed Wars on this hardware, so more mods are not needed.
 
 ## Risks and notes
 

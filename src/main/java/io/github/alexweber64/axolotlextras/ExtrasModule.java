@@ -3,6 +3,7 @@ package io.github.alexweber64.axolotlextras;
 import io.github.alexweber64.axolotlextras.bedwars.ChatStat;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
+import io.github.alexweber64.axolotlextras.perf.FrameBench;
 import io.github.alexweber64.axolotlextras.ui.ExtrasScreen;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
@@ -147,6 +148,13 @@ public class ExtrasModule extends AbstractModule {
 				}
 			}
 			upgradeDisplay.onChatLine(line);
+			// Test hook: "AXBENCH label seconds" starts the frame recorder, singleplayer only.
+			if (line.startsWith("AXBENCH ") && client.isInSingleplayer()) {
+				String[] parts = line.split(" ");
+				if (parts.length == 3 && parts[2].matches("[0-9]{1,4}")) {
+					FrameBench.start(parts[1], Integer.parseInt(parts[2]));
+				}
+			}
 		});
 
 		rawMouseGuard = FabricLoader.getInstance().isModLoaded("rawinput");
