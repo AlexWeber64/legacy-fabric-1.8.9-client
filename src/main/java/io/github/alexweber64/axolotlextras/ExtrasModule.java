@@ -197,13 +197,37 @@ public class ExtrasModule extends AbstractModule {
 		if (!privacyPatchFailed) {
 			AxolotlClient.LOGGER.info("[Extras] Privacy Lock patches loaded: AxolotlClient server calls and the Discord SDK download are blocked while the option is on.");
 		}
-		for (String name : new String[] {
-			"io.github.axolotlclient.modules.hypixel.bedwars.BedwarsGame",
-			"io.github.axolotlclient.modules.hypixel.bedwars.BedwarsPlayerStats"}) {
+		// Each Bed Wars / stats patch adds a method with a known name to the class it patches, so its presence shows it applied.
+		String[][] statsPatches = {
+			{"io.github.axolotlclient.modules.hypixel.bedwars.BedwarsGame", "axolotlextras$kdrLevelHead"},
+			{"io.github.axolotlclient.modules.hypixel.bedwars.BedwarsGame", "axolotlextras$noMadeUpWinstreaks"},
+			{"io.github.axolotlclient.modules.hypixel.bedwars.BedwarsPlayer", "axolotlextras$askAgainForRealStats"},
+			{"io.github.axolotlclient.modules.hypixel.bedwars.BedwarsPlayerStats", "axolotlextras$markGenerated"},
+			{"io.github.axolotlclient.modules.hypixel.HypixelAbstractionLayer", "axolotlextras$noMadeUpLevel"}};
+		boolean levelTextPatched = false;
+		for (java.lang.reflect.Method method : net.minecraft.client.render.entity.EntityRenderer.class.getDeclaredMethods()) {
+			if (method.getName().contains("axolotlextras$unknownLevelAsQuestionMark")) {
+				levelTextPatched = true;
+			}
+		}
+		AxolotlClient.LOGGER.info("[Extras] Lobby level text patch " + (levelTextPatched ? "applied" : "NOT applied (an unknown level shows as -1)"));
+		for (String[] patch : statsPatches) {
 			try {
-				Class.forName(name, false, ExtrasModule.class.getClassLoader());
+				Class<?> target = Class.forName(patch[0], false, ExtrasModule.class.getClassLoader());
+				boolean applied = false;
+				for (java.lang.reflect.Method method : target.getDeclaredMethods()) {
+					// Mixin renames its handler methods (handler$xyz$name), so the name only has to be contained
+					if (method.getName().contains(patch[1])) {
+						applied = true;
+					}
+				}
+				if (applied) {
+					AxolotlClient.LOGGER.info("[Extras] Stats patch applied: " + patch[1]);
+				} else {
+					AxolotlClient.LOGGER.error("[Extras] STATS PATCH NOT APPLIED: " + patch[1] + " (made-up numbers may show)");
+				}
 			} catch (ClassNotFoundException | LinkageError | RuntimeException e) {
-				AxolotlClient.LOGGER.error("[Extras] Bed Wars patches did not apply to " + name + ": " + e);
+				AxolotlClient.LOGGER.error("[Extras] Bed Wars patches did not apply to " + patch[0] + ": " + e);
 			}
 		}
 	}

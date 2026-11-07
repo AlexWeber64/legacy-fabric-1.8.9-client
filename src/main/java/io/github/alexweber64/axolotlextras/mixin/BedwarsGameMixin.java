@@ -29,6 +29,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -48,14 +49,33 @@ public abstract class BedwarsGameMixin {
 	@Shadow
 	public abstract Optional<BedwarsPlayer> getPlayer(String name);
 
-	/** The line above a player's head: KDR instead of the configured stat, and nothing for made-up stats. */
+	/**
+	 * The line above a player's head. Players of this game whose real stats are not known (no API key, not loaded yet, or a
+	 * nicked player) get a "?" instead of AxolotlClient's made-up numbers, whichever stat is chosen. With the KDR option on,
+	 * real stats show the kill/death ratio instead of the configured stat.
+	 */
 	@Inject(method = "getLevelHead", at = @At("HEAD"), cancellable = true)
 	private void axolotlextras$kdrLevelHead(AbstractClientPlayerEntity entity, CallbackInfoReturnable<String> cir) {
-		if (!ExtrasModule.KDR_LEVEL_HEAD.get()) {
+		BedwarsPlayer player = getPlayer(entity.getUuid()).orElse(null);
+		if (player == null) {
+			if (ExtrasModule.KDR_LEVEL_HEAD.get()) {
+				cir.setReturnValue(null);
+			}
 			return;
 		}
-		BedwarsPlayerStats stats = realStats(getPlayer(entity.getUuid()).orElse(null));
-		cir.setReturnValue(stats == null ? null : KdrMath.levelHead(stats.getKills(), stats.getDeaths()));
+		BedwarsPlayerStats stats = realStats(player);
+		if (stats == null) {
+			cir.setReturnValue("§7?");
+		} else if (ExtrasModule.KDR_LEVEL_HEAD.get()) {
+			cir.setReturnValue(KdrMath.levelHead(stats.getKills(), stats.getDeaths()));
+		}
+	}
+
+	/** The winstreak list AxolotlClient prints at the end of a game only has players whose winstreak is real. */
+	@Redirect(method = "gameEnd",
+		at = @At(value = "INVOKE", target = "Lio/github/axolotlclient/modules/hypixel/bedwars/BedwarsPlayer;getStats()Lio/github/axolotlclient/modules/hypixel/bedwars/BedwarsPlayerStats;"))
+	private BedwarsPlayerStats axolotlextras$noMadeUpWinstreaks(BedwarsPlayer player) {
+		return realStats(player);
 	}
 
 	/** KDR to the left of the health number in the tab list. Space for it is made in PlayerListHudMixin. */
@@ -65,10 +85,10 @@ public abstract class BedwarsGameMixin {
 			return;
 		}
 		BedwarsPlayer player = getPlayer(playerName).orElse(null);
-		BedwarsPlayerStats stats = realStats(player);
-		if (stats == null || (!player.isAlive() && player.isDisconnected())) {
+		if (player == null || (!player.isAlive() && player.isDisconnected())) {
 			return;
 		}
+		BedwarsPlayerStats stats = realStats(player);
 		MinecraftClient mc = MinecraftClient.getInstance();
 		String health;
 		if (player.isAlive()) {
@@ -77,7 +97,7 @@ public abstract class BedwarsGameMixin {
 			float seconds = Math.max(0, player.getTickAlive() - mc.inGameHud.getTicks()) / 20f;
 			health = String.format("%.1f", seconds) + "s";
 		}
-		String kdr = KdrMath.ratio(stats.getKills(), stats.getDeaths());
+		String kdr = stats == null ? "?" : KdrMath.ratio(stats.getKills(), stats.getDeaths());
 		float x = endX - mc.textRenderer.getStringWidth(health) - 4 - mc.textRenderer.getStringWidth(kdr);
 		mc.textRenderer.drawWithShadow(kdr, x, (float) y, 0xAAAAAA);
 	}

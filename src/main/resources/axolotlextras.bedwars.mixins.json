@@ -6,6 +6,8 @@
 	"client": [
 		"BedwarsGameMixin",
 		"BedwarsPlayerMixin",
+		"HypixelAbstractionLayerMixin",
+		"LevelHeadTextMixin",
 		"BedwarsPlayerStatsMixin",
 		"PlayerListHudMixin"
 	],

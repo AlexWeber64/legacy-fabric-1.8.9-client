@@ -119,7 +119,7 @@ public final class StatAnnouncer {
 		client.inGameHud.getChatHud().addMessage(new LiteralText("§6§l" + stat.label + " of every player"));
 		if (real == 0) {
 			client.inGameHud.getChatHud().addMessage(new LiteralText(
-				"§cNo real stats available. A Hypixel API key is needed (AxolotlClient options, Hypixel Mods)."));
+				"§cNo real stats could be loaded: a valid Hypixel API key is needed (AxolotlClient options, Hypixel Mods), or Hypixel did not answer."));
 			return;
 		}
 		for (StringBuilder line : lines.values()) {
