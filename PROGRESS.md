@@ -4,7 +4,7 @@ Goal: a Lunar Client style setup for Minecraft 1.8.9 on Legacy Fabric (Prism ins
 feature can be switched on and off at will. Features come from AxolotlClient where it has them, and from the
 `axolotl-extras` add-on in this folder where it does not.
 
-Last updated: 2026-11-05.
+Last updated: 2026-11-07.
 
 ## Lunar module map
 
@@ -102,6 +102,19 @@ Last updated: 2026-11-05.
   mod adds up every mouse device it finds, and a test with injected movement counted it twice, so the sensitivity may be about
   double what it should be. A probe that shows what your real mouse reports is in the scratchpad (`ji\run-probe.cmd`).
 - Confirmed by the user on 2026-11-06: Freelook and Toggle Sprint work.
+
+- Hacks menu (2026-11-07): a new "Hacks" category in AxolotlClient's own menu (Right Shift, next to Extras; no new key)
+  with an "Open" button for the same list in the Extras menu style (`ui/HacksScreen`). Five switches, all off by default:
+  Player ESP, Tracers, Generator Counts, Bed Defense, Obsidian Alert. Code in `hacks/`: `ResourceClusters` (piles of
+  dropped resources), `BedDefense` (blocks around a bed, inside out, "exposed" check, obsidian layer coverage),
+  `HackMath` (team colour, compass, world to screen projection), all unit tested (`HacksTest`, 12 tests);
+  `BedScanner` reads 12 chunks per tick from their block arrays (radius 10 chunks); `HackRenderer` draws the boxes and
+  tracers at the end of the world pass (before the hand) and the labels on the HUD by projecting their positions with the
+  saved camera matrices. Mixins `HackWorldRenderMixin` and `HackHudMixin` are in the optional visuals config; their
+  targets were checked against the 1.8.9 intermediary names. No open-source Legacy Fabric mod with these features was
+  found (the 1.8.9 ones are Forge and mostly GPL), so nothing was copied or downloaded. Built, never run in game.
+  To check: the boxes line up with players (also in third person), labels sit over generators and beds, the item icons
+  draw correctly on the HUD, and the obsidian alert fires once per change (a change has to hold for 2 seconds first).
 
 ## In progress
 

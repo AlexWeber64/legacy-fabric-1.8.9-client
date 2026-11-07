@@ -3,9 +3,11 @@ package io.github.alexweber64.axolotlextras;
 import io.github.alexweber64.axolotlextras.bedwars.ChatStat;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
+import io.github.alexweber64.axolotlextras.hacks.HackRenderer;
 import io.github.alexweber64.axolotlextras.perf.BenchDriver;
 import io.github.alexweber64.axolotlextras.perf.FrameBench;
 import io.github.alexweber64.axolotlextras.ui.ExtrasScreen;
+import io.github.alexweber64.axolotlextras.ui.HacksScreen;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.bedwars.UpgradeDisplayHud;
@@ -39,6 +41,24 @@ import org.lwjgl.input.Keyboard;
 public class ExtrasModule extends AbstractModule {
 
 	public static final OptionCategory CATEGORY = new OptionCategory("axolotlextras");
+
+	/** The hacks, as their own category in AxolotlClient's menu (Right Shift), next to Extras. */
+	public static final OptionCategory HACKS = new OptionCategory("axolotlextras.hacks");
+
+	/** Boxes around other players, through walls, in their team colour. Invisible players are included. */
+	public static final BooleanOption PLAYER_ESP = new BooleanOption("axolotlextras.playerEsp", false);
+
+	/** Lines from the middle of the screen to every other player. */
+	public static final BooleanOption ESP_TRACERS = new BooleanOption("axolotlextras.espTracers", false);
+
+	/** How many resources lie on the ground at each generator, with the resource icons, through walls. */
+	public static final BooleanOption GENERATOR_COUNTS = new BooleanOption("axolotlextras.generatorCounts", false);
+
+	/** The blocks around each bed, with block icons, innermost first, through walls. */
+	public static final BooleanOption BED_DEFENSE = new BooleanOption("axolotlextras.bedDefense", false);
+
+	/** A chat note when a bed gets obsidian around it, saying whether it is a full layer or has gaps. */
+	public static final BooleanOption OBSIDIAN_ALERT = new BooleanOption("axolotlextras.obsidianAlert", false);
 
 	/** 1.7: the sword, food and bow animations keep swinging when you swing while holding right click. */
 	public static final BooleanOption OLD_BLOCK_HITTING = new BooleanOption("axolotlextras.oldBlockHitting", false);
@@ -125,6 +145,11 @@ public class ExtrasModule extends AbstractModule {
 			QUICKPLAY_HYPIXEL_ONLY, OLD_BLOCK_HITTING, OLD_FIRST_PERSON, OLD_SNEAK, OLD_THIRD_PERSON, RELIABLE_STATS);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 
+		HACKS.add(new GenericOption("axolotlextras.openHacks", "axolotlextras.openMenuLabel",
+			(x, y) -> client.setScreen(new HacksScreen(client.currentScreen))));
+		HACKS.add(PLAYER_ESP, ESP_TRACERS, GENERATOR_COUNTS, BED_DEFENSE, OBSIDIAN_ALERT);
+		AxolotlClient.CONFIG.addCategory(HACKS);
+
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD
 		// category exists. A newly added entry has to be initialised by hand.
 		resourceCounter = new ResourceCounterHud();
@@ -148,6 +173,7 @@ public class ExtrasModule extends AbstractModule {
 			resourceCounter.resetAll();
 			upgradeDisplay.resetAll();
 			STAT_ANNOUNCER.reset();
+			HackRenderer.reset();
 			if (privacyPatchFailed) {
 				client.inGameHud.getChatHud().addMessage(new LiteralText(
 					"§c[Extras] The Privacy Lock could not be applied: AxolotlClient may contact its server. See the log."));
@@ -246,6 +272,7 @@ public class ExtrasModule extends AbstractModule {
 		STAT_ANNOUNCER.tick(client, ChatStat.byKey(CHAT_STAT.get()));
 		BenchDriver.tick(client);
 		FrameBench.onTick(client);
+		HackRenderer.tick(client);
 		if (menuKey != null && menuKey.wasPressed() && client.currentScreen == null) {
 			client.setScreen(new ExtrasScreen(null));
 		}

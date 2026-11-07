@@ -78,6 +78,12 @@ request AxolotlClient makes with the same key (its `HypixelAbstractionLayer`), j
 else, sends no UUID to anyone but Hypixel, and logs nothing that identifies a player (the log only says if Hypixel refused the key
 or asked to slow down). The switch "Reliable Bed Wars Stats" turns it off, and with no key set it makes no request at all.
 
+## Added by the add-on: Hacks (2026-11-07)
+
+Player ESP, Tracers, Generator Counts, Bed Defense and Obsidian Alert only read what the client already has (players,
+item entities, loaded chunks) and draw on screen. The obsidian alert's chat line is added to the local chat only. Nothing
+is sent to any server.
+
 ## Not covered
 
 - Prism Launcher and vanilla Minecraft's own network traffic (Mojang session, skins, Prism's metadata downloads).

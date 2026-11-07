@@ -7,7 +7,9 @@
 		"BiPedModelMixin",
 		"HeldItemFeatureMixin",
 		"HeldItemRendererMixin",
-		"SneakCameraMixin"
+		"SneakCameraMixin",
+		"HackWorldRenderMixin",
+		"HackHudMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

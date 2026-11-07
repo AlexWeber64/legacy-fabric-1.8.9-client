@@ -46,6 +46,7 @@ public class ExtrasScreen extends Screen {
 	}
 
 	private final Screen parent;
+	private final String title;
 	private final List<Entry> all = new ArrayList<>();
 	private final Map<Object, Float> knob = new HashMap<>();
 	private String search = "";
@@ -53,7 +54,7 @@ public class ExtrasScreen extends Screen {
 	private int panelLeft, panelTop, panelWidth, panelHeight, listTop, listBottom;
 
 	public ExtrasScreen(Screen parent) {
-		this.parent = parent;
+		this(parent, "§lAxolotlClient Extras");
 		section("axolotlextras.section.privacy", ExtrasModule.PRIVACY_LOCK, ExtrasModule.IGNORE_SERVER_BLOCKS);
 		section("axolotlextras.section.bedwars", ExtrasModule.NORMAL_MESSAGES, ExtrasModule.CHAT_STATS,
 			ExtrasModule.CHAT_STAT, ExtrasModule.KDR_LEVEL_HEAD, ExtrasModule.KDR_TAB, ExtrasModule.RELIABLE_STATS);
@@ -65,7 +66,13 @@ public class ExtrasScreen extends Screen {
 			ExtrasModule.OLD_SNEAK, ExtrasModule.OLD_THIRD_PERSON);
 	}
 
-	private void section(String headingKey, Object... options) {
+	/** For menus with the same look and other options (see {@link HacksScreen}). Add the options with {@link #section}. */
+	protected ExtrasScreen(Screen parent, String title) {
+		this.parent = parent;
+		this.title = title;
+	}
+
+	protected final void section(String headingKey, Object... options) {
 		all.add(new Entry(headingKey, null));
 		for (Object option : options) {
 			all.add(new Entry(null, option));
@@ -189,7 +196,7 @@ public class ExtrasScreen extends Screen {
 	}
 
 	private void drawHeader(int boxLeft, int boxWidth, String shown) {
-		client.textRenderer.draw("§lAxolotlClient Extras", panelLeft + 16, panelTop + 14, TEXT, true);
+		client.textRenderer.draw(title, panelLeft + 16, panelTop + 14, TEXT, true);
 		RoundedRect.fillShape(boxLeft, panelTop + 9, boxWidth, 18, RoundedRect.SMALL, 0x33FFFFFF);
 		client.textRenderer.draw(shown, boxLeft + (search.isEmpty() ? 10 : 6), panelTop + 14, search.isEmpty() ? MUTED : TEXT, false);
 		if ((System.currentTimeMillis() / 500) % 2 == 0) {

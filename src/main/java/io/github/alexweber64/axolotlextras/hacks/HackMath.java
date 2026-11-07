@@ -1,0 +1,81 @@
+package io.github.alexweber64.axolotlextras.hacks;
+
+/** Small helpers for the hacks: team colours from formatted names, and world-to-screen projection. No Minecraft imports. */
+public final class HackMath {
+
+	private HackMath() {
+	}
+
+	/**
+	 * The colour of the first colour code in a formatted name ("§c§lR §cSteve" gives red), the way Minecraft's font draws
+	 * it.
+	 *
+	 * @return 0xRRGGBB, or -1 when the name has no colour code
+	 */
+	public static int teamColor(String formatted) {
+		if (formatted == null) {
+			return -1;
+		}
+		for (int i = 0; i + 1 < formatted.length(); i++) {
+			if (formatted.charAt(i) == '§') {
+				int code = "0123456789abcdef".indexOf(Character.toLowerCase(formatted.charAt(i + 1)));
+				if (code >= 0) {
+					return codeColor(code);
+				}
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * The compass direction of an offset in Minecraft's world (north is -z, east is +x).
+	 *
+	 * @return one of N, NE, E, SE, S, SW, W, NW
+	 */
+	public static String compass(double dx, double dz) {
+		String[] names = {"S", "SW", "W", "NW", "N", "NE", "E", "SE"};
+		// 0 degrees points south (+z), turning towards west (-x), like Minecraft's yaw.
+		double degrees = Math.toDegrees(Math.atan2(-dx, dz));
+		int index = (int) Math.round(((degrees % 360) + 360) % 360 / 45.0) % 8;
+		return names[index];
+	}
+
+	/** The RGB value Minecraft's font uses for colour code 0 to 15. */
+	static int codeColor(int code) {
+		int extra = (code >> 3 & 1) * 85;
+		int r = (code >> 2 & 1) * 170 + extra;
+		int g = (code >> 1 & 1) * 170 + extra;
+		int b = (code & 1) * 170 + extra;
+		if (code == 6) {
+			r += 85;
+		}
+		return (r << 16) | (g << 8) | b;
+	}
+
+	/**
+	 * Projects a point (relative to the camera) to window pixels, like gluProject.
+	 *
+	 * @param modelView  the 4x4 model view matrix, column-major (as OpenGL hands it out)
+	 * @param projection the 4x4 projection matrix, column-major
+	 * @param viewport   x, y, width, height of the viewport
+	 * @return {x, y} in window pixels with y counted from the bottom, or null when the point is behind the camera
+	 */
+	public static double[] project(double x, double y, double z, float[] modelView, float[] projection, int[] viewport) {
+		double[] eye = multiply(modelView, x, y, z, 1);
+		double[] clip = multiply(projection, eye[0], eye[1], eye[2], eye[3]);
+		if (clip[3] <= 1e-6) {
+			return null;
+		}
+		double ndcX = clip[0] / clip[3];
+		double ndcY = clip[1] / clip[3];
+		return new double[] {viewport[0] + viewport[2] * (ndcX + 1) / 2, viewport[1] + viewport[3] * (ndcY + 1) / 2};
+	}
+
+	private static double[] multiply(float[] m, double x, double y, double z, double w) {
+		return new double[] {
+			m[0] * x + m[4] * y + m[8] * z + m[12] * w,
+			m[1] * x + m[5] * y + m[9] * z + m[13] * w,
+			m[2] * x + m[6] * y + m[10] * z + m[14] * w,
+			m[3] * x + m[7] * y + m[11] * z + m[15] * w};
+	}
+}
