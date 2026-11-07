@@ -45,7 +45,7 @@ public class ExtrasModule extends AbstractModule {
 	/** The hacks, as their own category in AxolotlClient's menu (Right Shift), next to Extras. */
 	public static final OptionCategory HACKS = new OptionCategory("axolotlextras.hacks");
 
-	/** Boxes around other players, through walls, in their team colour. Invisible players are included. */
+	/** Boxes around other players, through walls (NPCs left out; see the ESP switches below for the rest). */
 	public static final BooleanOption PLAYER_ESP = new BooleanOption("axolotlextras.playerEsp", false);
 
 	/** Lines from the middle of the screen to every other player. */
@@ -87,6 +87,70 @@ public class ExtrasModule extends AbstractModule {
 
 	/** The flight of your own pearl, snowball, egg or arrow (while drawing the bow) and where it would hit. */
 	public static final BooleanOption TRAJECTORIES = new BooleanOption("axolotlextras.trajectories", false);
+
+	// Fine tuning for the hacks above.
+
+	/** ESP, tracers and nametags also show players with the invisibility effect. */
+	public static final BooleanOption ESP_INVISIBLE = new BooleanOption("axolotlextras.espInvisible", true);
+
+	/** ESP, tracers and nametags also show your teammates (off: enemies only). */
+	public static final BooleanOption ESP_TEAMMATES = new BooleanOption("axolotlextras.espTeammates", true);
+
+	/** The ESP box: an outline, a see-through fill, or both. */
+	public static final EnumOption ESP_STYLE = new EnumOption("axolotlextras.espStyle",
+		new String[] {"axolotlextras.espStyle.outline", "axolotlextras.espStyle.filled", "axolotlextras.espStyle.both"},
+		"axolotlextras.espStyle.outline");
+
+	/** The ESP and tracer colour: team colour, distance (red near, green far) or health (green full, red low). */
+	public static final EnumOption ESP_COLOR = new EnumOption("axolotlextras.espColor",
+		new String[] {"axolotlextras.espColor.team", "axolotlextras.espColor.distance", "axolotlextras.espColor.health"},
+		"axolotlextras.espColor.team");
+
+	/** How far away players are still shown by ESP, tracers, nametags and enemy armor. */
+	public static final EnumOption ESP_RANGE = new EnumOption("axolotlextras.espRange",
+		new String[] {"axolotlextras.range.32", "axolotlextras.range.64", "axolotlextras.range.128", "axolotlextras.range.all"},
+		"axolotlextras.range.all");
+
+	/** Nametags show the health. */
+	public static final BooleanOption NAMETAG_HEALTH = new BooleanOption("axolotlextras.nametagHealth", true);
+
+	/** Nametags show the distance. */
+	public static final BooleanOption NAMETAG_DISTANCE = new BooleanOption("axolotlextras.nametagDistance", true);
+
+	/** Enemy Armor also shows the held item. */
+	public static final BooleanOption ARMOR_HELD = new BooleanOption("axolotlextras.armorHeld", true);
+
+	/** Generator Counts for diamonds and emeralds (the middle and side generators). */
+	public static final BooleanOption GEN_RARE = new BooleanOption("axolotlextras.genRare", true);
+
+	/** Generator Counts for iron and gold (the island generators). */
+	public static final BooleanOption GEN_BASE = new BooleanOption("axolotlextras.genBase", true);
+
+	/** Bed Defense also labels your own bed. */
+	public static final BooleanOption BED_DEFENSE_OWN = new BooleanOption("axolotlextras.bedDefenseOwn", true);
+
+	/** The Obsidian Alert plays a sound with its chat line. */
+	public static final BooleanOption OBSIDIAN_SOUND = new BooleanOption("axolotlextras.obsidianSound", true);
+
+	/** The Rush Alert plays a sound with its chat line. */
+	public static final BooleanOption RUSH_SOUND = new BooleanOption("axolotlextras.rushSound", true);
+
+	/** The Fireball Warning marks the blocks the blast will likely break. */
+	public static final BooleanOption FIREBALL_BLOCKS = new BooleanOption("axolotlextras.fireballBlocks", true);
+
+	/** The Fireball Warning plays a sound when a fireball is coming at you. */
+	public static final BooleanOption FIREBALL_SOUND = new BooleanOption("axolotlextras.fireballSound", true);
+
+	/** Trajectories while drawing a bow. */
+	public static final BooleanOption TRAJECTORY_BOW = new BooleanOption("axolotlextras.trajectoryBow", true);
+
+	/** Trajectories while holding a pearl, snowball or egg. */
+	public static final BooleanOption TRAJECTORY_THROWN = new BooleanOption("axolotlextras.trajectoryThrown", true);
+
+	/** The size of the hack labels (generators, beds, nametags, armor, projectiles). */
+	public static final EnumOption LABEL_SCALE = new EnumOption("axolotlextras.labelScale",
+		new String[] {"axolotlextras.scale.75", "axolotlextras.scale.100", "axolotlextras.scale.125", "axolotlextras.scale.150"},
+		"axolotlextras.scale.100");
 
 	/** 1.7: the sword, food and bow animations keep swinging when you swing while holding right click. */
 	public static final BooleanOption OLD_BLOCK_HITTING = new BooleanOption("axolotlextras.oldBlockHitting", false);
@@ -175,8 +239,11 @@ public class ExtrasModule extends AbstractModule {
 
 		HACKS.add(new GenericOption("axolotlextras.openHacks", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new HacksScreen(client.currentScreen))));
-		HACKS.add(PLAYER_ESP, ESP_TRACERS, NAMETAGS, ENEMY_ARMOR, GENERATOR_COUNTS, BED_DEFENSE, OBSIDIAN_ALERT,
-			OBSIDIAN_WAYPOINTS, RUSH_ALERT, RUSH_DISTANCE, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS);
+		HACKS.add(PLAYER_ESP, ESP_TRACERS, ESP_STYLE, ESP_COLOR, ESP_RANGE, ESP_INVISIBLE, ESP_TEAMMATES, NAMETAGS,
+			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_RARE, GEN_BASE, BED_DEFENSE,
+			BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
+			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
+			LABEL_SCALE, NO_BLINDNESS);
 		AxolotlClient.CONFIG.addCategory(HACKS);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD

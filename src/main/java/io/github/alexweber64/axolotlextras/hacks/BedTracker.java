@@ -71,6 +71,9 @@ final class BedTracker {
 	private List<HudLabel> labels = Collections.emptyList();
 	private int obsidianKey = -1;
 	private Info own;
+	/** What {@link #own} was found from: the team then, and whether the start spot was known. */
+	private int ownFoundTeam = TeamGuess.UNKNOWN;
+	private boolean ownFoundFromSpawn;
 
 	/** How far from where you stood at the game start your own bed may be. */
 	private static final double SPAWN_REACH = 40;
@@ -100,20 +103,28 @@ final class BedTracker {
 	}
 
 	/**
-	 * Your own bed: the bed of your team (from your name colour) nearest to where you stood when the game started, or
-	 * else the bed nearest that spot. Kept once found, until the bed is gone.
+	 * Your own bed. With the spot where you stood just after the game started, it is the bed nearest that spot (you start
+	 * next to your own bed, so this works whatever the bed's colour guess says). Without it (you joined late), it is the
+	 * bed of your team nearest to you. Once found, the bed takes your team, which also fixes a wrong colour guess.
 	 *
-	 * @param spawn {x, z} where you stood at the game start, or null when the start was not seen
+	 * @param ownTeam your team (from the sidebar), or {@link TeamGuess#UNKNOWN}
+	 * @param spawn   {x, z} where you stood at the game start, or null when the start was not seen
 	 * @return the bed, or null when it cannot be told yet
 	 */
 	Info ownBed(int ownTeam, double[] spawn, double playerX, double playerZ) {
-		if (own != null && beds.containsValue(own)) {
+		boolean stale = own == null || !beds.containsValue(own) || ownFoundTeam != ownTeam
+			|| (spawn != null && !ownFoundFromSpawn);
+		if (!stale) {
 			return own;
 		}
-		double rx = spawn != null ? spawn[0] : playerX, rz = spawn != null ? spawn[1] : playerZ;
-		own = nearest(rx, rz, ownTeam, Double.MAX_VALUE);
-		if (own == null && spawn != null) {
-			own = nearest(rx, rz, ANY_TEAM, SPAWN_REACH);
+		own = spawn != null ? nearest(spawn[0], spawn[1], ANY_TEAM, SPAWN_REACH) : null;
+		if (own == null && spawn == null) {
+			own = nearest(playerX, playerZ, ownTeam, Double.MAX_VALUE);
+		}
+		ownFoundTeam = ownTeam;
+		ownFoundFromSpawn = spawn != null;
+		if (own != null && ownTeam != TeamGuess.UNKNOWN) {
+			own.team = ownTeam;
 		}
 		return own;
 	}
@@ -135,7 +146,12 @@ final class BedTracker {
 		return best;
 	}
 
-	void update(MinecraftClient client, ClientWorld world, List<BedScanner.Bed> found, int tick) {
+	/**
+	 * @param ownTeam     your team, or {@link TeamGuess#UNKNOWN}
+	 * @param gameRunning true once names carry team colours (in the waiting lobby they carry rank colours instead)
+	 */
+	void update(MinecraftClient client, ClientWorld world, List<BedScanner.Bed> found, int tick, int ownTeam,
+		boolean gameRunning) {
 		if (obsidianKey < 0) {
 			obsidianKey = Block.getIdByBlock(Blocks.OBSIDIAN) << 4;
 		}
@@ -154,7 +170,6 @@ final class BedTracker {
 				it.remove();
 			}
 		}
-		int ownTeam = TeamGuess.fromFormattedName(client.player.getName().asFormattedString());
 		List<HudLabel> next = new ArrayList<>();
 		for (Map.Entry<Long, BedScanner.Bed> entry : current.entrySet()) {
 			BedScanner.Bed bed = entry.getValue();
@@ -167,14 +182,14 @@ final class BedTracker {
 				beds.put(entry.getKey(), info);
 			}
 			if (info.team == TeamGuess.UNKNOWN && tick >= info.nextTeamTry) {
-				info.team = guessTeam(client, world, info, pos);
+				info.team = guessTeam(client, world, info, pos, gameRunning);
 				info.nextTeamTry = tick + TEAM_RETRY;
 			}
 			info.obsidian = BedDefense.cover(bed.footX, bed.y, bed.footZ, bed.headX, bed.headZ, lookup, obsidianKey);
-			if (ExtrasModule.BED_DEFENSE.get()) {
+			boolean mine = info == own || (info.team != TeamGuess.UNKNOWN && info.team == ownTeam);
+			if (ExtrasModule.BED_DEFENSE.get() && (!mine || ExtrasModule.BED_DEFENSE_OWN.get())) {
 				next.add(defenseLabel(info, BedDefense.analyse(bed.footX, bed.y, bed.footZ, bed.headX, bed.headZ, lookup)));
 			}
-			boolean mine = info == own || (info.team != TeamGuess.UNKNOWN && info.team == ownTeam);
 			if (ExtrasModule.OBSIDIAN_ALERT.get() && !mine) {
 				obsidianAlert(client, info);
 			}
@@ -219,7 +234,9 @@ final class BedTracker {
 			: "§e" + obsidian.covered + "/" + obsidian.spots + " gaps";
 		client.inGameHud.getChatHud().addMessage(new LiteralText("§5Obby §f" + bedName(info) + " " + status
 			+ " §7" + distance(client, info)));
-		client.player.playSound("note.pling", 1f, 1.5f);
+		if (ExtrasModule.OBSIDIAN_SOUND.get()) {
+			client.player.playSound("note.pling", 1f, 1.5f);
+		}
 	}
 
 	/** "Red bed", or the coordinates when the team is not known. */
@@ -235,8 +252,12 @@ final class BedTracker {
 		return Math.round(Math.sqrt(dx * dx + dz * dz)) + "m " + HackMath.compass(dx, dz);
 	}
 
-	/** Team-coloured blocks around the bed first; players next to it when that does not tell. */
-	private static int guessTeam(MinecraftClient client, ClientWorld world, Info info, BlockPos.Mutable pos) {
+	/**
+	 * Team-coloured blocks around the bed first; players next to it when that does not tell. Players only count once the
+	 * game runs: in the waiting lobby their names are in rank colours (a VIP is green), not team colours.
+	 */
+	private static int guessTeam(MinecraftClient client, ClientWorld world, Info info, BlockPos.Mutable pos,
+		boolean gameRunning) {
 		int[] blockVotes = new int[TeamGuess.COUNT];
 		BedScanner.Bed bed = info.bed;
 		for (int x = bed.headX - TEAM_REACH; x <= bed.headX + TEAM_REACH; x++) {
@@ -255,13 +276,13 @@ final class BedTracker {
 			}
 		}
 		int[] playerVotes = new int[TeamGuess.COUNT];
-		for (PlayerEntity player : world.playerEntities) {
+		for (PlayerEntity player : gameRunning ? world.playerEntities : Collections.<PlayerEntity>emptyList()) {
 			double dx = player.x - info.centerX(), dz = player.z - info.centerZ(), dy = player.y - bed.y;
 			if (dx * dx + dz * dz > PLAYER_REACH * PLAYER_REACH || Math.abs(dy) > 6) {
 				continue;
 			}
-			if (player != client.player && client.getNetworkHandler() != null
-				&& client.getNetworkHandler().getPlayerListEntry(player.getUuid()) == null) {
+			if (HackMath.isNpc(player.getUuid()) || (player != client.player && client.getNetworkHandler() != null
+				&& client.getNetworkHandler().getPlayerListEntry(player.getUuid()) == null)) {
 				continue; // an NPC
 			}
 			int team = TeamGuess.fromFormattedName(player.getName().asFormattedString());

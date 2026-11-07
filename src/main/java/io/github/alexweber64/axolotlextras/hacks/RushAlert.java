@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import io.github.alexweber64.axolotlextras.ExtrasModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.LiteralText;
@@ -34,26 +35,30 @@ final class RushAlert {
 		lastAlert.clear();
 	}
 
-	void tick(MinecraftClient client, BedTracker.Info ownBed, int ownTeam, List<PlayerEntity> others, double radius, int tick) {
+	/**
+	 * @param enemies the other players, teammates and NPCs already left out
+	 * @param quiet   true right after the start, when everyone still stands on their own island: enemies are noted as
+	 *                inside but not announced
+	 */
+	void tick(MinecraftClient client, BedTracker.Info ownBed, List<PlayerEntity> enemies, double radius, int tick,
+		boolean quiet) {
 		if (ownBed == null) {
 			return;
 		}
-		for (PlayerEntity player : others) {
-			int team = TeamGuess.fromFormattedName(player.getName().asFormattedString());
-			if (team != TeamGuess.UNKNOWN && team == ownTeam) {
-				continue;
-			}
+		for (PlayerEntity player : enemies) {
 			double dx = player.x - ownBed.centerX(), dz = player.z - ownBed.centerZ();
 			double distance = Math.sqrt(dx * dx + dz * dz);
 			UUID id = player.getUuid();
 			if (distance <= radius && Math.abs(player.y - ownBed.bed.y) <= MAX_DY) {
-				if (inside.add(id)) {
+				if (inside.add(id) && !quiet) {
 					Integer last = lastAlert.get(id);
 					if (last == null || tick - last >= COOLDOWN) {
 						lastAlert.put(id, tick);
 						client.inGameHud.getChatHud().addMessage(new LiteralText("§c§lRush §r"
 							+ player.getName().asFormattedString() + " §f" + Math.round(distance) + "m from your bed"));
-						client.player.playSound("note.pling", 1f, 0.5f);
+						if (ExtrasModule.RUSH_SOUND.get()) {
+							client.player.playSound("note.pling", 1f, 0.5f);
+						}
 					}
 				}
 			} else if (distance > radius + LEAVE_MARGIN) {

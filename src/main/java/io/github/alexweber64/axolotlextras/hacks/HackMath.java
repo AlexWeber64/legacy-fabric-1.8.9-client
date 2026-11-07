@@ -28,6 +28,38 @@ public final class HackMath {
 	}
 
 	/**
+	 * Hypixel's NPCs (shopkeepers, upgrade villagers, lobby characters) are fake players with version 2 UUIDs; real players
+	 * have version 4 (online accounts) or 3 (offline). Nicked players keep a version 4 UUID.
+	 */
+	public static boolean isNpc(java.util.UUID id) {
+		return id != null && id.version() == 2;
+	}
+
+	/**
+	 * The number at the end of an option value ("axolotlextras.range.64" gives 64).
+	 *
+	 * @return the number, or {@code fallback} when the value does not end in one ("axolotlextras.range.all")
+	 */
+	public static double optionNumber(String value, double fallback) {
+		if (value == null) {
+			return fallback;
+		}
+		try {
+			return Double.parseDouble(value.substring(value.lastIndexOf('.') + 1));
+		} catch (RuntimeException e) {
+			return fallback;
+		}
+	}
+
+	/** Red at 0, through yellow, to green at 1 (values outside are clamped). */
+	public static int redToGreen(double fraction) {
+		double f = Math.max(0, Math.min(1, fraction));
+		int r = (int) Math.round(255 * Math.min(1, 2 * (1 - f)));
+		int g = (int) Math.round(255 * Math.min(1, 2 * f));
+		return r << 16 | g << 8 | 0x20;
+	}
+
+	/**
 	 * The compass direction of an offset in Minecraft's world (north is -z, east is +x).
 	 *
 	 * @return one of N, NE, E, SE, S, SW, W, NW

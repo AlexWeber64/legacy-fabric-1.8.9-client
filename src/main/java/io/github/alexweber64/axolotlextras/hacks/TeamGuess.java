@@ -64,6 +64,35 @@ public final class TeamGuess {
 	}
 
 	/**
+	 * Your own team from a line of the Bed Wars sidebar: Hypixel writes "YOU" after your team ("R Red: ✔ YOU"). This works
+	 * on every map and before your name gets its team colour (in the waiting lobby names are in rank colours, so a VIP's
+	 * green name says nothing about the team).
+	 *
+	 * @param line a sidebar line, with or without colour codes
+	 * @return the team, or {@link #UNKNOWN} when the line is not your team's line
+	 */
+	public static int fromSidebarLine(String line) {
+		if (line == null) {
+			return UNKNOWN;
+		}
+		String plain = strip(line);
+		if (!plain.matches(".*\\bYOU\\b.*")) {
+			return UNKNOWN;
+		}
+		for (int team = 0; team < COUNT; team++) {
+			if (plain.matches(".*\\b" + NAMES[team] + ":.*") || (team == 7 && plain.matches(".*\\bGrey:.*"))) {
+				return team;
+			}
+		}
+		return UNKNOWN;
+	}
+
+	/** The text without colour and format codes. */
+	public static String strip(String formatted) {
+		return formatted.replaceAll("§.?", "");
+	}
+
+	/**
 	 * @param blockVotes  coloured blocks around the bed, per team
 	 * @param playerVotes players standing next to the bed, per team
 	 * @return the team, or {@link #UNKNOWN} when neither tells

@@ -222,4 +222,37 @@ class HacksTest {
 		assertEquals(3, TeamGuess.guess(blocks, players));
 		assertEquals(TeamGuess.UNKNOWN, TeamGuess.guess(new int[TeamGuess.COUNT], new int[TeamGuess.COUNT]));
 	}
+
+	@Test
+	void sidebarYouLineGivesTheOwnTeam() {
+		assertEquals(0, TeamGuess.fromSidebarLine("§cR §fRed: §a✔ §7YOU"));
+		assertEquals(2, TeamGuess.fromSidebarLine("G Green: 3 YOU"));
+		assertEquals(7, TeamGuess.fromSidebarLine("S Gray: ✘ YOU"));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromSidebarLine("§aG §fGreen: §a✔"));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromSidebarLine("Players: 8/8"));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromSidebarLine("www.hypixel.net"));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromSidebarLine(null));
+	}
+
+	@Test
+	void npcsHaveVersionTwoUuids() {
+		assertTrue(HackMath.isNpc(java.util.UUID.fromString("a1b2c3d4-0000-2000-8000-000000000000")));
+		assertFalse(HackMath.isNpc(java.util.UUID.fromString("a1b2c3d4-0000-4000-8000-000000000000")));
+		assertFalse(HackMath.isNpc(null));
+	}
+
+	@Test
+	void optionNumbersAreReadFromTheEnd() {
+		assertEquals(64, HackMath.optionNumber("axolotlextras.range.64", 1), 1e-9);
+		assertEquals(7, HackMath.optionNumber("axolotlextras.range.all", 7), 1e-9);
+		assertEquals(7, HackMath.optionNumber(null, 7), 1e-9);
+	}
+
+	@Test
+	void redToGreenRunsFromRedToGreen() {
+		assertEquals(0xFF0020, HackMath.redToGreen(0));
+		assertEquals(0x00FF20, HackMath.redToGreen(1));
+		assertEquals(0xFFFF20, HackMath.redToGreen(0.5));
+		assertEquals(0x00FF20, HackMath.redToGreen(3));
+	}
 }

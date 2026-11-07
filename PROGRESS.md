@@ -139,6 +139,24 @@ Last updated: 2026-11-07.
   the rush alert picks your own bed (it stays silent until it can tell).
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-07 for testing (all hacks rounds). The previous jar is in
   mods-backup as axolotl-extras-0.1.0.before-hacks.jar. All hack switches start off.
+- Hacks round 4 (2026-11-07), after the first in-game test:
+  - Rush Alert fix. The user's report: at the start it went off for teammates, and on some maps it thought the team was
+    Green. Cause: the own team came from the name colour, which in the waiting lobby is the rank colour (VIP is green), and
+    the own bed was then cached for good. Now the own team comes from the Bed Wars sidebar line with "YOU" on it
+    (`TeamGuess.fromSidebarLine`), with the name colour only as a fallback after the game start. The own bed is the bed
+    nearest the start spot (any colour guess), takes the own team, and is looked up again when the team changes. Bed team
+    guesses only count players once the game runs. No rush alerts for 10 seconds after the start spot is taken. Teammates
+    are told by scoreboard team or team colour. New switch: Rush Sound.
+  - NPCs left out of ESP, tracers, nametags, enemy armor, rush and the aim line: version 2 UUIDs (Hypixel's fake players),
+    a hidden name tag (team rule "never"), or "[NPC]" in the name, on top of the tab list check.
+  - Fine tuning switches: ESP Style, ESP Color, ESP Range, Show Invisible Players, Show Teammates, Nametag Health, Nametag
+    Distance, Show Held Item, Diamonds and Emeralds, Iron and Gold, Show Own Bed, Obsidian Sound, Fireball Sound, Mark Blast
+    Blocks, Bow Trajectory, Throw Trajectory, Label Size. The Hacks menu has new sections Nametags and Labels, and Alerts.
+  - 83 tests pass (4 new: sidebar line, NPC UUIDs, option numbers, colour scale). Built, not yet run in game. To check:
+    the sidebar really has "YOU" on the own team's line (if not, the team is only known from the name after the start),
+    and that shopkeepers are gone from ESP.
+  - Deployed to the play clone 1.8.9-lunarlike on 2026-11-07. The previous jar (hacks rounds 1 to 3) is in mods-backup as
+    axolotl-extras-0.1.0.before-hacks-round4.jar.
 
 ## In progress
 

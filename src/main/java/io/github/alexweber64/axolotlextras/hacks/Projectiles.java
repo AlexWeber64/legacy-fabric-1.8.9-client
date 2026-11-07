@@ -116,7 +116,7 @@ final class Projectiles {
 		Trajectory.Path path = Trajectory.simulate(fireball.x, fireball.y, fireball.z, vx, vy, vz, 0,
 			accel == null ? 1 : Trajectory.FIREBALL_DRAG, accel, STEPS, blocks);
 		Flight flight = new Flight(path, true);
-		if (path.hit != null) {
+		if (path.hit != null && ExtrasModule.FIREBALL_BLOCKS.get()) {
 			markSoftBlocks(world, path.hit, flight.soft);
 		}
 		flights.add(flight);
@@ -129,7 +129,7 @@ final class Projectiles {
 		label.text = (threat ? "§c§lFIREBALL " : "§cFireball ") + "§7"
 			+ Math.round(Math.sqrt(fireball.squaredDistanceTo(me))) + "m";
 		labels.add(label);
-		if (threat && warned.add(fireball.getEntityId())) {
+		if (threat && warned.add(fireball.getEntityId()) && ExtrasModule.FIREBALL_SOUND.get()) {
 			me.playSound("note.bass", 1f, 0.5f);
 		}
 	}
@@ -190,11 +190,11 @@ final class Projectiles {
 		}
 		Item item = held.getItem();
 		double speed, gravity, drag;
-		if (item == Items.ENDER_PEARL || item == Items.SNOWBALL || item == Items.EGG) {
+		if ((item == Items.ENDER_PEARL || item == Items.SNOWBALL || item == Items.EGG) && ExtrasModule.TRAJECTORY_THROWN.get()) {
 			speed = Trajectory.THROWN_SPEED;
 			gravity = Trajectory.THROWN_GRAVITY;
 			drag = Trajectory.THROWN_DRAG;
-		} else if (item == Items.BOW && me.isUsingItem()) {
+		} else if (item == Items.BOW && me.isUsingItem() && ExtrasModule.TRAJECTORY_BOW.get()) {
 			speed = Trajectory.bowSpeed(me.getRemainingUseTime());
 			gravity = Trajectory.ARROW_GRAVITY;
 			drag = Trajectory.ARROW_DRAG;
@@ -216,7 +216,7 @@ final class Projectiles {
 		Trajectory.Collider blocks = blockCollider(world);
 		List<PlayerEntity> others = new ArrayList<>();
 		for (PlayerEntity player : world.playerEntities) {
-			if (player != me && !player.removed && player.isAlive()) {
+			if (player != me && !player.removed && player.isAlive() && !HackMath.isNpc(player.getUuid())) {
 				others.add(player);
 			}
 		}

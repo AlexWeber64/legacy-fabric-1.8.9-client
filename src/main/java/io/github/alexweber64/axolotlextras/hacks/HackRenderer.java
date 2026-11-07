@@ -23,9 +23,11 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardPlayerScore;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.util.math.Box;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -60,6 +62,14 @@ public final class HackRenderer {
 	/** {x, z} where you stood shortly after the game started (for finding your own bed), or null. */
 	private static double[] spawn;
 	private static int spawnCountdown = -1;
+	/** The tick the start spot was taken, or -1. */
+	private static int spawnTick = -1;
+	/** Your team (from the sidebar, or your name colour once the game runs), or {@link TeamGuess#UNKNOWN}. */
+	private static int ownTeam = TeamGuess.UNKNOWN;
+	/** True once names carry team colours: the sidebar shows your team, or the game start was seen. */
+	private static boolean gameRunning;
+	/** No rush alerts this long after the start spot is taken: everyone still stands on their own island. */
+	private static final int RUSH_QUIET_TICKS = 200;
 	private static final ItemStack[] RESOURCE_ICONS = new ItemStack[ResourceMath.COUNT];
 	private static List<HudLabel> generatorLabels = Collections.emptyList();
 	private static List<HudLabel> waypointLabels = Collections.emptyList();
@@ -76,6 +86,9 @@ public final class HackRenderer {
 		RUSH.reset();
 		spawn = null;
 		spawnCountdown = -1;
+		spawnTick = -1;
+		ownTeam = TeamGuess.UNKNOWN;
+		gameRunning = false;
 		generatorLabels = Collections.emptyList();
 		waypointLabels = Collections.emptyList();
 		captured = false;
@@ -84,6 +97,7 @@ public final class HackRenderer {
 	/** A Bed Wars game started: two seconds from now you stand on your own island, which tells which bed is yours. */
 	public static void onGameStart() {
 		spawn = null;
+		spawnTick = -1;
 		spawnCountdown = 40;
 	}
 
@@ -98,6 +112,10 @@ public final class HackRenderer {
 		ticks++;
 		if (spawnCountdown >= 0 && spawnCountdown-- == 0) {
 			spawn = new double[] {client.player.x, client.player.z};
+			spawnTick = ticks;
+		}
+		if (ticks % 10 == 0) {
+			findOwnTeam(client, world);
 		}
 		PROJECTILES.tick(client, world);
 		generatorLabels = ExtrasModule.GENERATOR_COUNTS.get() ? findGenerators(world) : Collections.<HudLabel>emptyList();
@@ -105,20 +123,58 @@ public final class HackRenderer {
 		if (beds) {
 			SCANNER.tick(world, client.player.x, client.player.z);
 			if (ticks % 10 == 0) {
-				BEDS.update(client, world, SCANNER.beds(), ticks);
+				BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z);
+				BEDS.update(client, world, SCANNER.beds(), ticks, ownTeam, gameRunning);
 				waypointLabels = ExtrasModule.OBSIDIAN_ALERT.get() && ExtrasModule.OBSIDIAN_WAYPOINTS.get()
 					? waypointLabels(client) : Collections.<HudLabel>emptyList();
 			}
-			if (ExtrasModule.RUSH_ALERT.get()) {
-				int ownTeam = TeamGuess.fromFormattedName(client.player.getName().asFormattedString());
-				RUSH.tick(client, BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z), ownTeam, targets(client),
-					rushDistance(), ticks);
+			if (ExtrasModule.RUSH_ALERT.get() && gameRunning) {
+				// Every enemy counts here, also invisible and far ones (the ESP filters do not apply).
+				List<PlayerEntity> enemies = new ArrayList<>();
+				for (PlayerEntity player : realPlayers(client)) {
+					if (!isTeammate(client, player)) {
+						enemies.add(player);
+					}
+				}
+				boolean quiet = spawnTick >= 0 && ticks - spawnTick < RUSH_QUIET_TICKS;
+				RUSH.tick(client, BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z), enemies, rushDistance(),
+					ticks, quiet);
 			}
 		} else if (!BEDS.labels().isEmpty() || !waypointLabels.isEmpty()) {
 			SCANNER.reset();
 			BEDS.reset();
 			waypointLabels = Collections.emptyList();
 		}
+	}
+
+	/**
+	 * Your team. The Bed Wars sidebar says it on every map ("R Red: YOU"). Without it, your name colour, but only after
+	 * the game start: in the waiting lobby names are in rank colours (VIP is green), which used to make you "Green".
+	 */
+	private static void findOwnTeam(MinecraftClient client, ClientWorld world) {
+		int team = sidebarTeam(world);
+		if (team == TeamGuess.UNKNOWN && spawn != null) {
+			team = TeamGuess.fromFormattedName(client.player.getName().asFormattedString());
+		}
+		ownTeam = team;
+		gameRunning = team != TeamGuess.UNKNOWN || spawn != null;
+	}
+
+	/** The team on the sidebar line that has "YOU" on it, or {@link TeamGuess#UNKNOWN}. */
+	private static int sidebarTeam(ClientWorld world) {
+		Scoreboard scoreboard = world.getScoreboard();
+		ScoreboardObjective sidebar = scoreboard.getObjectiveForSlot(1);
+		if (sidebar == null) {
+			return TeamGuess.UNKNOWN;
+		}
+		for (ScoreboardPlayerScore score : scoreboard.getAllPlayerScores(sidebar)) {
+			String name = score.getPlayerName();
+			int team = TeamGuess.fromSidebarLine(Team.decorateName(scoreboard.getPlayerTeam(name), name));
+			if (team != TeamGuess.UNKNOWN) {
+				return team;
+			}
+		}
+		return TeamGuess.UNKNOWN;
 	}
 
 	private static List<HudLabel> findGenerators(ClientWorld world) {
@@ -151,14 +207,16 @@ public final class HackRenderer {
 		return labels;
 	}
 
+	/** The resource, or -1 when it is not one or its switch is off. */
 	private static int resourceIndex(Item item) {
-		if (item == Items.IRON_INGOT) {
+		boolean base = ExtrasModule.GEN_BASE.get(), rare = ExtrasModule.GEN_RARE.get();
+		if (item == Items.IRON_INGOT && base) {
 			return ResourceMath.IRON;
-		} else if (item == Items.GOLD_INGOT) {
+		} else if (item == Items.GOLD_INGOT && base) {
 			return ResourceMath.GOLD;
-		} else if (item == Items.DIAMOND) {
+		} else if (item == Items.DIAMOND && rare) {
 			return ResourceMath.DIAMOND;
-		} else if (item == Items.EMERALD) {
+		} else if (item == Items.EMERALD && rare) {
 			return ResourceMath.EMERALD;
 		}
 		return -1;
@@ -166,12 +224,7 @@ public final class HackRenderer {
 
 	/** The Rush Distance option ("axolotlextras.rush.25" and so on) in blocks. */
 	private static double rushDistance() {
-		String value = ExtrasModule.RUSH_DISTANCE.get();
-		try {
-			return Double.parseDouble(value.substring(value.lastIndexOf('.') + 1));
-		} catch (RuntimeException e) {
-			return 25;
-		}
+		return HackMath.optionNumber(ExtrasModule.RUSH_DISTANCE.get(), 25);
 	}
 
 	/** "Red obby 8/8 64m NE" over every bed with obsidian, above its Bed Defense label. */
@@ -233,20 +286,79 @@ public final class HackRenderer {
 		}
 	}
 
-	/** Other real players (NPCs and Hypixel's hidden check bots are not in the tab list, so they are left out). */
-	private static List<PlayerEntity> targets(MinecraftClient client) {
+	/**
+	 * Other real players. Left out: NPCs (Hypixel's shopkeepers and upgrade villagers are fake players with version 2
+	 * UUIDs, a hidden name tag or "[NPC]" in the name), and players not in the tab list (hidden check bots).
+	 */
+	private static List<PlayerEntity> realPlayers(MinecraftClient client) {
 		List<PlayerEntity> out = new ArrayList<>();
 		Entity camera = client.getCameraEntity();
 		for (PlayerEntity player : client.world.playerEntities) {
 			if (player == client.player || player == camera || player.removed || !player.isAlive()) {
 				continue;
 			}
+			if (HackMath.isNpc(player.getUuid())) {
+				continue;
+			}
 			if (client.getNetworkHandler() != null && client.getNetworkHandler().getPlayerListEntry(player.getUuid()) == null) {
+				continue;
+			}
+			AbstractTeam team = player.getScoreboardTeam();
+			if (team != null && team.getNameTagVisibilityRule() == AbstractTeam.VisibilityRule.NEVER) {
+				continue;
+			}
+			if (player.getName().asFormattedString().contains("[NPC]")) {
 				continue;
 			}
 			out.add(player);
 		}
 		return out;
+	}
+
+	/** A teammate: only once the game runs (in the lobby nobody is), by scoreboard team or by team colour. */
+	private static boolean isTeammate(MinecraftClient client, PlayerEntity player) {
+		if (!gameRunning) {
+			return false;
+		}
+		if (client.player.isInSameTeam(player)) {
+			return true;
+		}
+		int team = TeamGuess.fromFormattedName(player.getName().asFormattedString());
+		return ownTeam != TeamGuess.UNKNOWN && team == ownTeam;
+	}
+
+	/** The players ESP, tracers, nametags and enemy armor show, after the range, invisible and teammate switches. */
+	private static List<PlayerEntity> targets(MinecraftClient client) {
+		double range = HackMath.optionNumber(ExtrasModule.ESP_RANGE.get(), Double.MAX_VALUE);
+		boolean invisible = ExtrasModule.ESP_INVISIBLE.get(), teammates = ExtrasModule.ESP_TEAMMATES.get();
+		List<PlayerEntity> out = new ArrayList<>();
+		for (PlayerEntity player : realPlayers(client)) {
+			if (!invisible && player.isInvisible()) {
+				continue;
+			}
+			if (range < Double.MAX_VALUE && player.squaredDistanceTo(client.player) > range * range) {
+				continue;
+			}
+			if (!teammates && isTeammate(client, player)) {
+				continue;
+			}
+			out.add(player);
+		}
+		return out;
+	}
+
+	/** The ESP colour of a player, after the ESP Color switch. */
+	private static int espColor(MinecraftClient client, PlayerEntity player) {
+		String mode = ExtrasModule.ESP_COLOR.get();
+		if (mode.endsWith(".distance")) {
+			return HackMath.redToGreen(Math.sqrt(player.squaredDistanceTo(client.player)) / 64);
+		}
+		if (mode.endsWith(".health")) {
+			Float health = healthValue(client, player);
+			return health == null ? 0xFFFFFF : HackMath.redToGreen(health / Math.max(1f, player.getMaxHealth()));
+		}
+		int rgb = HackMath.teamColor(player.getName().asFormattedString());
+		return rgb < 0 ? 0xFFFFFF : rgb;
 	}
 
 	private static void addPlayers(MinecraftClient client, Entity camera, float tickDelta, Draw3D draw) {
@@ -259,17 +371,21 @@ public final class HackRenderer {
 				Math.cos(yaw) * Math.cos(pitch)};
 		}
 		for (PlayerEntity player : targets(client)) {
-			int rgb = HackMath.teamColor(player.getName().asFormattedString());
-			if (rgb < 0) {
-				rgb = 0xFFFFFF;
-			}
+			int rgb = espColor(client, player);
 			double ox = player.prevTickX + (player.x - player.prevTickX) * tickDelta - camX;
 			double oy = player.prevTickY + (player.y - player.prevTickY) * tickDelta - camY;
 			double oz = player.prevTickZ + (player.z - player.prevTickZ) * tickDelta - camZ;
 			if (ExtrasModule.PLAYER_ESP.get()) {
 				Box box = player.getBoundingBox();
-				draw.boxOutline(box.minX - player.x + ox - 0.05, box.minY - player.y + oy, box.minZ - player.z + oz - 0.05,
-					box.maxX - player.x + ox + 0.05, box.maxY - player.y + oy + 0.1, box.maxZ - player.z + oz + 0.05, 0xFF000000 | rgb);
+				double x1 = box.minX - player.x + ox - 0.05, y1 = box.minY - player.y + oy, z1 = box.minZ - player.z + oz - 0.05;
+				double x2 = box.maxX - player.x + ox + 0.05, y2 = box.maxY - player.y + oy + 0.1, z2 = box.maxZ - player.z + oz + 0.05;
+				String style = ExtrasModule.ESP_STYLE.get();
+				if (!style.endsWith(".outline")) {
+					draw.filledBox(x1, y1, z1, x2, y2, z2, 0x40000000 | rgb);
+				}
+				if (!style.endsWith(".filled")) {
+					draw.boxOutline(x1, y1, z1, x2, y2, z2, 0xFF000000 | rgb);
+				}
 			}
 			if (eye != null) {
 				draw.line(eye[0], eye[1], eye[2], ox, oy + player.height / 2, oz, 0xC8000000 | rgb);
@@ -282,11 +398,9 @@ public final class HackRenderer {
 	/** Enemy armor over each enemy's head: their best armor piece with its Protection level, and what they hold. */
 	private static List<HudLabel> armorLabels(MinecraftClient client) {
 		List<HudLabel> labels = new ArrayList<>();
-		int ownTeam = TeamGuess.fromFormattedName(client.player.getName().asFormattedString());
 		float t = lastTickDelta;
 		for (PlayerEntity player : targets(client)) {
-			int team = TeamGuess.fromFormattedName(player.getName().asFormattedString());
-			if (team != TeamGuess.UNKNOWN && team == ownTeam) {
+			if (isTeammate(client, player)) {
 				continue;
 			}
 			HudLabel label = new HudLabel(player.prevTickX + (player.x - player.prevTickX) * t,
@@ -298,7 +412,7 @@ public final class HackRenderer {
 				int protection = protection(player);
 				label.icon(armor, protection > 0 ? "P" + protection : "");
 			}
-			ItemStack held = player.getStackInHand();
+			ItemStack held = ExtrasModule.ARMOR_HELD.get() ? player.getStackInHand() : null;
 			if (held != null) {
 				int sharpness = EnchantmentHelper.getLevel(Enchantment.SHARPNESS.id, held);
 				int knockback = EnchantmentHelper.getLevel(Enchantment.KNOCKBACK.id, held);
@@ -319,9 +433,11 @@ public final class HackRenderer {
 			HudLabel label = new HudLabel(player.prevTickX + (player.x - player.prevTickX) * t,
 				player.prevTickY + (player.y - player.prevTickY) * t + player.height + 0.5,
 				player.prevTickZ + (player.z - player.prevTickZ) * t);
-			String health = health(client, player);
-			label.text = player.getName().asFormattedString() + (health == null ? "" : " \u00a7c" + health + "\u2764")
-				+ " \u00a77" + Math.round(Math.sqrt(player.squaredDistanceTo(client.player))) + "m";
+			Float health = ExtrasModule.NAMETAG_HEALTH.get() ? healthValue(client, player) : null;
+			label.text = player.getName().asFormattedString()
+				+ (health == null ? "" : " \u00a7c" + Math.round(health) + "\u2764")
+				+ (ExtrasModule.NAMETAG_DISTANCE.get()
+					? " \u00a77" + Math.round(Math.sqrt(player.squaredDistanceTo(client.player))) + "m" : "");
 			labels.add(label);
 		}
 		return labels;
@@ -331,18 +447,18 @@ public final class HackRenderer {
 	 * A player's health: from the server's health score (under the name or in the tab list, as Bed Wars shows it) when there
 	 * is one, else the health the server sent for the player. Null when neither is known, so no number is made up.
 	 */
-	private static String health(MinecraftClient client, PlayerEntity player) {
+	private static Float healthValue(MinecraftClient client, PlayerEntity player) {
 		Scoreboard scoreboard = client.world.getScoreboard();
 		String name = player.getGameProfile().getName();
 		Map<ScoreboardObjective, ScoreboardPlayerScore> scores = scoreboard.getPlayerObjectives(name);
 		for (int slot : new int[] {2, 0}) {
 			ScoreboardObjective objective = scoreboard.getObjectiveForSlot(slot);
 			if (objective != null && scores.containsKey(objective)) {
-				return String.valueOf(scores.get(objective).getScore());
+				return (float) scores.get(objective).getScore();
 			}
 		}
 		float health = player.getHealth();
-		return health > 0 && !Float.isNaN(health) ? String.valueOf(Math.round(health)) : null;
+		return health > 0 && !Float.isNaN(health) ? health : null;
 	}
 
 	/** Leggings first (Bed Wars armor upgrades replace the leggings and boots), then boots, chestplate, helmet. */
@@ -393,12 +509,18 @@ public final class HackRenderer {
 			return;
 		}
 		int scale = new Window(client).getScaleFactor();
+		float size = (float) HackMath.optionNumber(ExtrasModule.LABEL_SCALE.get(), 100) / 100f;
 		// The farthest first, so nearer labels end up on top.
 		Collections.sort(labels, (a, b) -> Double.compare(distanceSq(b), distanceSq(a)));
 		for (HudLabel label : labels) {
 			double[] screen = HackMath.project(label.x - camX, label.y - camY, label.z - camZ, modelView, projection, viewport);
 			if (screen != null) {
-				drawLabel(client, label, (int) (screen[0] / scale), (int) ((client.height - screen[1]) / scale) - label.raise);
+				GlStateManager.pushMatrix();
+				GlStateManager.translate((float) (screen[0] / scale),
+					(float) ((client.height - screen[1]) / scale) - label.raise * size, 0f);
+				GlStateManager.scale(size, size, 1f);
+				drawLabel(client, label, 0, 0);
+				GlStateManager.popMatrix();
 			}
 		}
 		GlStateManager.color(1f, 1f, 1f, 1f);
