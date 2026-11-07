@@ -59,6 +59,7 @@ public final class HackRenderer {
 	private static final Projectiles PROJECTILES = new Projectiles();
 	private static final RushAlert RUSH = new RushAlert();
 	private static final Draw3D DRAW = new Draw3D();
+	private static final FreezeWatch WATCH = new FreezeWatch();
 	/** {x, z} where you stood shortly after the game started (for finding your own bed), or null. */
 	private static double[] spawn;
 	private static int spawnCountdown = -1;
@@ -84,6 +85,7 @@ public final class HackRenderer {
 		BEDS.reset();
 		PROJECTILES.reset();
 		RUSH.reset();
+		WATCH.reset();
 		spawn = null;
 		spawnCountdown = -1;
 		spawnTick = -1;
@@ -104,6 +106,7 @@ public final class HackRenderer {
 	// ------------------------------------------------------------------------------------------------------------ tick
 
 	public static void tick(MinecraftClient client) {
+		WATCH.tick();
 		ClientWorld world = client.world;
 		if (world == null || client.player == null) {
 			reset();
@@ -114,19 +117,29 @@ public final class HackRenderer {
 			spawn = new double[] {client.player.x, client.player.z};
 			spawnTick = ticks;
 		}
+		long t = WATCH.start();
 		if (ticks % 10 == 0) {
 			findOwnTeam(client, world);
+			WATCH.end("own team (sidebar)", t);
 		}
+		t = WATCH.start();
 		PROJECTILES.tick(client, world);
+		WATCH.end("fireball and pearl paths", t);
+		t = WATCH.start();
 		generatorLabels = ExtrasModule.GENERATOR_COUNTS.get() ? findGenerators(world) : Collections.<HudLabel>emptyList();
+		WATCH.end("generator counts", t);
 		boolean beds = ExtrasModule.BED_DEFENSE.get() || ExtrasModule.OBSIDIAN_ALERT.get() || ExtrasModule.RUSH_ALERT.get();
 		if (beds) {
+			t = WATCH.start();
 			SCANNER.tick(world, client.player.x, client.player.z);
+			WATCH.end("bed scan", t);
 			if (ticks % 10 == 0) {
+				t = WATCH.start();
 				BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z);
 				BEDS.update(client, world, SCANNER.beds(), ticks, ownTeam, gameRunning);
 				waypointLabels = ExtrasModule.OBSIDIAN_ALERT.get() && ExtrasModule.OBSIDIAN_WAYPOINTS.get()
 					? waypointLabels(client) : Collections.<HudLabel>emptyList();
+				WATCH.end("bed defense, teams and obsidian", t);
 			}
 			if (ExtrasModule.RUSH_ALERT.get() && gameRunning) {
 				// Every enemy counts here, also invisible and far ones (the ESP filters do not apply).
@@ -137,8 +150,10 @@ public final class HackRenderer {
 					}
 				}
 				boolean quiet = spawnTick >= 0 && ticks - spawnTick < RUSH_QUIET_TICKS;
+				t = WATCH.start();
 				RUSH.tick(client, BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z), enemies, rushDistance(),
 					ticks, quiet);
+				WATCH.end("rush alert", t);
 			}
 		} else if (!BEDS.labels().isEmpty() || !waypointLabels.isEmpty()) {
 			SCANNER.reset();
@@ -189,7 +204,8 @@ public final class HackRenderer {
 			if (!(entity instanceof ItemEntity) || entity.removed) {
 				continue;
 			}
-			ItemStack stack = ((ItemEntity) entity).getItemStack();
+			// Not getItemStack(): it writes "Item entity has no item?!" to the log while the item has not arrived yet.
+			ItemStack stack = entity.getDataTracker().getStack(10);
 			if (stack != null) {
 				CLUSTERS.add(entity.x, entity.y, entity.z, resourceIndex(stack.getItem()), stack.count);
 			}
@@ -263,6 +279,7 @@ public final class HackRenderer {
 		}
 		captured = true;
 
+		long t = WATCH.start();
 		if (ExtrasModule.PLAYER_ESP.get() || ExtrasModule.ESP_TRACERS.get()) {
 			addPlayers(client, camera, tickDelta, DRAW);
 		}
@@ -276,6 +293,7 @@ public final class HackRenderer {
 		}
 		PROJECTILES.render(client, tickDelta, DRAW, camX, camY, camZ);
 		DRAW.flush();
+		WATCH.end("ESP, beams and trajectories (drawing)", t);
 	}
 
 	private static void readMatrix(int which, float[] into) {
@@ -494,6 +512,7 @@ public final class HackRenderer {
 		if (client.world == null || client.player == null) {
 			return;
 		}
+		long t = WATCH.start();
 		List<HudLabel> labels = new ArrayList<>();
 		labels.addAll(generatorLabels);
 		labels.addAll(BEDS.labels());
@@ -506,6 +525,7 @@ public final class HackRenderer {
 			labels.addAll(armorLabels(client));
 		}
 		if (labels.isEmpty()) {
+			WATCH.end("labels (drawing)", t);
 			return;
 		}
 		int scale = new Window(client).getScaleFactor();
@@ -523,7 +543,9 @@ public final class HackRenderer {
 				GlStateManager.popMatrix();
 			}
 		}
+		GlStateManager.disableLighting();
 		GlStateManager.color(1f, 1f, 1f, 1f);
+		WATCH.end("labels (drawing)", t);
 	}
 
 	private static double distanceSq(HudLabel label) {

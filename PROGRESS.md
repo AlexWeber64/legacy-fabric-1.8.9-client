@@ -157,6 +157,21 @@ Last updated: 2026-11-07.
     and that shopkeepers are gone from ESP.
   - Deployed to the play clone 1.8.9-lunarlike on 2026-11-07. The previous jar (hacks rounds 1 to 3) is in mods-backup as
     axolotl-extras-0.1.0.before-hacks-round4.jar.
+- Hacks round 5 (2026-11-07), after the user's second test (labels missing, random freezes of several seconds):
+  - All HUD labels were invisible (generator counts, bed defense, obsidian waypoint labels, nametags, enemy armor,
+    projectile labels). Cause: `HackHudMixin` injected at HEAD of `InGameHud.render`, but 1.8.9 only switches to the
+    2D HUD view (`GameRenderer.setupHudMatrixMode`) a few instructions later, so the labels were drawn with the 3D camera.
+    Now injected right after that call. ESP boxes, tracers and beams were not affected (they are drawn in the world pass).
+  - Generator Counts read the item stack straight from the data tracker: `ItemEntity.getItemStack()` wrote "Item entity
+    has no item?!" to the log for items the server had not filled in yet (about 50 lines per game).
+  - Freezes: nothing in the hack code should take seconds (bed scan about 1 ms per tick), so `hacks/FreezeWatch` now
+    measures it. Any hack step over 50 ms writes "[Extras] Hacks: <step> took N ms" to latest.log, and a gap of over a
+    second between ticks writes "[Extras] Freeze: ..." with the garbage collection time and the slowest hack step in that
+    gap. The "Error executing task" NullPointerExceptions in the log are vanilla scoreboard packet errors from Hypixel;
+    they were in the logs before the hacks too. Instance memory is 2 to 4 GB on Java 8 (Parallel GC).
+  - 83 tests pass. Built, not yet run in game. To check: labels show at generators and beds, and what the freeze lines say.
+  - Deployed to the play clone 1.8.9-lunarlike on 2026-11-07. The previous jar (round 4) is in mods-backup as
+    axolotl-extras-0.1.0.before-hacks-round5.jar.
 
 ## In progress
 
