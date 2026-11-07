@@ -115,6 +115,16 @@ Last updated: 2026-11-07.
   found (the 1.8.9 ones are Forge and mostly GPL), so nothing was copied or downloaded. Built, never run in game.
   To check: the boxes line up with players (also in third person), labels sit over generators and beds, the item icons
   draw correctly on the HUD, and the obsidian alert fires once per change (a change has to hold for 2 seconds first).
+- Hacks round 2 (2026-11-07, from your feedback): the obsidian alert is one short line (`Obby Red bed 6/8 gaps 64m NE`);
+  the count is out of the spots in the obsidian's layer, which is 8 for the inner layer (the first round's example of 14
+  was made up, a second layer has 18). Your own team's bed is not announced. Team detection (`hacks/TeamGuess`, unit
+  tested): the most common team-coloured wool, clay, glass or carpet within 10 blocks of the bed, when it leads clearly;
+  otherwise the team of the players within 8 blocks; kept once known. New switches: Obsidian Waypoints (beam and label
+  over each reported bed, kept while its chunk is out of range), Enemy Armor (armor tier and Protection level, held item
+  and Sharpness/Knockback, enemies only), No Blindness (`NoBlindnessMixin`, wraps the blindness check in the two fog
+  methods only, so sprinting still sees the effect). Bed logic moved to `hacks/BedTracker`. 16 tests pass. Built, never
+  run in game. Unchecked guesses: the Hypixel wool colours for Aqua, Pink and Gray teams, and whether Hypixel sends the
+  enchantments of other players' armor (it should, since enchanted armor glints).
 
 ## In progress
 

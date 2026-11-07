@@ -9,7 +9,8 @@
 		"HeldItemRendererMixin",
 		"SneakCameraMixin",
 		"HackWorldRenderMixin",
-		"HackHudMixin"
+		"HackHudMixin",
+		"NoBlindnessMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

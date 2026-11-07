@@ -60,6 +60,15 @@ public class ExtrasModule extends AbstractModule {
 	/** A chat note when a bed gets obsidian around it, saying whether it is a full layer or has gaps. */
 	public static final BooleanOption OBSIDIAN_ALERT = new BooleanOption("axolotlextras.obsidianAlert", false);
 
+	/** A beam and a label over every bed the obsidian alert reported, until the obsidian or the bed is gone. */
+	public static final BooleanOption OBSIDIAN_WAYPOINTS = new BooleanOption("axolotlextras.obsidianWaypoints", true);
+
+	/** Over each enemy's head: their best armor piece with its Protection level, and their held item with its enchantment. */
+	public static final BooleanOption ENEMY_ARMOR = new BooleanOption("axolotlextras.enemyArmor", false);
+
+	/** Takes away the dark fog of the blindness effect (drawing only). */
+	public static final BooleanOption NO_BLINDNESS = new BooleanOption("axolotlextras.noBlindness", false);
+
 	/** 1.7: the sword, food and bow animations keep swinging when you swing while holding right click. */
 	public static final BooleanOption OLD_BLOCK_HITTING = new BooleanOption("axolotlextras.oldBlockHitting", false);
 
@@ -147,7 +156,8 @@ public class ExtrasModule extends AbstractModule {
 
 		HACKS.add(new GenericOption("axolotlextras.openHacks", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new HacksScreen(client.currentScreen))));
-		HACKS.add(PLAYER_ESP, ESP_TRACERS, GENERATOR_COUNTS, BED_DEFENSE, OBSIDIAN_ALERT);
+		HACKS.add(PLAYER_ESP, ESP_TRACERS, ENEMY_ARMOR, GENERATOR_COUNTS, BED_DEFENSE, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS,
+			NO_BLINDNESS);
 		AxolotlClient.CONFIG.addCategory(HACKS);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD

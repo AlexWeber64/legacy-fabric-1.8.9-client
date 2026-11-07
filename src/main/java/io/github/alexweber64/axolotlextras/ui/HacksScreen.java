@@ -8,8 +8,9 @@ public class HacksScreen extends ExtrasScreen {
 
 	public HacksScreen(Screen parent) {
 		super(parent, "§lHacks");
-		section("axolotlextras.section.esp", ExtrasModule.PLAYER_ESP, ExtrasModule.ESP_TRACERS);
+		section("axolotlextras.section.esp", ExtrasModule.PLAYER_ESP, ExtrasModule.ESP_TRACERS, ExtrasModule.ENEMY_ARMOR);
 		section("axolotlextras.section.bedwarsInfo", ExtrasModule.GENERATOR_COUNTS, ExtrasModule.BED_DEFENSE,
-			ExtrasModule.OBSIDIAN_ALERT);
+			ExtrasModule.OBSIDIAN_ALERT, ExtrasModule.OBSIDIAN_WAYPOINTS);
+		section("axolotlextras.section.vision", ExtrasModule.NO_BLINDNESS);
 	}
 }

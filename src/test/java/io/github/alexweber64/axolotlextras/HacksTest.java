@@ -14,6 +14,7 @@ import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.hacks.BedDefense;
 import io.github.alexweber64.axolotlextras.hacks.HackMath;
 import io.github.alexweber64.axolotlextras.hacks.ResourceClusters;
+import io.github.alexweber64.axolotlextras.hacks.TeamGuess;
 import org.junit.jupiter.api.Test;
 
 class HacksTest {
@@ -176,5 +177,49 @@ class HacksTest {
 		assertArrayEquals(new double[] {100, 50}, HackMath.project(0, 0, -5, identity, perspective, viewport), 1e-6);
 		assertArrayEquals(new double[] {150, 50}, HackMath.project(2.5, 0, -5, identity, perspective, viewport), 1e-6);
 		assertNull(HackMath.project(0, 0, 5, identity, perspective, viewport));
+	}
+
+	// ------------------------------------------------------------------------------------------------------ teams
+
+	@Test
+	void innerObsidianLayerHasEightSpots() {
+		World world = new World();
+		world.layer(1, OBSIDIAN);
+		BedDefense.Cover cover = BedDefense.cover(0, 64, 0, 1, 0, world, OBSIDIAN);
+		assertEquals(1, cover.layer);
+		assertEquals(8, cover.spots);
+		assertTrue(cover.complete());
+	}
+
+	@Test
+	void teamFromNamesAndDyes() {
+		assertEquals(0, TeamGuess.fromFormattedName("§c§lR §cSteve"));
+		assertEquals(7, TeamGuess.fromFormattedName("§8§lS §8Alex"));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromFormattedName("Plain"));
+		assertEquals(1, TeamGuess.fromDye(11));
+		assertEquals(2, TeamGuess.fromDye(5));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromDye(12));
+		assertEquals("§cRed", TeamGuess.colored(0));
+	}
+
+	@Test
+	void clearWoolMajorityDecides() {
+		int[] blocks = new int[TeamGuess.COUNT];
+		int[] players = new int[TeamGuess.COUNT];
+		blocks[1] = 20; // blue wool
+		blocks[0] = 4; // some red bridge wool
+		players[0] = 2; // two red players rushing it
+		assertEquals(1, TeamGuess.guess(blocks, players));
+	}
+
+	@Test
+	void playersDecideWhenWoolIsUnclear() {
+		int[] blocks = new int[TeamGuess.COUNT];
+		int[] players = new int[TeamGuess.COUNT];
+		blocks[1] = 5;
+		blocks[0] = 4;
+		players[3] = 1;
+		assertEquals(3, TeamGuess.guess(blocks, players));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.guess(new int[TeamGuess.COUNT], new int[TeamGuess.COUNT]));
 	}
 }
