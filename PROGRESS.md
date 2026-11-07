@@ -125,6 +125,20 @@ Last updated: 2026-11-07.
   methods only, so sprinting still sees the effect). Bed logic moved to `hacks/BedTracker`. 16 tests pass. Built, never
   run in game. Unchecked guesses: the Hypixel wool colours for Aqua, Pink and Gray teams, and whether Hypixel sends the
   enchantments of other players' armor (it should, since enchanted armor glints).
+- Hacks round 3 (2026-11-07): Rush Alert (+ Rush Distance), Fireball Warning, Pearl Landing, Trajectories, Nametags
+  Through Walls. `hacks/Trajectory` steps projectiles like 1.8.9 does (move, acceleration, drag, gravity; pearls,
+  snowballs and eggs 1.5 speed, 0.03 gravity; arrows 3 x charge, 0.05 gravity; fireballs 0.95 drag plus their
+  acceleration), unit tested (`TrajectoryTest`, 7 tests). `hacks/Projectiles` uses it for flying fireballs and pearls
+  (once per tick) and your own aim (every frame, from the hand position the game uses). Fireball blast marks are an
+  estimate: blocks within 2.2 of the impact with a blast resistance under 4, skipping glass and beds (Hypixel makes them
+  blast-proof). `hacks/RushAlert`: your bed is the bed of your team colour nearest where you stood 2 seconds after the
+  game start message, or the bed nearest that spot within 40 blocks; each enemy is announced once per visit with a 20
+  second cooldown. Nametag health comes from the below-name or tab list score, else the entity health, else nothing.
+  Drawing moved to `hacks/Draw3D` (one batch of see-through boxes, one of lines). 79 tests pass. Built, never run in
+  game. To check: the aim line starts at the hand and lands where the pearl really lands, fireball impact matches, and
+  the rush alert picks your own bed (it stays silent until it can tell).
+- Deployed to the play clone 1.8.9-lunarlike on 2026-11-07 for testing (all hacks rounds). The previous jar is in
+  mods-backup as axolotl-extras-0.1.0.before-hacks.jar. All hack switches start off.
 
 ## In progress
 

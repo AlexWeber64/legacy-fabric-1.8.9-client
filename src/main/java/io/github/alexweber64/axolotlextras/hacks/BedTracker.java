@@ -70,8 +70,16 @@ final class BedTracker {
 	private final Map<Integer, ItemStack> blockIcons = new HashMap<>();
 	private List<HudLabel> labels = Collections.emptyList();
 	private int obsidianKey = -1;
+	private Info own;
+
+	/** How far from where you stood at the game start your own bed may be. */
+	private static final double SPAWN_REACH = 40;
+
+	/** For {@link #nearest}: any team. */
+	private static final int ANY_TEAM = -2;
 
 	void reset() {
+		own = null;
 		beds.clear();
 		labels = Collections.emptyList();
 	}
@@ -89,6 +97,42 @@ final class BedTracker {
 			}
 		}
 		return out;
+	}
+
+	/**
+	 * Your own bed: the bed of your team (from your name colour) nearest to where you stood when the game started, or
+	 * else the bed nearest that spot. Kept once found, until the bed is gone.
+	 *
+	 * @param spawn {x, z} where you stood at the game start, or null when the start was not seen
+	 * @return the bed, or null when it cannot be told yet
+	 */
+	Info ownBed(int ownTeam, double[] spawn, double playerX, double playerZ) {
+		if (own != null && beds.containsValue(own)) {
+			return own;
+		}
+		double rx = spawn != null ? spawn[0] : playerX, rz = spawn != null ? spawn[1] : playerZ;
+		own = nearest(rx, rz, ownTeam, Double.MAX_VALUE);
+		if (own == null && spawn != null) {
+			own = nearest(rx, rz, ANY_TEAM, SPAWN_REACH);
+		}
+		return own;
+	}
+
+	/** @param team only beds of this team, or any bed when it is {@link #ANY_TEAM} */
+	private Info nearest(double x, double z, int team, double reach) {
+		if (team == TeamGuess.UNKNOWN) {
+			return null;
+		}
+		Info best = null;
+		double bestDistance = reach * reach;
+		for (Info info : beds.values()) {
+			double dx = info.centerX() - x, dz = info.centerZ() - z, d = dx * dx + dz * dz;
+			if ((team == ANY_TEAM || info.team == team) && d <= bestDistance) {
+				best = info;
+				bestDistance = d;
+			}
+		}
+		return best;
 	}
 
 	void update(MinecraftClient client, ClientWorld world, List<BedScanner.Bed> found, int tick) {
@@ -130,7 +174,8 @@ final class BedTracker {
 			if (ExtrasModule.BED_DEFENSE.get()) {
 				next.add(defenseLabel(info, BedDefense.analyse(bed.footX, bed.y, bed.footZ, bed.headX, bed.headZ, lookup)));
 			}
-			if (ExtrasModule.OBSIDIAN_ALERT.get() && (info.team == TeamGuess.UNKNOWN || info.team != ownTeam)) {
+			boolean mine = info == own || (info.team != TeamGuess.UNKNOWN && info.team == ownTeam);
+			if (ExtrasModule.OBSIDIAN_ALERT.get() && !mine) {
 				obsidianAlert(client, info);
 			}
 		}

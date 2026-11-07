@@ -5,6 +5,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.alexweber64.axolotlextras.ExtrasModule;
@@ -12,9 +13,6 @@ import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.enchantment.Enchantment;
@@ -25,6 +23,9 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.scoreboard.ScoreboardPlayerScore;
 import net.minecraft.util.math.Box;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -53,6 +54,12 @@ public final class HackRenderer {
 	private static final ResourceClusters CLUSTERS = new ResourceClusters();
 	private static final BedScanner SCANNER = new BedScanner();
 	private static final BedTracker BEDS = new BedTracker();
+	private static final Projectiles PROJECTILES = new Projectiles();
+	private static final RushAlert RUSH = new RushAlert();
+	private static final Draw3D DRAW = new Draw3D();
+	/** {x, z} where you stood shortly after the game started (for finding your own bed), or null. */
+	private static double[] spawn;
+	private static int spawnCountdown = -1;
 	private static final ItemStack[] RESOURCE_ICONS = new ItemStack[ResourceMath.COUNT];
 	private static List<HudLabel> generatorLabels = Collections.emptyList();
 	private static List<HudLabel> waypointLabels = Collections.emptyList();
@@ -65,9 +72,19 @@ public final class HackRenderer {
 	public static void reset() {
 		SCANNER.reset();
 		BEDS.reset();
+		PROJECTILES.reset();
+		RUSH.reset();
+		spawn = null;
+		spawnCountdown = -1;
 		generatorLabels = Collections.emptyList();
 		waypointLabels = Collections.emptyList();
 		captured = false;
+	}
+
+	/** A Bed Wars game started: two seconds from now you stand on your own island, which tells which bed is yours. */
+	public static void onGameStart() {
+		spawn = null;
+		spawnCountdown = 40;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------ tick
@@ -79,14 +96,23 @@ public final class HackRenderer {
 			return;
 		}
 		ticks++;
+		if (spawnCountdown >= 0 && spawnCountdown-- == 0) {
+			spawn = new double[] {client.player.x, client.player.z};
+		}
+		PROJECTILES.tick(client, world);
 		generatorLabels = ExtrasModule.GENERATOR_COUNTS.get() ? findGenerators(world) : Collections.<HudLabel>emptyList();
-		boolean beds = ExtrasModule.BED_DEFENSE.get() || ExtrasModule.OBSIDIAN_ALERT.get();
+		boolean beds = ExtrasModule.BED_DEFENSE.get() || ExtrasModule.OBSIDIAN_ALERT.get() || ExtrasModule.RUSH_ALERT.get();
 		if (beds) {
 			SCANNER.tick(world, client.player.x, client.player.z);
 			if (ticks % 10 == 0) {
 				BEDS.update(client, world, SCANNER.beds(), ticks);
 				waypointLabels = ExtrasModule.OBSIDIAN_ALERT.get() && ExtrasModule.OBSIDIAN_WAYPOINTS.get()
 					? waypointLabels(client) : Collections.<HudLabel>emptyList();
+			}
+			if (ExtrasModule.RUSH_ALERT.get()) {
+				int ownTeam = TeamGuess.fromFormattedName(client.player.getName().asFormattedString());
+				RUSH.tick(client, BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z), ownTeam, targets(client),
+					rushDistance(), ticks);
 			}
 		} else if (!BEDS.labels().isEmpty() || !waypointLabels.isEmpty()) {
 			SCANNER.reset();
@@ -138,6 +164,16 @@ public final class HackRenderer {
 		return -1;
 	}
 
+	/** The Rush Distance option ("axolotlextras.rush.25" and so on) in blocks. */
+	private static double rushDistance() {
+		String value = ExtrasModule.RUSH_DISTANCE.get();
+		try {
+			return Double.parseDouble(value.substring(value.lastIndexOf('.') + 1));
+		} catch (RuntimeException e) {
+			return 25;
+		}
+	}
+
 	/** "Red obby 8/8 64m NE" over every bed with obsidian, above its Bed Defense label. */
 	private static List<HudLabel> waypointLabels(MinecraftClient client) {
 		List<HudLabel> labels = new ArrayList<>();
@@ -174,12 +210,19 @@ public final class HackRenderer {
 		}
 		captured = true;
 
-		boolean players = ExtrasModule.PLAYER_ESP.get() || ExtrasModule.ESP_TRACERS.get();
-		List<BedTracker.Info> waypoints = ExtrasModule.OBSIDIAN_ALERT.get() && ExtrasModule.OBSIDIAN_WAYPOINTS.get()
-			? BEDS.waypoints() : Collections.<BedTracker.Info>emptyList();
-		if (players || !waypoints.isEmpty()) {
-			drawLines(client, camera, tickDelta, players, waypoints);
+		if (ExtrasModule.PLAYER_ESP.get() || ExtrasModule.ESP_TRACERS.get()) {
+			addPlayers(client, camera, tickDelta, DRAW);
 		}
+		if (ExtrasModule.OBSIDIAN_ALERT.get() && ExtrasModule.OBSIDIAN_WAYPOINTS.get()) {
+			for (BedTracker.Info info : BEDS.waypoints()) {
+				// A tall beam over the bed, in the team colour, so its island can be found from afar.
+				int rgb = info.team == TeamGuess.UNKNOWN ? UNKNOWN_TEAM_RGB : HackMath.teamColor("\u00a7" + TeamGuess.CODES[info.team]);
+				double x = info.centerX() - camX, z = info.centerZ() - camZ, y = info.bed.y - camY;
+				DRAW.line(x, y, z, 0xE6000000 | rgb, x, y + 60, z, 0x3C000000 | rgb);
+			}
+		}
+		PROJECTILES.render(client, tickDelta, DRAW, camX, camY, camZ);
+		DRAW.flush();
 	}
 
 	private static void readMatrix(int which, float[] into) {
@@ -206,50 +249,7 @@ public final class HackRenderer {
 		return out;
 	}
 
-	private static void drawLines(MinecraftClient client, Entity camera, float tickDelta, boolean players,
-		List<BedTracker.Info> waypoints) {
-		boolean blend = GL11.glIsEnabled(GL11.GL_BLEND);
-		boolean fog = GL11.glIsEnabled(GL11.GL_FOG);
-		GlStateManager.pushMatrix();
-		GlStateManager.disableTexture();
-		GlStateManager.disableLighting();
-		GlStateManager.disableDepthTest();
-		GlStateManager.depthMask(false);
-		GlStateManager.disableFog();
-		GlStateManager.enableBlend();
-		GlStateManager.blendFuncSeparate(770, 771, 1, 0);
-		GL11.glLineWidth(2f);
-
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.getBuffer();
-		buffer.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR);
-		if (players) {
-			addPlayers(client, camera, tickDelta, buffer);
-		}
-		for (BedTracker.Info info : waypoints) {
-			// A tall beam over the bed, in the team's colour, so its island can be found from afar.
-			int rgb = info.team == TeamGuess.UNKNOWN ? UNKNOWN_TEAM_RGB : HackMath.teamColor("§" + TeamGuess.CODES[info.team]);
-			double x = info.centerX() - camX, z = info.centerZ() - camZ, y = info.bed.y - camY;
-			buffer.vertex(x, y, z).color(rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255, 230).next();
-			buffer.vertex(x, y + 60, z).color(rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255, 60).next();
-		}
-		tessellator.draw();
-
-		GL11.glLineWidth(1f);
-		GlStateManager.enableTexture();
-		GlStateManager.enableDepthTest();
-		GlStateManager.depthMask(true);
-		if (!blend) {
-			GlStateManager.disableBlend();
-		}
-		if (fog) {
-			GlStateManager.enableFog();
-		}
-		GlStateManager.color(1f, 1f, 1f, 1f);
-		GlStateManager.popMatrix();
-	}
-
-	private static void addPlayers(MinecraftClient client, Entity camera, float tickDelta, BufferBuilder buffer) {
+	private static void addPlayers(MinecraftClient client, Entity camera, float tickDelta, Draw3D draw) {
 		double[] eye = null;
 		if (ExtrasModule.ESP_TRACERS.get()) {
 			// The tracers start just in front of the eyes, so they come out of the middle of the screen.
@@ -263,34 +263,17 @@ public final class HackRenderer {
 			if (rgb < 0) {
 				rgb = 0xFFFFFF;
 			}
-			int r = rgb >> 16 & 255, g = rgb >> 8 & 255, b = rgb & 255;
 			double ox = player.prevTickX + (player.x - player.prevTickX) * tickDelta - camX;
 			double oy = player.prevTickY + (player.y - player.prevTickY) * tickDelta - camY;
 			double oz = player.prevTickZ + (player.z - player.prevTickZ) * tickDelta - camZ;
 			if (ExtrasModule.PLAYER_ESP.get()) {
 				Box box = player.getBoundingBox();
-				box(buffer, box.minX - player.x + ox - 0.05, box.minY - player.y + oy, box.minZ - player.z + oz - 0.05,
-					box.maxX - player.x + ox + 0.05, box.maxY - player.y + oy + 0.1, box.maxZ - player.z + oz + 0.05, r, g, b);
+				draw.boxOutline(box.minX - player.x + ox - 0.05, box.minY - player.y + oy, box.minZ - player.z + oz - 0.05,
+					box.maxX - player.x + ox + 0.05, box.maxY - player.y + oy + 0.1, box.maxZ - player.z + oz + 0.05, 0xFF000000 | rgb);
 			}
 			if (eye != null) {
-				buffer.vertex(eye[0], eye[1], eye[2]).color(r, g, b, 200).next();
-				buffer.vertex(ox, oy + player.height / 2, oz).color(r, g, b, 200).next();
+				draw.line(eye[0], eye[1], eye[2], ox, oy + player.height / 2, oz, 0xC8000000 | rgb);
 			}
-		}
-	}
-
-	/** The 12 edges of a box, as line pairs. */
-	private static void box(BufferBuilder buffer, double x1, double y1, double z1, double x2, double y2, double z2,
-		int r, int g, int b) {
-		double[][] corners = {
-			{x1, y1, z1}, {x2, y1, z1}, {x2, y1, z2}, {x1, y1, z2},
-			{x1, y2, z1}, {x2, y2, z1}, {x2, y2, z2}, {x1, y2, z2}};
-		int[][] edges = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
-		for (int[] edge : edges) {
-			double[] a = corners[edge[0]];
-			double[] c = corners[edge[1]];
-			buffer.vertex(a[0], a[1], a[2]).color(r, g, b, 255).next();
-			buffer.vertex(c[0], c[1], c[2]).color(r, g, b, 255).next();
 		}
 	}
 
@@ -309,7 +292,7 @@ public final class HackRenderer {
 			HudLabel label = new HudLabel(player.prevTickX + (player.x - player.prevTickX) * t,
 				player.prevTickY + (player.y - player.prevTickY) * t + player.height + 0.5,
 				player.prevTickZ + (player.z - player.prevTickZ) * t);
-			label.raise = 14; // above the name tag
+			label.raise = ExtrasModule.NAMETAGS.get() ? 18 : 14; // above the name tag
 			ItemStack armor = bestArmor(player);
 			if (armor != null) {
 				int protection = protection(player);
@@ -326,6 +309,40 @@ public final class HackRenderer {
 			}
 		}
 		return labels;
+	}
+
+	/** Nametags through walls: team-coloured name, health and distance, over every other player. */
+	private static List<HudLabel> nametags(MinecraftClient client) {
+		List<HudLabel> labels = new ArrayList<>();
+		float t = lastTickDelta;
+		for (PlayerEntity player : targets(client)) {
+			HudLabel label = new HudLabel(player.prevTickX + (player.x - player.prevTickX) * t,
+				player.prevTickY + (player.y - player.prevTickY) * t + player.height + 0.5,
+				player.prevTickZ + (player.z - player.prevTickZ) * t);
+			String health = health(client, player);
+			label.text = player.getName().asFormattedString() + (health == null ? "" : " \u00a7c" + health + "\u2764")
+				+ " \u00a77" + Math.round(Math.sqrt(player.squaredDistanceTo(client.player))) + "m";
+			labels.add(label);
+		}
+		return labels;
+	}
+
+	/**
+	 * A player's health: from the server's health score (under the name or in the tab list, as Bed Wars shows it) when there
+	 * is one, else the health the server sent for the player. Null when neither is known, so no number is made up.
+	 */
+	private static String health(MinecraftClient client, PlayerEntity player) {
+		Scoreboard scoreboard = client.world.getScoreboard();
+		String name = player.getGameProfile().getName();
+		Map<ScoreboardObjective, ScoreboardPlayerScore> scores = scoreboard.getPlayerObjectives(name);
+		for (int slot : new int[] {2, 0}) {
+			ScoreboardObjective objective = scoreboard.getObjectiveForSlot(slot);
+			if (objective != null && scores.containsKey(objective)) {
+				return String.valueOf(scores.get(objective).getScore());
+			}
+		}
+		float health = player.getHealth();
+		return health > 0 && !Float.isNaN(health) ? String.valueOf(Math.round(health)) : null;
 	}
 
 	/** Leggings first (Bed Wars armor upgrades replace the leggings and boots), then boots, chestplate, helmet. */
@@ -365,6 +382,10 @@ public final class HackRenderer {
 		labels.addAll(generatorLabels);
 		labels.addAll(BEDS.labels());
 		labels.addAll(waypointLabels);
+		labels.addAll(PROJECTILES.labels());
+		if (ExtrasModule.NAMETAGS.get()) {
+			labels.addAll(nametags(client));
+		}
 		if (ExtrasModule.ENEMY_ARMOR.get()) {
 			labels.addAll(armorLabels(client));
 		}

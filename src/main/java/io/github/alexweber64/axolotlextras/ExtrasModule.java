@@ -69,6 +69,25 @@ public class ExtrasModule extends AbstractModule {
 	/** Takes away the dark fog of the blindness effect (drawing only). */
 	public static final BooleanOption NO_BLINDNESS = new BooleanOption("axolotlextras.noBlindness", false);
 
+	/** Team-coloured name, health and distance over every other player, through walls. */
+	public static final BooleanOption NAMETAGS = new BooleanOption("axolotlextras.nametags", false);
+
+	/** A chat line and a sound when an enemy comes near your own bed. */
+	public static final BooleanOption RUSH_ALERT = new BooleanOption("axolotlextras.rushAlert", false);
+
+	/** How near (in blocks) an enemy has to get to your bed for the Rush Alert. */
+	public static final EnumOption RUSH_DISTANCE = new EnumOption("axolotlextras.rushDistance",
+		new String[] {"axolotlextras.rush.15", "axolotlextras.rush.25", "axolotlextras.rush.40"}, "axolotlextras.rush.25");
+
+	/** Where flying fireballs will hit, the blocks the blast will likely break, and a sound when one comes at you. */
+	public static final BooleanOption FIREBALL_WARNING = new BooleanOption("axolotlextras.fireballWarning", false);
+
+	/** Where flying ender pearls (anyone's) will land. */
+	public static final BooleanOption PEARL_LANDING = new BooleanOption("axolotlextras.pearlLanding", false);
+
+	/** The flight of your own pearl, snowball, egg or arrow (while drawing the bow) and where it would hit. */
+	public static final BooleanOption TRAJECTORIES = new BooleanOption("axolotlextras.trajectories", false);
+
 	/** 1.7: the sword, food and bow animations keep swinging when you swing while holding right click. */
 	public static final BooleanOption OLD_BLOCK_HITTING = new BooleanOption("axolotlextras.oldBlockHitting", false);
 
@@ -156,8 +175,8 @@ public class ExtrasModule extends AbstractModule {
 
 		HACKS.add(new GenericOption("axolotlextras.openHacks", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new HacksScreen(client.currentScreen))));
-		HACKS.add(PLAYER_ESP, ESP_TRACERS, ENEMY_ARMOR, GENERATOR_COUNTS, BED_DEFENSE, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS,
-			NO_BLINDNESS);
+		HACKS.add(PLAYER_ESP, ESP_TRACERS, NAMETAGS, ENEMY_ARMOR, GENERATOR_COUNTS, BED_DEFENSE, OBSIDIAN_ALERT,
+			OBSIDIAN_WAYPOINTS, RUSH_ALERT, RUSH_DISTANCE, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS);
 		AxolotlClient.CONFIG.addCategory(HACKS);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD
@@ -194,6 +213,7 @@ public class ExtrasModule extends AbstractModule {
 			String line = event.getFormattedMessage().asUnformattedString();
 			if (ResourceMath.isGameStartMessage(line)) {
 				resourceCounter.onGameStart();
+				HackRenderer.onGameStart();
 				upgradeDisplay.onGameStart();
 				if (CHAT_STATS.get()) {
 					STAT_ANNOUNCER.onGameStart();

@@ -80,8 +80,9 @@ or asked to slow down). The switch "Reliable Bed Wars Stats" turns it off, and w
 
 ## Added by the add-on: Hacks (2026-11-07)
 
-Player ESP, Tracers, Generator Counts, Bed Defense and Obsidian Alert only read what the client already has (players,
-item entities, loaded chunks) and draw on screen. The obsidian alert's chat line is added to the local chat only. Nothing
+All the hacks (ESP, tracers, nametags, enemy armor, generator counts, bed defense, obsidian and rush alerts, fireball,
+pearl and trajectory lines, no blindness) only read what the client already has (players,
+item entities, loaded chunks) and draw on screen. The alert chat lines are added to the local chat only, and their sounds play locally. Nothing
 is sent to any server.
 
 ## Not covered
