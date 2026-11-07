@@ -178,6 +178,11 @@ Last updated: 2026-11-07.
   nametag) are moved up by half of each label's scaled height, so they do not overlap at any mix of sizes. 83 tests pass.
   Deployed to the play clone 1.8.9-lunarlike on 2026-11-07; the previous jar (round 5) is in mods-backup as
   axolotl-extras-0.1.0.before-label-sizes.jar.
+- Freeze log read (2026-11-07): 13 freezes in one session, mostly about 1.06 s (one 2 s). During each, all hacks together
+  took 0 to 4 ms and garbage collection 0 ms, so neither the hacks nor memory is the cause; something else holds the game
+  thread for about a second. `FreezeWatch` now also starts a watcher thread that writes the game thread's stack to
+  latest.log at 600 ms and 900 ms into a freeze ("[Extras] Freeze going on ..."), to show what it is stuck in. Built, not
+  yet deployed.
 
 ## In progress
 
