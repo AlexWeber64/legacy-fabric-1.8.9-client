@@ -72,3 +72,5 @@ axolotlextras.oldSneak=1.7 Sneaking
 axolotlextras.oldSneak.tooltip=The camera goes down at once when you sneak and comes back up slowly when you stop, like in 1.7.
 axolotlextras.oldThirdPerson=1.7 Sword Block (outside view)
 axolotlextras.oldThirdPerson.tooltip=How other players and the third person camera see a blocking sword: the arm straight up in front and the sword turned, like in 1.7.
+axolotlextras.reliableStats=Reliable Bed Wars Stats
+axolotlextras.reliableStats.tooltip=Loads every player's Bed Wars stats from Hypixel at the start of a game, a few at a time, and asks again after a failure. Without it AxolotlClient asks once and most players stay at a question mark. Needs a Hypixel API key in the AxolotlClient settings.

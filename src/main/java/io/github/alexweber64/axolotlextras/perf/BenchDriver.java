@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import io.github.alexweber64.axolotlextras.ExtrasModule;
+import io.github.alexweber64.axolotlextras.bedwars.StatsLoader;
 import io.github.axolotlclient.AxolotlClient;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -34,6 +35,7 @@ import net.minecraft.client.util.ScreenshotUtils;
  * swingblock seconds name ticks   one swing, then blocking at once, and a screenshot that many ticks later
  * wait seconds                waits before the next step
  * option name on|off          switches one of the 1.7 visuals options (oldBlockHitting, oldFirstPerson, oldSneak, oldThirdPerson)
+ * statstest                 looks up 2 real and 16 made-up player ids with the stats loader and logs how long it took
  * eyelog seconds             logs the real and the shown eye height every tick for that long
  * shot name                   saves a screenshot named name.png in the game's screenshots folder
  * done                        writes "[Extras] BENCH queue finished" to the log
@@ -51,6 +53,8 @@ public final class BenchDriver {
 	private static int worldTicks;
 	private static int waitTicks;
 	private static int eyeLogTicks;
+	private static List<String> statsTestIds;
+	private static long statsTestStart;
 	private static int pendingShotTicks;
 	private static String pendingShotName;
 
@@ -65,6 +69,24 @@ public final class BenchDriver {
 			worldTicks = 0;
 		}
 		tickHolds(client);
+		if (statsTestIds != null) {
+			int ready = 0;
+			int unknown = 0;
+			for (String id : statsTestIds) {
+				StatsLoader.Entry entry = StatsLoader.lookup(id);
+				if (entry.state == StatsLoader.State.READY) {
+					ready++;
+				} else if (entry.state == StatsLoader.State.UNKNOWN) {
+					unknown++;
+				}
+			}
+			long elapsed = System.currentTimeMillis() - statsTestStart;
+			if (ready + unknown == statsTestIds.size() || elapsed > 60_000) {
+				AxolotlClient.LOGGER.info("[Extras] BENCH statstest: " + ready + " ready, " + unknown + " unknown of "
+					+ statsTestIds.size() + " after " + elapsed + " ms");
+				statsTestIds = null;
+			}
+		}
 		if (eyeLogTicks > 0 && client.player != null && client.gameRenderer instanceof EyeProbe) {
 			eyeLogTicks--;
 			AxolotlClient.LOGGER.info(String.format(Locale.ROOT, "[Extras] BENCH eye sneaking=%b real=%.3f shown=%.3f", client.player.isSneaking(),
@@ -136,6 +158,17 @@ public final class BenchDriver {
 				break;
 			case "swingblock":
 				swingBlock(client, arg);
+				break;
+			case "statstest":
+				// two real accounts (Notch and the Hypixel account) and sixteen random ids that no player has
+				statsTestIds = new java.util.ArrayList<>();
+				statsTestIds.add("069a79f444e94726a5befca90e38aaf5");
+				statsTestIds.add("f7c77d999f154a66a87dc4a51ef30d19");
+				java.util.Random random = new java.util.Random(7);
+				for (int i = 0; i < 16; i++) {
+					statsTestIds.add(String.format("%016x%016x", random.nextLong(), random.nextLong()));
+				}
+				statsTestStart = System.currentTimeMillis();
 				break;
 			case "eyelog":
 				if (arg.matches("[0-9]{1,3}")) {

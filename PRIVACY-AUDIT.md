@@ -70,6 +70,14 @@ clone, the log should have no "Sucessfully logged in at AxolotlClient" and no "E
 Hypixel session in that instance (21:59, before the lock existed) does have "Error while logging in!", the call to the
 server failing.
 
+## Added by the add-on: Reliable Bed Wars Stats (2026-11-07)
+
+With the key in your AxolotlClient settings, the add-on's own stats loader (`StatsLoader`) sends one request per player of the
+Bed Wars game you are in to `https://api.hypixel.net/v2/player?uuid=...`, with your key in the `API-Key` header. That is the same
+request AxolotlClient makes with the same key (its `HypixelAbstractionLayer`), just reliably and in parallel. It contacts nothing
+else, sends no UUID to anyone but Hypixel, and logs nothing that identifies a player (the log only says if Hypixel refused the key
+or asked to slow down). The switch "Reliable Bed Wars Stats" turns it off, and with no key set it makes no request at all.
+
 ## Not covered
 
 - Prism Launcher and vanilla Minecraft's own network traffic (Mojang session, skins, Prism's metadata downloads).

@@ -25,7 +25,7 @@ import net.minecraft.text.LiteralText;
 public final class StatAnnouncer {
 
 	/** After this many ticks players whose stats are still missing are shown as "?". */
-	private static final int WAIT_TICKS = 200;
+	private static final int WAIT_TICKS = 300;
 	/** Give up if the game never became ready (for example the Bed Wars module is off). */
 	private static final int GIVE_UP_TICKS = 600;
 
@@ -77,7 +77,8 @@ public final class StatAnnouncer {
 			for (BedwarsPlayer p : players.values()) {
 				BedwarsPlayerStats s = p.getStats();
 				// made-up numbers count as not loaded: the real ones usually arrive a second or two later
-				if (s == null || !(s instanceof StatsOrigin) || ((StatsOrigin) s).axolotlextras$isGenerated()) {
+				boolean real = s != null && s instanceof StatsOrigin && !((StatsOrigin) s).axolotlextras$isGenerated();
+				if (!real && !settledWithoutStats(p)) {
 					allLoaded = false;
 				}
 			}
@@ -124,6 +125,15 @@ public final class StatAnnouncer {
 		}
 		for (StringBuilder line : lines.values()) {
 			client.inGameHud.getChatHud().addMessage(new LiteralText(line.toString()));
+		}
+	}
+
+	/** A player the loader found no stats for (nicked, or no valid key) will not get any, so there is no point in waiting. */
+	private static boolean settledWithoutStats(BedwarsPlayer p) {
+		try {
+			return StatsLoader.isSettled(p.getProfile().getProfile().getId().toString().replace("-", ""));
+		} catch (RuntimeException e) {
+			return false;
 		}
 	}
 

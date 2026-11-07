@@ -8,10 +8,10 @@ package io.github.alexweber64.axolotlextras.bedwars;
 public final class StatsRetry {
 
 	/** Ask again every this many calls of the player's tick. */
-	public static final int EVERY = 10;
+	public static final int EVERY = 5;
 
 	/** Give up after this many asks (a nicked player or a failed request never gets real stats). */
-	public static final int MAX_ASKS = 60;
+	public static final int MAX_ASKS = 600;
 
 	private int calls;
 	private int asks;
