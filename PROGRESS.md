@@ -183,6 +183,14 @@ Last updated: 2026-11-07.
   thread for about a second. `FreezeWatch` now also starts a watcher thread that writes the game thread's stack to
   latest.log at 600 ms and 900 ms into a freeze ("[Extras] Freeze going on ..."), to show what it is stuck in. Built, not
   yet deployed.
+- Git history (2026-11-07): the folder is now a git repo, pushed to the private GitHub repo
+  AlexWeber64/legacy-fabric-1.8.9-client. There was no version control before, so the history was rebuilt by replaying every
+  recorded file change from the two Claude Code conversations in order (file writes and edits directly, the file-editing parts
+  of shell commands in a scratch copy), with the real time of each change; the replay ends byte for byte at the files as they
+  were. 30 commits, one per piece of work, then this one. `libs/` (AxolotlClient's jars) and CLAUDE.md are not in the repo.
+  CI (GitHub Actions, `.github/workflows/build.yml`) builds and tests each commit after the first; the workflow was added to
+  every one of them, and each was pushed on its own so each shows its build result. The first commit has no build file fix yet
+  (`archivesBaseName`, fixed in the second), so it has no CI.
 
 ## In progress
 

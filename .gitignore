@@ -4,3 +4,5 @@ build-first.log
 .idea/
 *.iml
 run/
+# AxolotlClient jars to compile against, see "Building" in the README
+libs/

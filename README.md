@@ -51,8 +51,17 @@ sprints and jumps in circles, particles are spawned around the player, and 64 cl
 gradlew build
 ```
 
-Needs JDK 17 or newer to run Gradle (the mod itself targets Java 8). `libs/` holds jars taken from the AxolotlClient 3.0.6+1.8.9
-release, used only to compile against.
+Needs JDK 17 or newer to run Gradle (the mod itself targets Java 8). The build compiles against AxolotlClient's jars in `libs/`,
+which are not in this repository (they are AxolotlClient's, not ours to redistribute). Put these four there first, all taken
+from the AxolotlClient 3.0.6+1.8.9 release jar on Modrinth:
+
+- `AxolotlClient-3.0.6+1.8.9.jar`: the release jar itself.
+- `AxolotlClient-3.0.6.jar` and `AxolotlClient-config-2.1.13+1.8.9.jar`: inside it, under `META-INF/jars/`.
+- `AxolotlClientConfig-common-2.1.13.jar`: inside `AxolotlClient-config-2.1.13+1.8.9.jar`, under `META-INF/jars/`.
+
+GitHub Actions builds every push the same way (`.github/workflows/build.yml`): it downloads the release jar from Modrinth,
+checks its SHA-256, unpacks the nested jars into `libs/`, runs `gradlew build` (with the unit tests) and keeps the built jar
+as an artifact of the run.
 
 ## How it plugs in
 
