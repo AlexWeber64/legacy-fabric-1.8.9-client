@@ -11,6 +11,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.alexweber64.axolotlextras.ExtrasModule;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
+import io.github.axolotlclient.AxolotlClientConfig.options.EnumOption;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.Window;
@@ -251,7 +252,7 @@ public final class HackRenderer {
 			BedDefense.Cover cover = info.obsidian;
 			label.text = TeamGuess.colored(info.team) + " §5obby " + (cover.complete() ? "§a" : "§e")
 				+ cover.covered + "/" + cover.spots + " §7" + BedTracker.distance(client, info);
-			label.raise = ExtrasModule.BED_DEFENSE.get() ? 24 : 0;
+			label.raise = ExtrasModule.BED_DEFENSE.get() ? 10 * size(ExtrasModule.SIZE_BEDS) + 6 * size(ExtrasModule.SIZE_WAYPOINTS) + 8 : 0;
 			labels.add(label);
 		}
 		return labels;
@@ -424,7 +425,9 @@ public final class HackRenderer {
 			HudLabel label = new HudLabel(player.prevTickX + (player.x - player.prevTickX) * t,
 				player.prevTickY + (player.y - player.prevTickY) * t + player.height + 0.5,
 				player.prevTickZ + (player.z - player.prevTickZ) * t);
-			label.raise = ExtrasModule.NAMETAGS.get() ? 18 : 14; // above the name tag
+			float armorSize = size(ExtrasModule.SIZE_ARMOR);
+			// Above the name tag: half of each label's height plus a gap (the game's own name tag when ours is off).
+			label.raise = ExtrasModule.NAMETAGS.get() ? 6 * size(ExtrasModule.SIZE_NAMETAGS) + 10 * armorSize + 2 : 4 + 10 * armorSize;
 			ItemStack armor = bestArmor(player);
 			if (armor != null) {
 				int protection = protection(player);
@@ -514,22 +517,21 @@ public final class HackRenderer {
 		}
 		long t = WATCH.start();
 		List<HudLabel> labels = new ArrayList<>();
-		labels.addAll(generatorLabels);
-		labels.addAll(BEDS.labels());
-		labels.addAll(waypointLabels);
-		labels.addAll(PROJECTILES.labels());
+		add(labels, generatorLabels, ExtrasModule.SIZE_GENERATORS);
+		add(labels, BEDS.labels(), ExtrasModule.SIZE_BEDS);
+		add(labels, waypointLabels, ExtrasModule.SIZE_WAYPOINTS);
+		add(labels, PROJECTILES.labels(), ExtrasModule.SIZE_PROJECTILES);
 		if (ExtrasModule.NAMETAGS.get()) {
-			labels.addAll(nametags(client));
+			add(labels, nametags(client), ExtrasModule.SIZE_NAMETAGS);
 		}
 		if (ExtrasModule.ENEMY_ARMOR.get()) {
-			labels.addAll(armorLabels(client));
+			add(labels, armorLabels(client), ExtrasModule.SIZE_ARMOR);
 		}
 		if (labels.isEmpty()) {
 			WATCH.end("labels (drawing)", t);
 			return;
 		}
 		int scale = new Window(client).getScaleFactor();
-		float size = (float) HackMath.optionNumber(ExtrasModule.LABEL_SCALE.get(), 100) / 100f;
 		// The farthest first, so nearer labels end up on top.
 		Collections.sort(labels, (a, b) -> Double.compare(distanceSq(b), distanceSq(a)));
 		for (HudLabel label : labels) {
@@ -537,8 +539,8 @@ public final class HackRenderer {
 			if (screen != null) {
 				GlStateManager.pushMatrix();
 				GlStateManager.translate((float) (screen[0] / scale),
-					(float) ((client.height - screen[1]) / scale) - label.raise * size, 0f);
-				GlStateManager.scale(size, size, 1f);
+					(float) ((client.height - screen[1]) / scale) - label.raise, 0f);
+				GlStateManager.scale(label.scale, label.scale, 1f);
 				drawLabel(client, label, 0, 0);
 				GlStateManager.popMatrix();
 			}
@@ -546,6 +548,19 @@ public final class HackRenderer {
 		GlStateManager.disableLighting();
 		GlStateManager.color(1f, 1f, 1f, 1f);
 		WATCH.end("labels (drawing)", t);
+	}
+
+	private static void add(List<HudLabel> into, List<HudLabel> labels, EnumOption size) {
+		float scale = size(size);
+		for (HudLabel label : labels) {
+			label.scale = scale;
+			into.add(label);
+		}
+	}
+
+	/** A Label Sizes option as a factor ("axolotlextras.scale.150" is 1.5). */
+	private static float size(EnumOption option) {
+		return (float) HackMath.optionNumber(option.get(), 100) / 100f;
 	}
 
 	private static double distanceSq(HudLabel label) {

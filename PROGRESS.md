@@ -172,6 +172,12 @@ Last updated: 2026-11-07.
   - 83 tests pass. Built, not yet run in game. To check: labels show at generators and beds, and what the freeze lines say.
   - Deployed to the play clone 1.8.9-lunarlike on 2026-11-07. The previous jar (round 4) is in mods-backup as
     axolotl-extras-0.1.0.before-hacks-round5.jar.
+- Label Sizes (2026-11-07): the single Label Size option is replaced by one size per label type (Generator Counts, Bed
+  Defense, Obsidian Waypoints, Nametags, Enemy Armor, Fireballs and Pearls), each 25%, 50%, 75%, 100%, 125%, 150% or 200%, in a
+  new Label Sizes section of the Hacks menu. Stacked labels (waypoint text over the bed defense label, enemy armor over the
+  nametag) are moved up by half of each label's scaled height, so they do not overlap at any mix of sizes. 83 tests pass.
+  Deployed to the play clone 1.8.9-lunarlike on 2026-11-07; the previous jar (round 5) is in mods-backup as
+  axolotl-extras-0.1.0.before-label-sizes.jar.
 
 ## In progress
 

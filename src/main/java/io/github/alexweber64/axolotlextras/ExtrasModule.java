@@ -147,9 +147,31 @@ public class ExtrasModule extends AbstractModule {
 	/** Trajectories while holding a pearl, snowball or egg. */
 	public static final BooleanOption TRAJECTORY_THROWN = new BooleanOption("axolotlextras.trajectoryThrown", true);
 
-	/** The size of the hack labels (generators, beds, nametags, armor, projectiles). */
-	public static final EnumOption LABEL_SCALE = new EnumOption("axolotlextras.labelScale",
-		new String[] {"axolotlextras.scale.75", "axolotlextras.scale.100", "axolotlextras.scale.125", "axolotlextras.scale.150"},
+	/** The sizes a hack label can have, in percent. */
+	private static final String[] LABEL_SIZES = {"axolotlextras.scale.25", "axolotlextras.scale.50",
+		"axolotlextras.scale.75", "axolotlextras.scale.100",
+		"axolotlextras.scale.125", "axolotlextras.scale.150", "axolotlextras.scale.200"};
+
+	/** The size of the Generator Counts labels. */
+	public static final EnumOption SIZE_GENERATORS = new EnumOption("axolotlextras.sizeGenerators", LABEL_SIZES,
+		"axolotlextras.scale.100");
+
+	/** The size of the Bed Defense labels. */
+	public static final EnumOption SIZE_BEDS = new EnumOption("axolotlextras.sizeBeds", LABEL_SIZES, "axolotlextras.scale.100");
+
+	/** The size of the obsidian waypoint labels. */
+	public static final EnumOption SIZE_WAYPOINTS = new EnumOption("axolotlextras.sizeWaypoints", LABEL_SIZES,
+		"axolotlextras.scale.100");
+
+	/** The size of the nametags. */
+	public static final EnumOption SIZE_NAMETAGS = new EnumOption("axolotlextras.sizeNametags", LABEL_SIZES,
+		"axolotlextras.scale.100");
+
+	/** The size of the Enemy Armor labels. */
+	public static final EnumOption SIZE_ARMOR = new EnumOption("axolotlextras.sizeArmor", LABEL_SIZES, "axolotlextras.scale.100");
+
+	/** The size of the fireball and pearl labels. */
+	public static final EnumOption SIZE_PROJECTILES = new EnumOption("axolotlextras.sizeProjectiles", LABEL_SIZES,
 		"axolotlextras.scale.100");
 
 	/** 1.7: the sword, food and bow animations keep swinging when you swing while holding right click. */
@@ -243,7 +265,7 @@ public class ExtrasModule extends AbstractModule {
 			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_RARE, GEN_BASE, BED_DEFENSE,
 			BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
-			LABEL_SCALE, NO_BLINDNESS);
+			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS);
 		AxolotlClient.CONFIG.addCategory(HACKS);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD

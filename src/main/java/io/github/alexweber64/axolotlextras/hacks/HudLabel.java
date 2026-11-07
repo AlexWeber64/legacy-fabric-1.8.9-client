@@ -13,7 +13,9 @@ final class HudLabel {
 	/** Shown before the icons; may hold colour codes. */
 	String text;
 	/** Moves the label up on screen by this many GUI pixels (to clear a name tag, for example). */
-	int raise;
+	float raise;
+	/** The size of the label (1 is normal), from its Label Sizes option. */
+	float scale = 1f;
 
 	HudLabel(double x, double y, double z) {
 		this.x = x;
