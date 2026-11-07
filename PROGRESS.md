@@ -105,6 +105,16 @@ Last updated: 2026-11-05.
 
 ## In progress
 
+- Stats showing "?" for most players at the start of a Bed Wars game (reported 2026-11-07): cause found in AxolotlClient's code,
+  fix written and built, NOT installed yet (the game was running) and not seen on Hypixel. `BedwarsPlayer.tick` asks for a
+  player's stats once, `HypixelAbstractionLayer.getPlayer` waits one microsecond for the web request, and when the answer is not
+  there yet it stores made-up stats (`generateFake`) for good and never asks again (flag `triedStats`). Only players whose data was
+  fetched earlier (yourself, players seen in the lobby with Level Head on) get real numbers; the Add-on hid the made-up ones, which
+  is why they show as "?". It is not the key: it is a normal Hypixel API key, the same public API the stats websites use (they have
+  approved keys with higher limits), and a request with it showed 237 of 300 requests left. The fix (`BedwarsPlayerMixin`, with
+  `StatsRetry` and a unit test) asks again every 10 ticks, up to 60 times, while a player only has made-up numbers, and swaps in the
+  real ones when the request has finished. The chat stats list now waits up to 10 seconds for real numbers before printing. Nicked
+  players have no stats and stay "?". AxolotlClient also limits itself to 56 lookups per minute.
 - Nothing is being built right now. The UI restyle (Modern Menus, Extras Menu, HUD corners, Quickplay) is done, see Completed.
 - Raw mouse input: the cause of the "enhanced pointer precision" feel was fixed (AxolotlClient's own option, now kept off).
   Still unconfirmed: whether it feels right now, and the possible double counting of mouse devices by the Raw Input mod

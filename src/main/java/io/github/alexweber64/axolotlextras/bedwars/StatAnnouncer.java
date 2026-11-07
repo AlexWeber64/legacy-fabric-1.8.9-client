@@ -25,7 +25,7 @@ import net.minecraft.text.LiteralText;
 public final class StatAnnouncer {
 
 	/** After this many ticks players whose stats are still missing are shown as "?". */
-	private static final int WAIT_TICKS = 100;
+	private static final int WAIT_TICKS = 200;
 	/** Give up if the game never became ready (for example the Bed Wars module is off). */
 	private static final int GIVE_UP_TICKS = 600;
 
@@ -75,7 +75,9 @@ public final class StatAnnouncer {
 			}
 			boolean allLoaded = true;
 			for (BedwarsPlayer p : players.values()) {
-				if (p.getStats() == null) {
+				BedwarsPlayerStats s = p.getStats();
+				// made-up numbers count as not loaded: the real ones usually arrive a second or two later
+				if (s == null || !(s instanceof StatsOrigin) || ((StatsOrigin) s).axolotlextras$isGenerated()) {
 					allLoaded = false;
 				}
 			}
