@@ -191,6 +191,13 @@ Last updated: 2026-11-07.
   CI (GitHub Actions, `.github/workflows/build.yml`) builds and tests each commit after the first; the workflow was added to
   every one of them, and each was pushed on its own so each shows its build result. The first commit has no build file fix yet
   (`archivesBaseName`, fixed in the second), so it has no CI.
+- Label size sliders (2026-11-08): the six Label Sizes options are sliders now (AxolotlClient `IntegerOption`, 25 to 200
+  percent), drawn as a bar like FOV both in AxolotlClient's menu and in the Hacks menu (`ExtrasScreen` got a slider: click or
+  drag on the bar, steps of 5). New option names (`axolotlextras.labelSize...`), because AxolotlClient cannot read the old
+  text values into a number option; on the first tick after start the old button values in AxolotlClient.json are carried
+  over to sliders that were never saved (`LabelSizeMigration`, 4 tests). 87 tests pass. Built, not yet seen in game.
+  Deployed to the play clone 1.8.9-lunarlike on 2026-11-08 together with the freeze stack logger; the previous jar (label size
+  buttons) is in mods-backup as axolotl-extras-0.1.0.before-label-sliders.jar.
 
 ## In progress
 

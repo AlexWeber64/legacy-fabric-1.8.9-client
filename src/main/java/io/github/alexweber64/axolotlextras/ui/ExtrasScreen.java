@@ -10,6 +10,7 @@ import io.github.alexweber64.axolotlextras.ExtrasModule;
 import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.EnumOption;
+import io.github.axolotlclient.AxolotlClientConfig.options.IntegerOption;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import org.lwjgl.input.Keyboard;
@@ -33,6 +34,9 @@ public class ExtrasScreen extends Screen {
 	private static final int ROW_HEIGHT = 42;
 	private static final int ROW_GAP = 4;
 	private static final int HEADING_HEIGHT = 20;
+	private static final int SLIDER_WIDTH = 110;
+	private static final int KNOB_WIDTH = 8;
+	private static final int SLIDER_STEP = 5;
 
 	/** One line of the list: a section heading or an option. */
 	private static final class Entry {
@@ -51,6 +55,9 @@ public class ExtrasScreen extends Screen {
 	private final Map<Object, Float> knob = new HashMap<>();
 	private String search = "";
 	private int scroll;
+	/** The slider being dragged, and the left edge of its bar. */
+	private IntegerOption dragging;
+	private int dragLeft;
 	private int panelLeft, panelTop, panelWidth, panelHeight, listTop, listBottom;
 
 	public ExtrasScreen(Screen parent) {
@@ -82,7 +89,18 @@ public class ExtrasScreen extends Screen {
 	// ---------------------------------------------------------------------------------------------------- option access
 
 	private static String name(Object option) {
-		return option instanceof BooleanOption ? ((BooleanOption) option).getName() : ((EnumOption) option).getName();
+		if (option instanceof BooleanOption) {
+			return ((BooleanOption) option).getName();
+		}
+		if (option instanceof IntegerOption) {
+			return ((IntegerOption) option).getName();
+		}
+		return ((EnumOption) option).getName();
+	}
+
+	/** The unit shown after a slider's value: the label sizes are percentages. */
+	private static String unit(IntegerOption option) {
+		return option.getName().contains("labelSize") ? "%" : "";
 	}
 
 	private static String label(Object option) {
@@ -209,7 +227,7 @@ public class ExtrasScreen extends Screen {
 	private void drawOption(Object option, int left, int top, int width) {
 		int controlRight = left + width - 10;
 		String desc = description(option);
-		int textWidth = width - 100;
+		int textWidth = width - (option instanceof IntegerOption ? SLIDER_WIDTH + 60 : 100);
 		client.textRenderer.draw(label(option), left + 10, top + (desc.isEmpty() ? 17 : 6), TEXT, false);
 		if (!desc.isEmpty()) {
 			List<String> lines = client.textRenderer.wrapLines(desc, textWidth);
@@ -235,6 +253,18 @@ public class ExtrasScreen extends Screen {
 			RoundedRect.fillShape(x, y, w, h, RoundedRect.PANEL, blend(OFF, ACCENT, now));
 			int knobX = x + 2 + Math.round(now * (w - 14 - 4));
 			RoundedRect.fillShape(knobX, y + 2, 14, 12, RoundedRect.SMALL, 0xFFFFFFFF);
+		} else if (option instanceof IntegerOption) {
+			// A bar like the FOV slider: filled up to the knob, the value on its left.
+			IntegerOption slider = (IntegerOption) option;
+			int barLeft = controlRight - SLIDER_WIDTH;
+			int middle = top + ROW_HEIGHT / 2;
+			float t = fraction(slider);
+			int knobX = barLeft + Math.round(t * (SLIDER_WIDTH - KNOB_WIDTH));
+			RoundedRect.fillShape(barLeft, middle - 2, SLIDER_WIDTH, 4, new int[] {1}, OFF);
+			RoundedRect.fillShape(barLeft, middle - 2, knobX - barLeft + KNOB_WIDTH / 2, 4, new int[] {1}, ACCENT);
+			RoundedRect.fillShape(knobX, middle - 8, KNOB_WIDTH, 16, RoundedRect.SMALL, dragging == slider ? 0xFFE6E9F0 : 0xFFFFFFFF);
+			String value = slider.get() + unit(slider);
+			client.textRenderer.draw(value, barLeft - 8 - client.textRenderer.getStringWidth(value), middle - 4, TEXT, false);
 		} else {
 			String value = I18n.translate(((EnumOption) option).get());
 			int w = Math.max(60, client.textRenderer.getStringWidth(value) + 16);
@@ -255,6 +285,20 @@ public class ExtrasScreen extends Screen {
 		int barHeight = Math.max(20, visibleHeight * visibleHeight / total);
 		int barTop = listTop + (int) ((long) (visibleHeight - barHeight) * scroll / (total - visibleHeight));
 		RoundedRect.fillShape(trackLeft, barTop, 4, barHeight, new int[] {1}, 0x66FFFFFF);
+	}
+
+	/** Where a slider's value sits between its minimum (0) and maximum (1). */
+	private static float fraction(IntegerOption slider) {
+		int min = slider.getMin(), max = slider.getMax();
+		return max <= min ? 0f : Math.max(0f, Math.min(1f, (slider.get() - min) / (float) (max - min)));
+	}
+
+	/** Sets the slider being dragged from the mouse position, in steps of {@link #SLIDER_STEP}. */
+	private void slideTo(int mouseX) {
+		int min = dragging.getMin(), max = dragging.getMax();
+		float t = Math.max(0f, Math.min(1f, (mouseX - dragLeft - KNOB_WIDTH / 2f) / (float) (SLIDER_WIDTH - KNOB_WIDTH)));
+		int value = Math.round((min + t * (max - min)) / SLIDER_STEP) * SLIDER_STEP;
+		dragging.set(Math.max(min, Math.min(max, value)));
 	}
 
 	private static int blend(int from, int to, float t) {
@@ -280,6 +324,14 @@ public class ExtrasScreen extends Screen {
 			if (e.option != null && mouseY >= y && mouseY < y + ROW_HEIGHT && mouseX >= rowLeft && mouseX < rowLeft + rowWidth) {
 				if (e.option instanceof BooleanOption) {
 					((BooleanOption) e.option).toggle();
+				} else if (e.option instanceof IntegerOption) {
+					// Only the bar takes clicks (a click on the text does nothing), then dragging moves the knob.
+					int barLeft = rowLeft + rowWidth - 10 - SLIDER_WIDTH;
+					if (mouseX >= barLeft - 6) {
+						dragging = (IntegerOption) e.option;
+						dragLeft = barLeft;
+						slideTo(mouseX);
+					}
 				} else {
 					((EnumOption) e.option).next();
 				}
@@ -287,6 +339,18 @@ public class ExtrasScreen extends Screen {
 			}
 			y += h;
 		}
+	}
+
+	@Override
+	protected void mouseDragged(int mouseX, int mouseY, int button, long time) {
+		if (dragging != null && button == 0) {
+			slideTo(mouseX);
+		}
+	}
+
+	@Override
+	protected void mouseReleased(int mouseX, int mouseY, int button) {
+		dragging = null;
 	}
 
 	@Override

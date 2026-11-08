@@ -11,7 +11,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.alexweber64.axolotlextras.ExtrasModule;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
-import io.github.axolotlclient.AxolotlClientConfig.options.EnumOption;
+import io.github.axolotlclient.AxolotlClientConfig.options.IntegerOption;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.Window;
@@ -550,7 +550,7 @@ public final class HackRenderer {
 		WATCH.end("labels (drawing)", t);
 	}
 
-	private static void add(List<HudLabel> into, List<HudLabel> labels, EnumOption size) {
+	private static void add(List<HudLabel> into, List<HudLabel> labels, IntegerOption size) {
 		float scale = size(size);
 		for (HudLabel label : labels) {
 			label.scale = scale;
@@ -558,9 +558,10 @@ public final class HackRenderer {
 		}
 	}
 
-	/** A Label Sizes option as a factor ("axolotlextras.scale.150" is 1.5). */
-	private static float size(EnumOption option) {
-		return (float) HackMath.optionNumber(option.get(), 100) / 100f;
+	/** A Label Sizes slider as a factor (150 percent is 1.5). */
+	private static float size(IntegerOption option) {
+		Integer percent = option.get();
+		return percent == null ? 1f : percent / 100f;
 	}
 
 	private static double distanceSq(HudLabel label) {

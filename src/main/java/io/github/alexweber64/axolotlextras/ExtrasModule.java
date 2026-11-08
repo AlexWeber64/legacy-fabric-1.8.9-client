@@ -16,6 +16,7 @@ import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.EnumOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.GenericOption;
+import io.github.axolotlclient.AxolotlClientConfig.options.IntegerOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.OptionCategory;
 import io.github.axolotlclient.modules.AbstractModule;
 import io.github.axolotlclient.modules.freelook.Freelook;
@@ -147,32 +148,30 @@ public class ExtrasModule extends AbstractModule {
 	/** Trajectories while holding a pearl, snowball or egg. */
 	public static final BooleanOption TRAJECTORY_THROWN = new BooleanOption("axolotlextras.trajectoryThrown", true);
 
-	/** The sizes a hack label can have, in percent. */
-	private static final String[] LABEL_SIZES = {"axolotlextras.scale.25", "axolotlextras.scale.50",
-		"axolotlextras.scale.75", "axolotlextras.scale.100",
-		"axolotlextras.scale.125", "axolotlextras.scale.150", "axolotlextras.scale.200"};
+	/** Label sizes are sliders in percent, from {@link #LABEL_SIZE_MIN} to {@link #LABEL_SIZE_MAX}. */
+	public static final int LABEL_SIZE_MIN = LabelSizeMigration.MIN, LABEL_SIZE_MAX = LabelSizeMigration.MAX;
 
-	/** The size of the Generator Counts labels. */
-	public static final EnumOption SIZE_GENERATORS = new EnumOption("axolotlextras.sizeGenerators", LABEL_SIZES,
-		"axolotlextras.scale.100");
+	/** The size of the Generator Counts labels, in percent. */
+	public static final IntegerOption SIZE_GENERATORS = labelSize("axolotlextras.labelSizeGenerators");
 
-	/** The size of the Bed Defense labels. */
-	public static final EnumOption SIZE_BEDS = new EnumOption("axolotlextras.sizeBeds", LABEL_SIZES, "axolotlextras.scale.100");
+	/** The size of the Bed Defense labels, in percent. */
+	public static final IntegerOption SIZE_BEDS = labelSize("axolotlextras.labelSizeBeds");
 
-	/** The size of the obsidian waypoint labels. */
-	public static final EnumOption SIZE_WAYPOINTS = new EnumOption("axolotlextras.sizeWaypoints", LABEL_SIZES,
-		"axolotlextras.scale.100");
+	/** The size of the obsidian waypoint labels, in percent. */
+	public static final IntegerOption SIZE_WAYPOINTS = labelSize("axolotlextras.labelSizeWaypoints");
 
-	/** The size of the nametags. */
-	public static final EnumOption SIZE_NAMETAGS = new EnumOption("axolotlextras.sizeNametags", LABEL_SIZES,
-		"axolotlextras.scale.100");
+	/** The size of the nametags, in percent. */
+	public static final IntegerOption SIZE_NAMETAGS = labelSize("axolotlextras.labelSizeNametags");
 
-	/** The size of the Enemy Armor labels. */
-	public static final EnumOption SIZE_ARMOR = new EnumOption("axolotlextras.sizeArmor", LABEL_SIZES, "axolotlextras.scale.100");
+	/** The size of the Enemy Armor labels, in percent. */
+	public static final IntegerOption SIZE_ARMOR = labelSize("axolotlextras.labelSizeArmor");
 
-	/** The size of the fireball and pearl labels. */
-	public static final EnumOption SIZE_PROJECTILES = new EnumOption("axolotlextras.sizeProjectiles", LABEL_SIZES,
-		"axolotlextras.scale.100");
+	/** The size of the fireball and pearl labels, in percent. */
+	public static final IntegerOption SIZE_PROJECTILES = labelSize("axolotlextras.labelSizeProjectiles");
+
+	private static IntegerOption labelSize(String name) {
+		return new IntegerOption(name, 100, LABEL_SIZE_MIN, LABEL_SIZE_MAX);
+	}
 
 	/** 1.7: the sword, food and bow animations keep swinging when you swing while holding right click. */
 	public static final BooleanOption OLD_BLOCK_HITTING = new BooleanOption("axolotlextras.oldBlockHitting", false);
@@ -245,6 +244,8 @@ public class ExtrasModule extends AbstractModule {
 
 	/** True when the Raw Input mod is installed, which makes AxolotlClient's own raw mouse option redundant and harmful. */
 	private static boolean rawMouseGuard;
+	/** True once the label sizes from the old buttons have been carried over to the sliders (see {@link LabelSizeMigration}). */
+	private static boolean labelSizesMigrated;
 
 	private static KeyBinding quickplayKey;
 	private static KeyBinding menuKey;
@@ -321,6 +322,7 @@ public class ExtrasModule extends AbstractModule {
 		});
 
 		rawMouseGuard = FabricLoader.getInstance().isModLoaded("rawinput");
+		labelSizesMigrated = false;
 
 		verifyPatches();
 	}
@@ -380,8 +382,47 @@ public class ExtrasModule extends AbstractModule {
 		}
 	}
 
+	/** Sets the size sliders to the sizes picked with the old size buttons, if the sliders were never saved (once per start). */
+	private static void carryOverLabelSizes() {
+		java.nio.file.Path config = FabricLoader.getInstance().getConfigDir().resolve("AxolotlClient.json");
+		if (!java.nio.file.Files.exists(config)) {
+			return;
+		}
+		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(config, java.nio.charset.StandardCharsets.UTF_8)) {
+			com.google.gson.JsonElement root = new com.google.gson.JsonParser().parse(reader);
+			if (!root.isJsonObject() || !root.getAsJsonObject().has(HACKS.getName())) {
+				return;
+			}
+			java.util.Map<String, String> saved = new java.util.HashMap<>();
+			for (java.util.Map.Entry<String, com.google.gson.JsonElement> e
+				: root.getAsJsonObject().getAsJsonObject(HACKS.getName()).entrySet()) {
+				if (e.getValue().isJsonPrimitive()) {
+					saved.put(e.getKey(), e.getValue().getAsString());
+				}
+			}
+			java.util.Map<String, Integer> values = LabelSizeMigration.carriedOver(saved);
+			for (IntegerOption slider : new IntegerOption[] {SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR,
+				SIZE_PROJECTILES}) {
+				Integer percent = values.get(slider.getName());
+				if (percent != null) {
+					slider.set(percent);
+				}
+			}
+			if (!values.isEmpty()) {
+				AxolotlClient.LOGGER.info("[Extras] Label sizes carried over to the sliders: " + values);
+			}
+		} catch (Exception e) {
+			AxolotlClient.LOGGER.warn("[Extras] Could not carry the old label sizes over: " + e);
+		}
+	}
+
 	@Override
 	public void tick() {
+		if (!labelSizesMigrated) {
+			// The config is loaded by now (it is loaded after init), so the sizes picked with the old buttons can be carried over.
+			labelSizesMigrated = true;
+			carryOverLabelSizes();
+		}
 		if (rawMouseGuard && AxolotlClient.CONFIG.rawMouseInput.get()) {
 			// AxolotlClient's own "Raw Mouse Input" is not raw input: it rescales the movement and cuts it to whole numbers,
 			// so slow movements lose most of their distance while fast ones keep theirs (it feels like acceleration).
