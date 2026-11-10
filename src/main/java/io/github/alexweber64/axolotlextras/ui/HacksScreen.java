@@ -22,5 +22,6 @@ public class HacksScreen extends ExtrasScreen {
 		section("axolotlextras.section.labelSizes", ExtrasModule.SIZE_GENERATORS, ExtrasModule.SIZE_BEDS,
 			ExtrasModule.SIZE_WAYPOINTS, ExtrasModule.SIZE_NAMETAGS, ExtrasModule.SIZE_ARMOR, ExtrasModule.SIZE_PROJECTILES);
 		section("axolotlextras.section.vision", ExtrasModule.NO_BLINDNESS);
+		section("axolotlextras.section.hackKeys", ExtrasModule.HACK_KEY_NOTE);
 	}
 }

@@ -1,8 +1,12 @@
 package io.github.alexweber64.axolotlextras;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.github.alexweber64.axolotlextras.bedwars.ChatStat;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
+import io.github.alexweber64.axolotlextras.hacks.HackPanic;
 import io.github.alexweber64.axolotlextras.hacks.HackRenderer;
 import io.github.alexweber64.axolotlextras.perf.BenchDriver;
 import io.github.alexweber64.axolotlextras.perf.FrameBench;
@@ -28,6 +32,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.legacyfabric.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.LiteralText;
 import org.lwjgl.input.Keyboard;
 
@@ -148,6 +153,16 @@ public class ExtrasModule extends AbstractModule {
 	/** Trajectories while holding a pearl, snowball or egg. */
 	public static final BooleanOption TRAJECTORY_THROWN = new BooleanOption("axolotlextras.trajectoryThrown", true);
 
+	/** A short note above the hotbar when a hack key is used (the emergency toggle, G and H by default, or a toggle key). */
+	public static final BooleanOption HACK_KEY_NOTE = new BooleanOption("axolotlextras.hackKeyNote", true);
+
+	/**
+	 * The main switch of every hack: what the emergency toggle turns off and back on, and what gets a toggle key. Their
+	 * fine-tuning switches (style, sounds, sizes) are left out: they do nothing while the hack is off.
+	 */
+	public static final BooleanOption[] HACK_MAIN_SWITCHES = {PLAYER_ESP, ESP_TRACERS, NAMETAGS, ENEMY_ARMOR, GENERATOR_COUNTS,
+		BED_DEFENSE, OBSIDIAN_ALERT, RUSH_ALERT, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS};
+
 	/** Label sizes are sliders in percent, from {@link #LABEL_SIZE_MIN} to {@link #LABEL_SIZE_MAX}. */
 	public static final int LABEL_SIZE_MIN = LabelSizeMigration.MIN, LABEL_SIZE_MAX = LabelSizeMigration.MAX;
 
@@ -248,6 +263,12 @@ public class ExtrasModule extends AbstractModule {
 	private static boolean labelSizesMigrated;
 
 	private static KeyBinding quickplayKey;
+	/** The emergency toggle: every hack off (G), and back on as they were (H). */
+	private static KeyBinding hacksOffKey, hacksOnKey;
+	/** One toggle key per {@link #HACK_MAIN_SWITCHES} entry, unbound until set in Controls. */
+	private static KeyBinding[] hackToggleKeys = new KeyBinding[0];
+	private static final String HACK_KEY_CATEGORY = "category.axolotlextras.hacks";
+	private static HackPanic hackPanic;
 	private static KeyBinding menuKey;
 	private static ResourceCounterHud resourceCounter;
 	private static UpgradeDisplayHud upgradeDisplay;
@@ -266,7 +287,7 @@ public class ExtrasModule extends AbstractModule {
 			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_RARE, GEN_BASE, BED_DEFENSE,
 			BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
-			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS);
+			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, HACK_KEY_NOTE);
 		AxolotlClient.CONFIG.addCategory(HACKS);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD
@@ -286,6 +307,22 @@ public class ExtrasModule extends AbstractModule {
 
 		quickplayKey = new KeyBinding("key.axolotlextras.quickplay", Keyboard.KEY_Y, "category.axolotlclient");
 		KeyBindingHelper.registerKeyBinding(quickplayKey);
+
+		// The hack keys have their own section in Controls. Only the emergency toggle has keys by default; the toggle keys
+		// start unbound so they do not take keys used in game.
+		hacksOffKey = new KeyBinding("key.axolotlextras.hacksOff", Keyboard.KEY_G, HACK_KEY_CATEGORY);
+		KeyBindingHelper.registerKeyBinding(hacksOffKey);
+		hacksOnKey = new KeyBinding("key.axolotlextras.hacksOn", Keyboard.KEY_H, HACK_KEY_CATEGORY);
+		KeyBindingHelper.registerKeyBinding(hacksOnKey);
+		hackToggleKeys = new KeyBinding[HACK_MAIN_SWITCHES.length];
+		for (int i = 0; i < HACK_MAIN_SWITCHES.length; i++) {
+			// "axolotlextras.playerEsp" gets the key "key.axolotlextras.toggle.playerEsp"
+			String name = HACK_MAIN_SWITCHES[i].getName();
+			hackToggleKeys[i] = new KeyBinding("key.axolotlextras.toggle." + name.substring(name.indexOf('.') + 1),
+				Keyboard.KEY_NONE, HACK_KEY_CATEGORY);
+			KeyBindingHelper.registerKeyBinding(hackToggleKeys[i]);
+		}
+		hackPanic = new HackPanic(FabricLoader.getInstance().getConfigDir().resolve("axolotl-extras").resolve("hacks-off.txt"));
 
 		// Loading a different world (including joining another server or game) forgets the remembered counts.
 		Events.WORLD_LOAD_EVENT.register(event -> {
@@ -433,6 +470,25 @@ public class ExtrasModule extends AbstractModule {
 		BenchDriver.tick(client);
 		FrameBench.onTick(client);
 		HackRenderer.tick(client);
+		if (hacksOffKey != null && hacksOffKey.wasPressed() && client.currentScreen == null) {
+			int count = hackPanic.allOff(hackSwitches());
+			saveConfig();
+			emergencyNote("§cHacks off" + (count > 0 ? " §7(" + count + ")" : ""));
+		}
+		if (hacksOnKey != null && hacksOnKey.wasPressed() && client.currentScreen == null) {
+			int count = hackPanic.restore(hackSwitches());
+			saveConfig();
+			emergencyNote(count < 0 ? "§7Hacks: nothing to turn back on" : "§aHacks back on §7(" + count + ")");
+		}
+		for (int i = 0; i < hackToggleKeys.length; i++) {
+			if (hackToggleKeys[i].wasPressed() && client.currentScreen == null) {
+				BooleanOption option = HACK_MAIN_SWITCHES[i];
+				option.toggle();
+				saveConfig();
+				emergencyNote((option.get() ? "§a" : "§c") + I18n.translate(option.getName())
+					+ (option.get() ? " on" : " off"));
+			}
+		}
 		if (menuKey != null && menuKey.wasPressed() && client.currentScreen == null) {
 			client.setScreen(new ExtrasScreen(null));
 		}
@@ -450,6 +506,45 @@ public class ExtrasModule extends AbstractModule {
 		if (quickplayKey != null && quickplayKey.wasPressed() && QUICKPLAY.get() && client.currentScreen == null
 			&& client.world != null && client.player != null && quickplayAllowedHere()) {
 			client.setScreen(new QuickplayScreen());
+		}
+	}
+
+	/** The main switch of every hack (their fine-tuning switches stay as they are, they do nothing while the hack is off). */
+	private static List<HackPanic.Switch> hackSwitches() {
+		List<HackPanic.Switch> out = new ArrayList<>();
+		for (BooleanOption option : HACK_MAIN_SWITCHES) {
+			out.add(new HackPanic.Switch() {
+				@Override
+				public String name() {
+					return option.getName();
+				}
+
+				@Override
+				public boolean on() {
+					return option.get();
+				}
+
+				@Override
+				public void set(boolean on) {
+					option.set(on);
+				}
+			});
+		}
+		return out;
+	}
+
+	/** A short note above the hotbar (it fades after a few seconds), unless the Hack Key Note switch is off. */
+	private void emergencyNote(String text) {
+		if (HACK_KEY_NOTE.get() && client.inGameHud != null) {
+			client.inGameHud.setOverlayMessage(text, false);
+		}
+	}
+
+	private static void saveConfig() {
+		try {
+			AxolotlClient.configManager.save();
+		} catch (RuntimeException e) {
+			AxolotlClient.LOGGER.error("[Extras] Could not save the config: " + e);
 		}
 	}
 

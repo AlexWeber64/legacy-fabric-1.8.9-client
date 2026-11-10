@@ -198,6 +198,19 @@ Last updated: 2026-11-07.
   over to sliders that were never saved (`LabelSizeMigration`, 4 tests). 87 tests pass. Built, not yet seen in game.
   Deployed to the play clone 1.8.9-lunarlike on 2026-11-08 together with the freeze stack logger; the previous jar (label size
   buttons) is in mods-backup as axolotl-extras-0.1.0.before-label-sliders.jar.
+- Emergency toggle (2026-11-10): two keys, rebindable in Controls under AxolotlClient: G ("Hacks: All Off") switches the 12
+  main hack switches off and remembers which were on, H ("Hacks: Back On") switches exactly those back on. Pressing G again
+  while off keeps the memory and adds any hack switched on by hand since. The memory is in
+  `config/axolotl-extras/hacks-off.txt` (deleted on H), so it survives a restart or crash. The keys only work in game (no
+  menu or chat open). The config is saved right away. A note above the hotbar ("Hacks off (3)", "Hacks back on (3)") unless
+  Hack Key Note is off. `hacks/HackPanic`, 4 tests.
+- Hack toggle keys (2026-11-10): one toggle key per main hack switch (the same 12 as the emergency toggle,
+  `ExtrasModule.HACK_MAIN_SWITCHES`), unbound by default so they take no keys used in game. All hack keys, G and H included,
+  are in their own Controls section "AxolotlClient Extras: Hacks". A key flips its hack, saves the config and shows
+  "Player ESP on" / "off" above the hotbar (option Hack Key Note, which replaced Emergency Toggle Note before it was ever
+  deployed). Fine-tuning switches (style, sounds, sizes) have no keys. 91 tests pass.
+  Deployed to the play clone 1.8.9-lunarlike on 2026-11-10 together with the emergency toggle, not yet seen in game; the
+  previous jar (label size sliders) is in mods-backup as axolotl-extras-0.1.0.before-hack-keys.jar.
 
 ## In progress
 
