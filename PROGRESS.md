@@ -336,3 +336,7 @@ High performance (or Best performance) power plan. There is no discrete GPU to s
   placeholder.
 - Backups: the previous add-on jar is in `instances/1.8.9-lunarlike/minecraft/mods-backup`, config backups sit next to
   `AxolotlClient.json`.
+- Workflow (2026-11-13): changes now go to `main` through pull requests, one branch per piece of work, at the user's
+  request. GitHub Actions builds and tests every pull request (once per push, a newer push cancels the older build)
+  and `main` after each merge; branches without a pull request are not built. A failed build keeps the test reports
+  as an artifact.

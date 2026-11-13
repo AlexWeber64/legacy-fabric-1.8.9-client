@@ -59,9 +59,12 @@ from the AxolotlClient 3.0.6+1.8.9 release jar on Modrinth:
 - `AxolotlClient-3.0.6.jar` and `AxolotlClient-config-2.1.13+1.8.9.jar`: inside it, under `META-INF/jars/`.
 - `AxolotlClientConfig-common-2.1.13.jar`: inside `AxolotlClient-config-2.1.13+1.8.9.jar`, under `META-INF/jars/`.
 
-GitHub Actions builds every push the same way (`.github/workflows/build.yml`): it downloads the release jar from Modrinth,
-checks its SHA-256, unpacks the nested jars into `libs/`, runs `gradlew build` (with the unit tests) and keeps the built jar
-as an artifact of the run.
+GitHub Actions builds the same way (`.github/workflows/build.yml`): it downloads the release jar from Modrinth, checks its
+SHA-256, unpacks the nested jars into `libs/`, runs `gradlew build` (with the unit tests) and keeps the built jar as an
+artifact of the run (and the test reports, when a test fails).
+
+Changes reach `main` through pull requests: each piece of work goes on its own branch, and its pull request is built and
+tested before it is merged. `main` is built again after each merge.
 
 ## How it plugs in
 
