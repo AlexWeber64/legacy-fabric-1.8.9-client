@@ -200,6 +200,39 @@ public class ExtrasModule extends AbstractModule {
 	/** Generator Counts for emeralds. */
 	public static final BooleanOption GEN_EMERALD = new BooleanOption("axolotlextras.genEmerald", true);
 
+	/** A chat note when an enemy goes invisible, and a mark where it happened for 60 seconds. */
+	public static final BooleanOption INVIS_ALERT = new BooleanOption("axolotlextras.invisAlert", false);
+
+	/** The Invisibility Alert also puts a beam and a label over the mark, like the obsidian waypoints. */
+	public static final BooleanOption INVIS_WAYPOINTS = new BooleanOption("axolotlextras.invisWaypoints", true);
+
+	/** The Invisibility Alert only counts players seen holding an invisibility potion just before. */
+	public static final BooleanOption INVIS_NEED_POTION = new BooleanOption("axolotlextras.invisNeedPotion", true);
+
+	/**
+	 * A breadcrumb trail of players you cannot see, from the footstep, hurt, drink and bow sounds, footstep particles and
+	 * block breaking the server still sends for them.
+	 */
+	public static final BooleanOption HIDDEN_TRAIL = new BooleanOption("axolotlextras.hiddenTrail", false);
+
+	/** How long the hidden trail's crumbs stay. */
+	public static final EnumOption TRAIL_TIME = new EnumOption("axolotlextras.trailTime",
+		new String[] {"axolotlextras.seconds.5", "axolotlextras.seconds.10", "axolotlextras.seconds.20", "axolotlextras.seconds.30"},
+		"axolotlextras.seconds.10");
+
+	/** Drawn markers through walls, or particles in the world. */
+	public static final EnumOption TRAIL_STYLE = new EnumOption("axolotlextras.trailStyle",
+		new String[] {"axolotlextras.trailStyle.markers", "axolotlextras.trailStyle.particles"}, "axolotlextras.trailStyle.markers");
+
+	/** A label over the newest crumb of each trail. */
+	public static final BooleanOption TRAIL_LABELS = new BooleanOption("axolotlextras.trailLabels", true);
+
+	/** A chat line when a new hidden trail starts. */
+	public static final BooleanOption TRAIL_CHAT = new BooleanOption("axolotlextras.trailChat", true);
+
+	/** The Invisibility Alert plays a sound with its chat line. */
+	public static final BooleanOption INVIS_SOUND = new BooleanOption("axolotlextras.invisSound", true);
+
 	/** Bed Defense also labels your own bed. */
 	public static final BooleanOption BED_DEFENSE_OWN = new BooleanOption("axolotlextras.bedDefenseOwn", true);
 
@@ -229,7 +262,8 @@ public class ExtrasModule extends AbstractModule {
 	 * fine-tuning switches (style, sounds, sizes) are left out: they do nothing while the hack is off.
 	 */
 	public static final BooleanOption[] HACK_MAIN_SWITCHES = {PLAYER_ESP, ESP_TRACERS, NAMETAGS, ENEMY_ARMOR, GENERATOR_COUNTS,
-		BED_DEFENSE, OBSIDIAN_ALERT, RUSH_ALERT, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS, RADAR};
+		BED_DEFENSE, OBSIDIAN_ALERT, RUSH_ALERT, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS, RADAR, INVIS_ALERT,
+		HIDDEN_TRAIL};
 
 	/** Label sizes are sliders in percent, from {@link #LABEL_SIZE_MIN} to {@link #LABEL_SIZE_MAX}. */
 	public static final int LABEL_SIZE_MIN = LabelSizeMigration.MIN, LABEL_SIZE_MAX = LabelSizeMigration.MAX;
@@ -357,7 +391,9 @@ public class ExtrasModule extends AbstractModule {
 			(x, y) -> client.setScreen(new HacksScreen(client.currentScreen))));
 		HACKS.add(PLAYER_ESP, ESP_TRACERS, ESP_STYLE, ESP_COLOR, ESP_RANGE, ESP_INVISIBLE, ESP_TEAMMATES, NAMETAGS,
 			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_IRON, GEN_GOLD, GEN_DIAMOND,
-			GEN_EMERALD, BED_DEFENSE, BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
+			GEN_EMERALD, BED_DEFENSE, BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, INVIS_ALERT,
+			INVIS_NEED_POTION, INVIS_WAYPOINTS, INVIS_SOUND, HIDDEN_TRAIL, TRAIL_TIME, TRAIL_STYLE,
+			TRAIL_LABELS, TRAIL_CHAT, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
 			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_CENTER,
 			RADAR_RANGE, RADAR_SHAPE, RADAR_CORNER, RADAR_OFFSET_X, RADAR_OFFSET_Y, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,

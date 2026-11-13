@@ -10,7 +10,8 @@
 		"SneakCameraMixin",
 		"HackWorldRenderMixin",
 		"HackHudMixin",
-		"NoBlindnessMixin"
+		"NoBlindnessMixin",
+		"HiddenTrailMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

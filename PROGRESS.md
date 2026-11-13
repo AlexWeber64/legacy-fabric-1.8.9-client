@@ -238,6 +238,46 @@ Last updated: 2026-11-13.
 - Generator Counts per ore (2026-11-13, built, 101 tests pass, not yet seen in game): the two switches Diamonds and
   Emeralds / Iron and Gold are replaced by four, Count Iron, Count Gold, Count Diamonds and Count Emeralds (all on by
   default). The old two are no longer read, so anyone who had one of them off gets it back on once.
+- Invisibility Alert (2026-11-13, built, 107 tests pass, not yet seen in game): a hack (off by default, in the Alerts
+  section, with its own toggle key and on the emergency toggle). `hacks/InvisTracker` (no Minecraft imports, 6 tests)
+  watches every enemy once the game runs: when one seen visible turns invisible and stays so for half a second, it
+  keeps a mark where it happened (position, head yaw and pitch, team) for 60 seconds, one per player, and the chat
+  gets `Invis <name> went invisible 23m NE` plus a ping (Invisibility Sound). Players first seen already invisible,
+  teammates and spectators give no mark; a player who leaves range while waiting is dropped. The mark is a
+  see-through box (0.6 x 1.8, filled and outlined in the team colour, through walls) with a 3-block line from the eyes
+  the way they looked, fading over the last 5 seconds. Invisibility Waypoints (on by default) adds the obsidian-style
+  beam and a label "<name> invis 12s 23m NE" (Waypoints label size, renamed from Obsidian Waypoints). Drawing and a
+  local chat line only, nothing is sent. Players leaving render distance cannot be flagged: the server despawns
+  them on your side, they drop out of the tracker, and coming back already invisible gives no mark (tested). Only
+  After a Potion (on by default) also needs the enemy seen holding a potion with the invisibility effect (from the
+  held item the server sends, read with `PotionItem.getCustomPotionEffects`) in the 3 seconds before; 110 tests pass
+  (4 new). To check in game: that Hypixel shows the potion in hand while drinking (if not, switch it off),
+  that a potion really sets the invisible flag on Hypixel before the armor hides, and that dying or respawning does
+  not give false alerts.
+- Invisibility Alert, vanish case (2026-11-13): the user saw that Hypixel does not show invisible players at all (ESP
+  with Show Invisible found nothing), so the server likely stops sending them, and the flag path never fires there.
+  `InvisTracker` now also gives a mark when an enemy disappears from your side while alive, nearer than 32 blocks,
+  within 3 seconds of holding an invisibility potion (Hypixel does show the bottle while drinking, the user says).
+  The mark is at their last seen spot and look. Dying players are fed in as not alive, so a death is not taken for
+  vanishing; walking out of range without a potion, or beyond 32 blocks, never gives a mark; flagged then gone gives
+  one mark. Tests rewritten around `InvisTracker.Sighting` (11).
+- Hidden Player Trail (2026-11-13, built, 119 tests pass, not yet seen in game): a hack (off by default, Alerts
+  section, own toggle key, on the emergency toggle). `mixin/HiddenTrailMixin` (visuals config) reads, without
+  changing anything, the server's sound packets, particle packets and block breaking progress (main thread run
+  only). Footstep (`step.*`), hurt, drink, eat, burp and bow sounds and footstep particles become a crumb when no
+  loaded living entity (armor stands left out: generators carry them) is within 2 blocks; block breaking counts when
+  the breaking entity id is not loaded (and not you). `hacks/HiddenTrail` (no Minecraft imports, 7 tests) snaps each
+  crumb to the middle of the block (for a sound at the feet, the lower block of the two), skips the same block
+  again within half a second, links crumbs within 4.5 blocks and 2 seconds into a walk, keeps at most 300, and drops
+  them after Trail Time (5/10/20/30 s, default 10). Who it is: the Invisibility Alert mark of that entity id for
+  block breaking, else the only mark there is (two or more: unknown, drawn pale purple). Style Markers: cubes and
+  lines through walls, a red cube for a hit, an outline round a block being broken. Style Particles: coloured
+  redstone dust at each crumb every 4 ticks (walls hide it). Labels over the newest crumb of each walk (Waypoints
+  size) and a chat line when a trail starts after 5 quiet seconds. The first 40 crumbs per world are written to
+  latest.log ("Hidden trail: step.stone at x y z"), so one game shows what Hypixel really sends. Only reads packets
+  and draws, nothing is sent. To check in game: whether Hypixel sends step sounds for hidden invisible players (if
+  not, only hits, drinking, bow shots and block breaking give crumbs), false crumbs from mobs or players at the edge
+  of what is loaded, and teammates who drink invisibility (they may show up as hidden too).
 
 ## In progress
 
