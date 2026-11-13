@@ -278,6 +278,16 @@ Last updated: 2026-11-13.
   and draws, nothing is sent. To check in game: whether Hypixel sends step sounds for hidden invisible players (if
   not, only hits, drinking, bow shots and block breaking give crumbs), false crumbs from mobs or players at the edge
   of what is loaded, and teammates who drink invisibility (they may show up as hidden too).
+- Fix (2026-11-13): invisible players were dropped as NPCs. The user saw no ESP box on an invisible player (Show
+  Invisible on) although their held item still showed, so the player was still sent. The NPC filter skipped every
+  player on a team with name tags set to "never", and servers hide invisible players' name tags that way. The rule
+  now only counts for visible players (NPCs are still caught by version 2 UUIDs, the tab list and "[NPC]"). This
+  fixes ESP, tracers, nametags, the radar and the Invisibility Alert for invisible players. Invisible players also no
+  longer "explain" a sound for the hidden trail, so their steps go on it too. An Invisibility Alert now writes one
+  line to latest.log saying whether the player was still sent (flagged) or gone from your side.
+- Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
+  the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
+  axolotl-extras-0.1.0.before-invis.jar.
 
 ## In progress
 

@@ -659,8 +659,11 @@ public final class HackRenderer {
 			if (client.getNetworkHandler() != null && client.getNetworkHandler().getPlayerListEntry(player.getUuid()) == null) {
 				continue;
 			}
+			// A hidden name tag marks an NPC, but not on an invisible player: servers hide invisible players' name tags with
+			// a team, too, and they are the ones that matter most. Real NPCs are still caught by the UUID, tab list and
+			// "[NPC]" checks.
 			AbstractTeam team = player.getScoreboardTeam();
-			if (team != null && team.getNameTagVisibilityRule() == AbstractTeam.VisibilityRule.NEVER) {
+			if (team != null && team.getNameTagVisibilityRule() == AbstractTeam.VisibilityRule.NEVER && !player.isInvisible()) {
 				continue;
 			}
 			if (player.getName().asFormattedString().contains("[NPC]")) {
