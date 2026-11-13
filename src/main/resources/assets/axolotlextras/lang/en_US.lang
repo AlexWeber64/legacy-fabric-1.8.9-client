@@ -233,3 +233,5 @@ axolotlextras.radarHeight=Height Arrows
 axolotlextras.radarHeight.tooltip=A green arrow next to players more than 3 blocks above you, a red one for players more than 3 blocks below.
 axolotlextras.radarGrid=Grid and North
 axolotlextras.radarGrid.tooltip=Cross lines, a ring at half the range, and an N on the edge pointing north.
+key.axolotlextras.dynamicFov=Toggle Dynamic FOV
+dynamicFov.tooltip=On: the view widens when you sprint, draw a bow or have Speed, like vanilla. Off: the FOV stays put. This is AxolotlClient's own option. A toggle key is in Controls, section AxolotlClient (unbound until you set it).

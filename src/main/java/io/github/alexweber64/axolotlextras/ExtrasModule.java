@@ -329,6 +329,8 @@ public class ExtrasModule extends AbstractModule {
 	private static final String HACK_KEY_CATEGORY = "category.axolotlextras.hacks";
 	private static HackPanic hackPanic;
 	private static KeyBinding menuKey;
+	/** Flips AxolotlClient's own Dynamic FOV option (the FOV widening when you sprint, draw a bow or have Speed). */
+	private static KeyBinding dynamicFovKey;
 	private static ResourceCounterHud resourceCounter;
 	private static UpgradeDisplayHud upgradeDisplay;
 
@@ -369,6 +371,10 @@ public class ExtrasModule extends AbstractModule {
 
 		quickplayKey = new KeyBinding("key.axolotlextras.quickplay", Keyboard.KEY_Y, "category.axolotlclient");
 		KeyBindingHelper.registerKeyBinding(quickplayKey);
+
+		// Unbound by default, so it takes no key used in game.
+		dynamicFovKey = new KeyBinding("key.axolotlextras.dynamicFov", Keyboard.KEY_NONE, "category.axolotlclient");
+		KeyBindingHelper.registerKeyBinding(dynamicFovKey);
 
 		// The hack keys have their own section in Controls. Only the emergency toggle has keys by default; the toggle keys
 		// start unbound so they do not take keys used in game.
@@ -549,6 +555,14 @@ public class ExtrasModule extends AbstractModule {
 				saveConfig();
 				emergencyNote((option.get() ? "§a" : "§c") + I18n.translate(option.getName())
 					+ (option.get() ? " on" : " off"));
+			}
+		}
+		if (dynamicFovKey != null && dynamicFovKey.wasPressed() && client.currentScreen == null) {
+			BooleanOption dynamicFov = AxolotlClient.CONFIG.dynamicFOV;
+			dynamicFov.toggle();
+			saveConfig();
+			if (client.inGameHud != null) {
+				client.inGameHud.setOverlayMessage(dynamicFov.get() ? "§aDynamic FOV on" : "§cDynamic FOV off", false);
 			}
 		}
 		if (menuKey != null && menuKey.wasPressed() && client.currentScreen == null) {

@@ -221,6 +221,10 @@ Last updated: 2026-11-13.
   Show Names (half size), Height Arrows (green above, red below, more than 3 blocks) and Grid and North. Drawn in the HUD
   pass before the hack labels, so the hotbar and HUD modules stay on top. `hacks/Radar` (drawing), `hacks/RadarMath`
   (placement, 9 tests). Deployed to the play clone 1.8.9-lunarlike on 2026-11-13.
+- Dynamic FOV toggle (2026-11-13, built, 100 tests pass, not yet seen in game): key "Toggle Dynamic FOV" (Controls,
+  section AxolotlClient, unbound by default) flips AxolotlClient's own `dynamicFov` option (on by default; off keeps
+  the FOV still when sprinting, drawing a bow or with Speed), saves the config and shows "Dynamic FOV on/off" above
+  the hotbar. The option is also listed in the Extras menu under Look, with a tooltip. Deployed to the play clone 1.8.9-lunarlike on 2026-11-13.
 
 ## In progress
 
