@@ -129,7 +129,8 @@ public final class HackRenderer {
 		t = WATCH.start();
 		generatorLabels = ExtrasModule.GENERATOR_COUNTS.get() ? findGenerators(world) : Collections.<HudLabel>emptyList();
 		WATCH.end("generator counts", t);
-		boolean beds = ExtrasModule.BED_DEFENSE.get() || ExtrasModule.OBSIDIAN_ALERT.get() || ExtrasModule.RUSH_ALERT.get();
+		boolean beds = ExtrasModule.BED_DEFENSE.get() || ExtrasModule.OBSIDIAN_ALERT.get() || ExtrasModule.RUSH_ALERT.get()
+			|| radarOnBed();
 		if (beds) {
 			t = WATCH.start();
 			SCANNER.tick(world, client.player.x, client.player.z);
@@ -237,6 +238,24 @@ public final class HackRenderer {
 			return ResourceMath.EMERALD;
 		}
 		return -1;
+	}
+
+	/** True when the radar is on and centred on your bed (then the bed scan runs for it, too). */
+	private static boolean radarOnBed() {
+		return ExtrasModule.RADAR.get() && ExtrasModule.RADAR_CENTER.get().endsWith(".bed");
+	}
+
+	/** Your bed for the radar: where it is and whether it is within your render distance. */
+	private static Radar.Bed radarBed(MinecraftClient client) {
+		BedTracker.Info info = BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z);
+		if (info == null) {
+			return new Radar.Bed(0, 0, 0, RadarMath.BedState.NO_BED);
+		}
+		double x = info.centerX(), z = info.centerZ();
+		boolean loaded = !client.world.getChunk(info.bed.headX >> 4, info.bed.headZ >> 4).isEmpty();
+		double distance = Math.hypot(x - client.player.x, z - client.player.z);
+		return new Radar.Bed(x, info.bed.y + 0.5, z,
+			RadarMath.bedState(true, loaded, distance, client.options.viewDistance));
 	}
 
 	/** The Rush Distance option ("axolotlextras.rush.25" and so on) in blocks. */
@@ -522,7 +541,7 @@ public final class HackRenderer {
 			for (PlayerEntity player : realPlayers(client)) {
 				targets.add(new Radar.Target(player, isTeammate(client, player)));
 			}
-			Radar.render(client, targets, lastTickDelta);
+			Radar.render(client, targets, lastTickDelta, radarOnBed() ? radarBed(client) : null);
 			WATCH.end("radar (drawing)", t);
 			t = WATCH.start();
 		}

@@ -81,6 +81,15 @@ class RadarMathTest {
 	}
 
 	@Test
+	void bedRadarIsLiveOnlyWithinRenderDistance() {
+		assertEquals(RadarMath.BedState.NO_BED, RadarMath.bedState(false, true, 0, 8));
+		assertEquals(RadarMath.BedState.ACTIVE, RadarMath.bedState(true, true, 128, 8));
+		assertEquals(RadarMath.BedState.OUT_OF_RANGE, RadarMath.bedState(true, true, 129, 8));
+		// Within the distance but the chunk is not loaded (just teleported, or the server sends fewer chunks).
+		assertEquals(RadarMath.BedState.OUT_OF_RANGE, RadarMath.bedState(true, false, 20, 8));
+	}
+
+	@Test
 	void heightMarks() {
 		assertEquals(1, RadarMath.heightMark(4, 3));
 		assertEquals(-1, RadarMath.heightMark(-4, 3));

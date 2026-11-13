@@ -7,6 +7,7 @@ import java.util.List;
 import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.alexweber64.axolotlextras.ExtrasModule;
 import io.github.axolotlclient.AxolotlClientConfig.options.IntegerOption;
+import io.github.axolotlclient.modules.hud.util.ItemUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
@@ -16,6 +17,8 @@ import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.util.Window;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import org.lwjgl.opengl.GL11;
 
 /**
@@ -35,10 +38,29 @@ final class Radar {
 		}
 	}
 
+	/** Your bed as the radar's middle, with whether the radar is live there. */
+	static final class Bed {
+		final double x, y, z;
+		final RadarMath.BedState state;
+
+		Bed(double x, double y, double z, RadarMath.BedState state) {
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.state = state;
+		}
+	}
+
 	private static final int BACKGROUND_RGB = 0x101318;
 	private static final int RIM = 0x90FFFFFF;
 	private static final int GRID = 0x30FFFFFF;
 	private static final int NORTH = 0xFFFFD84D;
+	/** The same parts while a bed-centred radar is not live: gray, so it is plain that it shows nothing. */
+	private static final int GRAY_BACKGROUND_RGB = 0x3C3C3C;
+	private static final int GRAY_RIM = 0x90808080;
+	private static final int GRAY_GRID = 0x30A0A0A0;
+	private static final int GRAY_TEXT = 0xFFA0A0A0;
+	private static ItemStack bedIcon;
 	private static final int ABOVE = 0xFF55FF55;
 	private static final int BELOW = 0xFFFF5555;
 	private static final int SEGMENTS = 64;
@@ -50,7 +72,11 @@ final class Radar {
 	private Radar() {
 	}
 
-	static void render(MinecraftClient client, List<Target> targets, float t) {
+	/**
+	 * @param bed null: the radar is centred on you; else centred on your bed, and gray (no other players) unless the bed is
+	 *     within your render distance
+	 */
+	static void render(MinecraftClient client, List<Target> targets, float t, Bed bed) {
 		PlayerEntity me = client.player;
 		Window window = new Window(client);
 		int size = value(ExtrasModule.RADAR_SIZE, 100);
@@ -71,6 +97,10 @@ final class Radar {
 		double usable = Math.max(1, half - icon / 2 - 1);
 		double yaw = me.prevYaw + (me.yaw - me.prevYaw) * t;
 		double myX = lerp(me.prevTickX, me.x, t), myY = lerp(me.prevTickY, me.y, t), myZ = lerp(me.prevTickZ, me.z, t);
+		// The middle of the radar: you, or your bed.
+		boolean onBed = bed != null && bed.state != RadarMath.BedState.NO_BED;
+		boolean live = bed == null || bed.state == RadarMath.BedState.ACTIVE;
+		double originX = onBed ? bed.x : myX, originZ = onBed ? bed.z : myZ;
 
 		boolean blend = GL11.glIsEnabled(GL11.GL_BLEND);
 		boolean cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
@@ -84,21 +114,37 @@ final class Radar {
 		GlStateManager.disableTexture();
 		int alpha = Math.round(255 * value(ExtrasModule.RADAR_OPACITY, 50) / 100f);
 		if (alpha > 0) {
-			shape(GL11.GL_TRIANGLE_FAN, cx, cy, half, circle, alpha << 24 | BACKGROUND_RGB);
+			shape(GL11.GL_TRIANGLE_FAN, cx, cy, half, circle, alpha << 24 | (live ? BACKGROUND_RGB : GRAY_BACKGROUND_RGB));
 		}
-		int grid = GRID;
+		int grid = live ? GRID : GRAY_GRID;
 		if (ExtrasModule.RADAR_GRID.get()) {
 			line(cx - half, cy, cx + half, cy, grid);
 			line(cx, cy - half, cx, cy + half, grid);
 			shape(GL11.GL_LINE_LOOP, cx, cy, half / 2, circle, grid);
 		}
-		shape(GL11.GL_LINE_LOOP, cx, cy, half, circle, RIM);
+		shape(GL11.GL_LINE_LOOP, cx, cy, half, circle, live ? RIM : GRAY_RIM);
 		GlStateManager.enableTexture();
 
 		if (ExtrasModule.RADAR_GRID.get()) {
 			double[] n = RadarMath.turn(0, -1, yaw, rotate);
 			double[] spot = RadarMath.place(n[0], n[1], 1, half - 5, circle, true);
-			client.textRenderer.drawWithShadow("N", (float) (cx + spot[0] - 2.5), (float) (cy + spot[1] - 3.5), NORTH);
+			client.textRenderer.drawWithShadow("N", (float) (cx + spot[0] - 2.5), (float) (cy + spot[1] - 3.5),
+				live ? NORTH : GRAY_TEXT);
+		}
+
+		if (!live) {
+			// Not live: no other players (they are not sent to you that far away), only the reason and where you are.
+			String reason = onBed
+				? "Bed out of range (" + Math.round(Math.hypot(myX - originX, myZ - originZ)) + "m)" : "No bed";
+			small(client, reason, cx, cy + (onBed ? icon / 2 + 2 : -2), GRAY_TEXT);
+			if (onBed) {
+				GlStateManager.disableTexture();
+				rect(cx - 3, cy - 2, cx + 3, cy + 2, 0xFF808080);
+				GlStateManager.enableTexture();
+				self(client, me, cx, cy, myX - originX, myZ - originZ, yaw, rotate, range, usable, circle, icon, true);
+			}
+			finish(blend, cull);
+			return;
 		}
 
 		// Other players, the farthest first so nearer ones end up on top.
@@ -111,7 +157,7 @@ final class Radar {
 			if ((!teammates && target.teammate) || (!invisible && p.isInvisible())) {
 				continue;
 			}
-			double dx = lerp(p.prevTickX, p.x, t) - myX, dz = lerp(p.prevTickZ, p.z, t) - myZ;
+			double dx = lerp(p.prevTickX, p.x, t) - originX, dz = lerp(p.prevTickZ, p.z, t) - originZ;
 			double[] turned = RadarMath.turn(dx, dz, yaw, rotate);
 			double[] spot = RadarMath.place(turned[0], turned[1], range, usable, circle, keepOut);
 			if (spot != null) {
@@ -140,15 +186,30 @@ final class Radar {
 			}
 		}
 
-		// You, in the middle.
-		self(client, me, cx, cy, 0, 0, yaw, rotate, range, usable, circle, icon, false);
+		if (onBed) {
+			// Your bed in the middle, you where you are around it.
+			if (bedIcon == null) {
+				bedIcon = new ItemStack(Items.BED);
+			}
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(cx - icon / 2, cy - icon / 2, 0);
+			GlStateManager.scale(icon / 16f, icon / 16f, 1f);
+			ItemUtil.renderGuiItemModel(bedIcon, 0, 0);
+			GlStateManager.popMatrix();
+			GlStateManager.disableLighting();
+			GlStateManager.enableBlend();
+			GlStateManager.blendFuncSeparate(770, 771, 1, 0);
+			self(client, me, cx, cy, myX - originX, myZ - originZ, yaw, rotate, range, usable, circle, icon, false);
+		} else {
+			self(client, me, cx, cy, 0, 0, yaw, rotate, range, usable, circle, icon, false);
+		}
 		finish(blend, cull);
 	}
 
 	/**
 	 * You on the radar: your face (or an arrow) at your offset from the middle, kept on the rim when out of range.
 	 *
-	 * @param faded drawn see-through
+	 * @param faded true while the radar is not live
 	 */
 	private static void self(MinecraftClient client, PlayerEntity me, double cx, double cy, double dx, double dz, double yaw,
 		boolean rotate, double range, double usable, boolean circle, float icon, boolean faded) {

@@ -99,6 +99,9 @@ public class ExtrasModule extends AbstractModule {
 
 	// Fine tuning for the radar.
 
+	/** What the radar's middle is: you, or your own bed (live only while the bed is within your render distance). */
+	public static final EnumOption RADAR_CENTER = new EnumOption("axolotlextras.radarCenter",
+		new String[] {"axolotlextras.radarCenter.player", "axolotlextras.radarCenter.bed"}, "axolotlextras.radarCenter.player");
 
 	/** How many blocks the radar's edge stands for. */
 	public static final EnumOption RADAR_RANGE = new EnumOption("axolotlextras.radarRange",
@@ -331,6 +334,8 @@ public class ExtrasModule extends AbstractModule {
 	private static KeyBinding menuKey;
 	/** Flips AxolotlClient's own Dynamic FOV option (the FOV widening when you sprint, draw a bow or have Speed). */
 	private static KeyBinding dynamicFovKey;
+	/** Switches the radar's middle between you and your bed. */
+	private static KeyBinding radarCenterKey;
 	private static ResourceCounterHud resourceCounter;
 	private static UpgradeDisplayHud upgradeDisplay;
 
@@ -348,8 +353,8 @@ public class ExtrasModule extends AbstractModule {
 			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_RARE, GEN_BASE, BED_DEFENSE,
 			BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
-			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_RANGE,
-			RADAR_SHAPE, RADAR_CORNER, RADAR_OFFSET_X, RADAR_OFFSET_Y, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
+			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_CENTER,
+			RADAR_RANGE, RADAR_SHAPE, RADAR_CORNER, RADAR_OFFSET_X, RADAR_OFFSET_Y, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
 			RADAR_SELF, RADAR_TEAMMATES, RADAR_INVISIBLE, RADAR_EDGE, RADAR_BORDER, RADAR_NAMES, RADAR_HEIGHT, RADAR_GRID,
 			HACK_KEY_NOTE);
 		AxolotlClient.CONFIG.addCategory(HACKS);
@@ -390,6 +395,8 @@ public class ExtrasModule extends AbstractModule {
 				Keyboard.KEY_NONE, HACK_KEY_CATEGORY);
 			KeyBindingHelper.registerKeyBinding(hackToggleKeys[i]);
 		}
+		radarCenterKey = new KeyBinding("key.axolotlextras.radarCenter", Keyboard.KEY_NONE, HACK_KEY_CATEGORY);
+		KeyBindingHelper.registerKeyBinding(radarCenterKey);
 		hackPanic = new HackPanic(FabricLoader.getInstance().getConfigDir().resolve("axolotl-extras").resolve("hacks-off.txt"));
 
 		// Loading a different world (including joining another server or game) forgets the remembered counts.
@@ -556,6 +563,12 @@ public class ExtrasModule extends AbstractModule {
 				emergencyNote((option.get() ? "§a" : "§c") + I18n.translate(option.getName())
 					+ (option.get() ? " on" : " off"));
 			}
+		}
+		if (radarCenterKey != null && radarCenterKey.wasPressed() && client.currentScreen == null) {
+			boolean toBed = !RADAR_CENTER.get().endsWith(".bed");
+			RADAR_CENTER.set(toBed ? "axolotlextras.radarCenter.bed" : "axolotlextras.radarCenter.player");
+			saveConfig();
+			emergencyNote(toBed ? "§eRadar: centred on your bed" : "§eRadar: centred on you");
 		}
 		if (dynamicFovKey != null && dynamicFovKey.wasPressed() && client.currentScreen == null) {
 			BooleanOption dynamicFov = AxolotlClient.CONFIG.dynamicFOV;

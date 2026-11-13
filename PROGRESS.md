@@ -225,6 +225,16 @@ Last updated: 2026-11-13.
   section AxolotlClient, unbound by default) flips AxolotlClient's own `dynamicFov` option (on by default; off keeps
   the FOV still when sprinting, drawing a bow or with Speed), saves the config and shows "Dynamic FOV on/off" above
   the hotbar. The option is also listed in the Extras menu under Look, with a tooltip. Deployed to the play clone 1.8.9-lunarlike on 2026-11-13.
+- Radar Centre (2026-11-13, built, 101 tests pass, not yet seen in game): option You (default) or Your Bed, plus an
+  unbound key "Radar: You / Your Bed" in the hack keys section. On the bed, the bed icon is in the middle and you are
+  drawn where you are (on the rim, faded, when out of range). Your bed comes from the same tracker as Bed Defense and
+  the Rush Alert (nearest bed to the start spot, else your team's), so the bed scan now also runs for the radar. The
+  bed radar is live only while the bed's chunk is loaded and the bed is within your render distance (render distance
+  x 16 blocks, `RadarMath.bedState`, 1 test). Otherwise it turns gray, hides other players and says "Bed out of
+  range (143m)" or "No bed" (not in a game, not found yet, or broken). Note: a server may send players over a
+  shorter distance than its chunks, so near the edge of render distance the live radar can still miss some.
+  Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 together with the radar and the Dynamic FOV toggle, not yet
+  seen in game; the previous jar (hack keys) is in mods-backup as axolotl-extras-0.1.0.before-radar.jar.
 
 ## In progress
 

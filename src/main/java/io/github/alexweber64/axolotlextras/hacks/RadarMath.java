@@ -56,6 +56,32 @@ public final class RadarMath {
 		return new double[] {px * shrink, py * shrink, 1};
 	}
 
+	/** What a bed-centred radar can show. */
+	public enum BedState {
+		/** The bed is near enough: the players around it are loaded. */
+		ACTIVE,
+		/** The bed is known but beyond your render distance (or its chunk is not loaded): the radar goes gray. */
+		OUT_OF_RANGE,
+		/** No own bed known (not in a game, not found yet, or broken): the radar goes gray. */
+		NO_BED
+	}
+
+	/**
+	 * Whether a radar centred on your bed is live. Players are only sent to you within your render distance, so beyond it
+	 * the radar would show an empty bed and mislead you.
+	 *
+	 * @param bedKnown       your own bed is known
+	 * @param chunkLoaded    the bed's chunk is loaded on your side
+	 * @param distance       horizontal blocks from you to the bed
+	 * @param renderDistance your render distance in chunks
+	 */
+	public static BedState bedState(boolean bedKnown, boolean chunkLoaded, double distance, int renderDistance) {
+		if (!bedKnown) {
+			return BedState.NO_BED;
+		}
+		return chunkLoaded && distance <= Math.max(1, renderDistance) * 16.0 ? BedState.ACTIVE : BedState.OUT_OF_RANGE;
+	}
+
 	/**
 	 * The height mark next to a face: 1 when the player is clearly above you, -1 when clearly below, 0 otherwise.
 	 *
