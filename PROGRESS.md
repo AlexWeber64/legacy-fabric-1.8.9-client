@@ -4,7 +4,7 @@ Goal: a Lunar Client style setup for Minecraft 1.8.9 on Legacy Fabric (Prism ins
 feature can be switched on and off at will. Features come from AxolotlClient where it has them, and from the
 `axolotl-extras` add-on in this folder where it does not.
 
-Last updated: 2026-11-07.
+Last updated: 2026-11-13.
 
 ## Lunar module map
 
@@ -211,6 +211,16 @@ Last updated: 2026-11-07.
   deployed). Fine-tuning switches (style, sounds, sizes) have no keys. 91 tests pass.
   Deployed to the play clone 1.8.9-lunarlike on 2026-11-10 together with the emergency toggle, not yet seen in game; the
   previous jar (label size sliders) is in mods-backup as axolotl-extras-0.1.0.before-hack-keys.jar.
+- Radar (2026-11-12, built, 100 tests pass, not yet seen in game): a minimap on the HUD (main switch Radar, off by
+  default, in the Hacks menu section "Radar" and with its own toggle key, so now 13 main hack switches). Every other real
+  player (same NPC and tab list filter as ESP) is drawn as the face of their skin: the 8x8 face plus the hat layer from the
+  skin texture, the way the tab list draws heads, framed in the team colour. Options: Range (16, 32, 64, 128 blocks), Shape
+  (circle, square), Corner plus side and top/bottom offsets in GUI pixels, Size (50 to 250 px), Face Size (50% to 250% of
+  10 px), Background Opacity, Turn With View (on: ahead is up; off: north up with a view arrow), Show Own Face (off: an
+  arrow), Show Teammates, Show Invisible (faded), Keep Far Players on Edge (faded, in their direction), Team Colour Frame,
+  Show Names (half size), Height Arrows (green above, red below, more than 3 blocks) and Grid and North. Drawn in the HUD
+  pass before the hack labels, so the hotbar and HUD modules stay on top. `hacks/Radar` (drawing), `hacks/RadarMath`
+  (placement, 9 tests). Deployed to the play clone 1.8.9-lunarlike on 2026-11-13.
 
 ## In progress
 

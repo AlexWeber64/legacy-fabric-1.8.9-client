@@ -98,9 +98,13 @@ public class ExtrasScreen extends Screen {
 		return ((EnumOption) option).getName();
 	}
 
-	/** The unit shown after a slider's value: the label sizes are percentages. */
+	/** The unit shown after a slider's value: the label sizes are percentages, the radar's size and place are pixels. */
 	private static String unit(IntegerOption option) {
-		return option.getName().contains("labelSize") ? "%" : "";
+		String name = option.getName();
+		if (name.contains("labelSize") || name.contains("radarIconSize") || name.contains("radarOpacity")) {
+			return "%";
+		}
+		return name.contains("radarSize") || name.contains("radarOffset") ? " px" : "";
 	}
 
 	private static String label(Object option) {

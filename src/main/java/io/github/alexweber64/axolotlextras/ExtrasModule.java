@@ -94,6 +94,65 @@ public class ExtrasModule extends AbstractModule {
 	/** The flight of your own pearl, snowball, egg or arrow (while drawing the bow) and where it would hit. */
 	public static final BooleanOption TRAJECTORIES = new BooleanOption("axolotlextras.trajectories", false);
 
+	/** A minimap of the players around you, each shown by the face of their skin. */
+	public static final BooleanOption RADAR = new BooleanOption("axolotlextras.radar", false);
+
+	// Fine tuning for the radar.
+
+
+	/** How many blocks the radar's edge stands for. */
+	public static final EnumOption RADAR_RANGE = new EnumOption("axolotlextras.radarRange",
+		new String[] {"axolotlextras.range.16", "axolotlextras.range.32", "axolotlextras.range.64", "axolotlextras.range.128"},
+		"axolotlextras.range.64");
+
+	/** Round or square. */
+	public static final EnumOption RADAR_SHAPE = new EnumOption("axolotlextras.radarShape",
+		new String[] {"axolotlextras.radarShape.circle", "axolotlextras.radarShape.square"}, "axolotlextras.radarShape.circle");
+
+	/** The screen corner the radar sits in, moved in by the two offsets below. */
+	public static final EnumOption RADAR_CORNER = new EnumOption("axolotlextras.radarCorner",
+		new String[] {"axolotlextras.corner.topLeft", "axolotlextras.corner.topRight", "axolotlextras.corner.bottomLeft",
+			"axolotlextras.corner.bottomRight"}, "axolotlextras.corner.topRight");
+
+	public static final IntegerOption RADAR_OFFSET_X = new IntegerOption("axolotlextras.radarOffsetX", 5, 0, 400);
+	public static final IntegerOption RADAR_OFFSET_Y = new IntegerOption("axolotlextras.radarOffsetY", 5, 0, 300);
+
+	/** The radar's width and height, in GUI pixels. */
+	public static final IntegerOption RADAR_SIZE = new IntegerOption("axolotlextras.radarSize", 100, 50, 250);
+
+	/** The size of the faces, in percent of 10 GUI pixels. */
+	public static final IntegerOption RADAR_ICON_SIZE = new IntegerOption("axolotlextras.radarIconSize", 100, 50, 250);
+
+	/** How dark the radar's background is, in percent (0 is no background). */
+	public static final IntegerOption RADAR_OPACITY = new IntegerOption("axolotlextras.radarOpacity", 50, 0, 100);
+
+	/** The radar turns with you, so your view always points up (off: north is up). */
+	public static final BooleanOption RADAR_ROTATE = new BooleanOption("axolotlextras.radarRotate", true);
+
+	/** Your own face in the middle (off: an arrow). */
+	public static final BooleanOption RADAR_SELF = new BooleanOption("axolotlextras.radarSelf", true);
+
+	/** The radar also shows your teammates. */
+	public static final BooleanOption RADAR_TEAMMATES = new BooleanOption("axolotlextras.radarTeammates", true);
+
+	/** The radar also shows players with the invisibility effect. */
+	public static final BooleanOption RADAR_INVISIBLE = new BooleanOption("axolotlextras.radarInvisible", true);
+
+	/** Players out of range stay on the radar's edge, faded, in their direction. */
+	public static final BooleanOption RADAR_EDGE = new BooleanOption("axolotlextras.radarEdge", true);
+
+	/** A frame in the team colour around each face. */
+	public static final BooleanOption RADAR_BORDER = new BooleanOption("axolotlextras.radarBorder", true);
+
+	/** The name under each face. */
+	public static final BooleanOption RADAR_NAMES = new BooleanOption("axolotlextras.radarNames", false);
+
+	/** A small arrow next to players more than 3 blocks above or below you. */
+	public static final BooleanOption RADAR_HEIGHT = new BooleanOption("axolotlextras.radarHeight", true);
+
+	/** Cross lines, a ring at half the range, and an N for north. */
+	public static final BooleanOption RADAR_GRID = new BooleanOption("axolotlextras.radarGrid", true);
+
 	// Fine tuning for the hacks above.
 
 	/** ESP, tracers and nametags also show players with the invisibility effect. */
@@ -161,7 +220,7 @@ public class ExtrasModule extends AbstractModule {
 	 * fine-tuning switches (style, sounds, sizes) are left out: they do nothing while the hack is off.
 	 */
 	public static final BooleanOption[] HACK_MAIN_SWITCHES = {PLAYER_ESP, ESP_TRACERS, NAMETAGS, ENEMY_ARMOR, GENERATOR_COUNTS,
-		BED_DEFENSE, OBSIDIAN_ALERT, RUSH_ALERT, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS};
+		BED_DEFENSE, OBSIDIAN_ALERT, RUSH_ALERT, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS, RADAR};
 
 	/** Label sizes are sliders in percent, from {@link #LABEL_SIZE_MIN} to {@link #LABEL_SIZE_MAX}. */
 	public static final int LABEL_SIZE_MIN = LabelSizeMigration.MIN, LABEL_SIZE_MAX = LabelSizeMigration.MAX;
@@ -287,7 +346,10 @@ public class ExtrasModule extends AbstractModule {
 			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_RARE, GEN_BASE, BED_DEFENSE,
 			BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
-			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, HACK_KEY_NOTE);
+			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_RANGE,
+			RADAR_SHAPE, RADAR_CORNER, RADAR_OFFSET_X, RADAR_OFFSET_Y, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
+			RADAR_SELF, RADAR_TEAMMATES, RADAR_INVISIBLE, RADAR_EDGE, RADAR_BORDER, RADAR_NAMES, RADAR_HEIGHT, RADAR_GRID,
+			HACK_KEY_NOTE);
 		AxolotlClient.CONFIG.addCategory(HACKS);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD

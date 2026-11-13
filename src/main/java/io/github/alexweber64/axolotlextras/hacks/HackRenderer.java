@@ -516,6 +516,16 @@ public final class HackRenderer {
 			return;
 		}
 		long t = WATCH.start();
+		if (ExtrasModule.RADAR.get()) {
+			// Every real player, the radar's own switches filter them (not the ESP range, invisible and teammate ones).
+			List<Radar.Target> targets = new ArrayList<>();
+			for (PlayerEntity player : realPlayers(client)) {
+				targets.add(new Radar.Target(player, isTeammate(client, player)));
+			}
+			Radar.render(client, targets, lastTickDelta);
+			WATCH.end("radar (drawing)", t);
+			t = WATCH.start();
+		}
 		List<HudLabel> labels = new ArrayList<>();
 		add(labels, generatorLabels, ExtrasModule.SIZE_GENERATORS);
 		add(labels, BEDS.labels(), ExtrasModule.SIZE_BEDS);
