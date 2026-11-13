@@ -188,11 +188,17 @@ public class ExtrasModule extends AbstractModule {
 	/** Enemy Armor also shows the held item. */
 	public static final BooleanOption ARMOR_HELD = new BooleanOption("axolotlextras.armorHeld", true);
 
-	/** Generator Counts for diamonds and emeralds (the middle and side generators). */
-	public static final BooleanOption GEN_RARE = new BooleanOption("axolotlextras.genRare", true);
+	/** Generator Counts for iron. */
+	public static final BooleanOption GEN_IRON = new BooleanOption("axolotlextras.genIron", true);
 
-	/** Generator Counts for iron and gold (the island generators). */
-	public static final BooleanOption GEN_BASE = new BooleanOption("axolotlextras.genBase", true);
+	/** Generator Counts for gold. */
+	public static final BooleanOption GEN_GOLD = new BooleanOption("axolotlextras.genGold", true);
+
+	/** Generator Counts for diamonds. */
+	public static final BooleanOption GEN_DIAMOND = new BooleanOption("axolotlextras.genDiamond", true);
+
+	/** Generator Counts for emeralds. */
+	public static final BooleanOption GEN_EMERALD = new BooleanOption("axolotlextras.genEmerald", true);
 
 	/** Bed Defense also labels your own bed. */
 	public static final BooleanOption BED_DEFENSE_OWN = new BooleanOption("axolotlextras.bedDefenseOwn", true);
@@ -350,8 +356,8 @@ public class ExtrasModule extends AbstractModule {
 		HACKS.add(new GenericOption("axolotlextras.openHacks", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new HacksScreen(client.currentScreen))));
 		HACKS.add(PLAYER_ESP, ESP_TRACERS, ESP_STYLE, ESP_COLOR, ESP_RANGE, ESP_INVISIBLE, ESP_TEAMMATES, NAMETAGS,
-			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_RARE, GEN_BASE, BED_DEFENSE,
-			BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
+			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_IRON, GEN_GOLD, GEN_DIAMOND,
+			GEN_EMERALD, BED_DEFENSE, BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
 			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_CENTER,
 			RADAR_RANGE, RADAR_SHAPE, RADAR_CORNER, RADAR_OFFSET_X, RADAR_OFFSET_Y, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,

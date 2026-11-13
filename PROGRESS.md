@@ -235,6 +235,9 @@ Last updated: 2026-11-13.
   shorter distance than its chunks, so near the edge of render distance the live radar can still miss some.
   Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 together with the radar and the Dynamic FOV toggle, not yet
   seen in game; the previous jar (hack keys) is in mods-backup as axolotl-extras-0.1.0.before-radar.jar.
+- Generator Counts per ore (2026-11-13, built, 101 tests pass, not yet seen in game): the two switches Diamonds and
+  Emeralds / Iron and Gold are replaced by four, Count Iron, Count Gold, Count Diamonds and Count Emeralds (all on by
+  default). The old two are no longer read, so anyone who had one of them off gets it back on once.
 
 ## In progress
 

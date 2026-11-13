@@ -227,14 +227,13 @@ public final class HackRenderer {
 
 	/** The resource, or -1 when it is not one or its switch is off. */
 	private static int resourceIndex(Item item) {
-		boolean base = ExtrasModule.GEN_BASE.get(), rare = ExtrasModule.GEN_RARE.get();
-		if (item == Items.IRON_INGOT && base) {
+		if (item == Items.IRON_INGOT && ExtrasModule.GEN_IRON.get()) {
 			return ResourceMath.IRON;
-		} else if (item == Items.GOLD_INGOT && base) {
+		} else if (item == Items.GOLD_INGOT && ExtrasModule.GEN_GOLD.get()) {
 			return ResourceMath.GOLD;
-		} else if (item == Items.DIAMOND && rare) {
+		} else if (item == Items.DIAMOND && ExtrasModule.GEN_DIAMOND.get()) {
 			return ResourceMath.DIAMOND;
-		} else if (item == Items.EMERALD && rare) {
+		} else if (item == Items.EMERALD && ExtrasModule.GEN_EMERALD.get()) {
 			return ResourceMath.EMERALD;
 		}
 		return -1;
