@@ -4,7 +4,7 @@ Goal: a Lunar Client style setup for Minecraft 1.8.9 on Legacy Fabric (Prism ins
 feature can be switched on and off at will. Features come from AxolotlClient where it has them, and from the
 `axolotl-extras` add-on in this folder where it does not.
 
-Last updated: 2026-11-13.
+Last updated: 2026-11-14.
 
 ## Lunar module map
 
@@ -285,6 +285,11 @@ Last updated: 2026-11-13.
   fixes ESP, tracers, nametags, the radar and the Invisibility Alert for invisible players. Invisible players also no
   longer "explain" a sound for the hidden trail, so their steps go on it too. An Invisibility Alert now writes one
   line to latest.log saying whether the player was still sent (flagged) or gone from your side.
+- Fix (2026-11-14): the game crashed when the radar was switched on ("Registering texture", NullPointerException in
+  `Radar.face`). In these yarn mappings `AbstractClientPlayerEntity.getSkinId()` returns the cape (null without one)
+  and `getCapeId()` returns the skin; the radar used `getSkinId()`, so a player without a cape crashed it (and one
+  with a cape would have shown a piece of the cape). It now uses `getCapeId()` and draws a gray square if there is
+  no texture at all.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.

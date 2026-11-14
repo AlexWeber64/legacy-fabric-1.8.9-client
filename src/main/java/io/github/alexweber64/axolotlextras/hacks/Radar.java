@@ -19,6 +19,7 @@ import net.minecraft.client.util.Window;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.Identifier;
 import org.lwjgl.opengl.GL11;
 
 /**
@@ -271,8 +272,11 @@ final class Radar {
 			rect(-1, -1, icon + 1, icon + 1, a | (rgb < 0 ? 0xFFFFFF : rgb));
 			GlStateManager.enableTexture();
 		}
-		if (player instanceof AbstractClientPlayerEntity) {
-			client.getTextureManager().bindTexture(((AbstractClientPlayerEntity) player).getSkinId());
+		// The skin texture. Careful with the names: in these mappings getCapeId() is the one that returns the skin (with the
+		// default skin as fallback), and getSkinId() returns the cape, null without one. Binding null crashes the game.
+		Identifier skin = player instanceof AbstractClientPlayerEntity ? ((AbstractClientPlayerEntity) player).getCapeId() : null;
+		if (skin != null) {
+			client.getTextureManager().bindTexture(skin);
 			GlStateManager.color(1f, 1f, 1f, alpha);
 			GlStateManager.scale(icon / 8f, icon / 8f, 1f);
 			DrawableHelper.drawTexture(0, 0, 8f, 8f, 8, 8, 8, 8, 64f, 64f);
