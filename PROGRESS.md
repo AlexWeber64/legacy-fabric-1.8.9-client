@@ -319,6 +319,15 @@ Last updated: 2026-11-15.
   Size, and it saves only its position (no own on/off switch, no scale, so the two menus cannot disagree). The radar
   is now drawn by that entry with the other HUD modules, no longer from the hack labels pass. Radar Corner and the two
   offsets are gone; the default spot is the top right, where the radar sat before.
+- Dreams game start (2026-11-15, built, 127 tests pass, not yet seen in game): a Lucky Blocks game showed that
+  AxolotlClient and the add-on only start a Bed Wars game on "Protect your bed and destroy the enemy beds.", which
+  that mode does not print, so AxolotlClient's Bed Wars module and everything built on it (stats, KDR, Chat Stats
+  At Start, Hardcore Hearts) stayed off. Every start in the logs (43 normal games and 1 Lucky Blocks game) opens with
+  a "▬" line and then a title starting with "Bed Wars", and no other banner does (Duels shows "Bridge Duel").
+  `bedwars/GameStartWatcher` starts a game on that title (the old line still counts on its own, never twice for one
+  banner); the add-on's own start handling uses it, and `mixin/BedwarsModStartMixin` starts AxolotlClient's game the
+  same way AxolotlClient does (a 10 tick countdown) and logs "[Extras] Bed Wars game start seen". The other Dreams
+  modes (Rush, Ultimate, Voidless, Armed, Swappage, Castle) are not checked yet. 5 tests.
 - Clearer names (2026-11-15): ESP and the radar each have a "Show Invisible" and a "Show Teammates" switch, which
   looked like duplicates. They are now "ESP: Show Invisible", "ESP: Show Teammates" (ESP, tracers and nametags) and
   "Radar: Show Invisible", "Radar: Show Teammates" (the radar only), and each tooltip points to the other switch.
