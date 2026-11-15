@@ -309,6 +309,21 @@ Last updated: 2026-11-14.
   The bed counts as broken when its chunk is loaded and the bed block is gone (one in an unloaded chunk counts as
   still there). Radar Centre itself is not changed: a new game (or a new world) clears the broken mark, so the radar
   starts on your bed again. Off: the radar stays gray with "No bed" as before. `RadarMath.centreOnBed`, 1 test.
+- Deployed main 3ddbbee (pull requests 1 to 4) to the play clone 1.8.9-lunarlike on 2026-11-15; the previous jar is in
+  mods-backup as axolotl-extras-0.1.0.before-radar-hud.jar.
+- Safe Sneak (2026-11-15, built, 126 tests pass, not yet seen in game): a hack in a new Movement section, off by
+  default, with its own toggle key and on the emergency toggle. The first hack that changes what the server sees
+  (real sneak packets; Hypixel forbids it), and the tooltip and README say so. `mixin/SafeSneakMixin` hooks the end
+  of `KeyboardInput.tick` (after AxolotlClient's toggle sneak) and sets `sneaking` plus the vanilla 0.3 slow-down, as
+  the sneak key does. `hacks/SafeSneak` (no Minecraft imports, 6 tests): each tick, while on the ground, not flying, no
+  menu open, looking down at least Only Looking Down (45 degrees), holding a block item and not walking forward (each
+  a switch), it checks the player's box shrunk by an inset, moved by the motion and one block down: no block there
+  means the next step leaves the edge, so it sneaks. After the edge it keeps sneaking for a random time between Sneak
+  Hold Min and Max (80 to 220 ms). Random Start Spot draws the inset once per edge between 0.12 and 0.25 (the sneak
+  starts 0.05 to 0.18 blocks past the edge, before the 0.3 at which you fall); a test caught that it was first drawn
+  every tick, which favoured an early start. Your own sneak key always wins. Reviewed Vape V4's SafeWalk and edge
+  sneak helper for the approach (not copied). Detection: the random hold and start spot vary the timing, but every
+  sneak still starts at a block edge, so a server can still notice the pattern.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.

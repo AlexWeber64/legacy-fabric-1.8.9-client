@@ -76,6 +76,30 @@ public class ExtrasModule extends AbstractModule {
 	/** Takes away the dark fog of the blindness effect (drawing only). */
 	public static final BooleanOption NO_BLINDNESS = new BooleanOption("axolotlextras.noBlindness", false);
 
+	/**
+	 * Sneaks for you at the edge of a block while bridging, then stands up after a random moment. The one hack that changes
+	 * what the server sees (real sneak packets).
+	 */
+	public static final BooleanOption SAFE_SNEAK = new BooleanOption("axolotlextras.safeSneak", false);
+
+	/** Safe Sneak keeps sneaking this long after the edge at least (ms). */
+	public static final IntegerOption SAFE_SNEAK_HOLD_MIN = new IntegerOption("axolotlextras.safeSneakHoldMin", 80, 0, 500);
+
+	/** ... and this long at most (ms); each edge draws a time in between. */
+	public static final IntegerOption SAFE_SNEAK_HOLD_MAX = new IntegerOption("axolotlextras.safeSneakHoldMax", 220, 0, 800);
+
+	/** Safe Sneak starts at a slightly different spot at each edge. */
+	public static final BooleanOption SAFE_SNEAK_RANDOM_EDGE = new BooleanOption("axolotlextras.safeSneakRandomEdge", true);
+
+	/** Safe Sneak only while looking down at least this far (degrees, 0 is always). */
+	public static final IntegerOption SAFE_SNEAK_PITCH = new IntegerOption("axolotlextras.safeSneakPitch", 45, 0, 90);
+
+	/** Safe Sneak only while holding blocks. */
+	public static final BooleanOption SAFE_SNEAK_BLOCKS = new BooleanOption("axolotlextras.safeSneakBlocks", true);
+
+	/** Safe Sneak not while walking forward (bridging is done walking backwards), so you can still walk off on purpose. */
+	public static final BooleanOption SAFE_SNEAK_NOT_FORWARD = new BooleanOption("axolotlextras.safeSneakNotForward", true);
+
 	/** Team-coloured name, health and distance over every other player, through walls. */
 	public static final BooleanOption NAMETAGS = new BooleanOption("axolotlextras.nametags", false);
 
@@ -262,7 +286,7 @@ public class ExtrasModule extends AbstractModule {
 	 */
 	public static final BooleanOption[] HACK_MAIN_SWITCHES = {PLAYER_ESP, ESP_TRACERS, NAMETAGS, ENEMY_ARMOR, GENERATOR_COUNTS,
 		BED_DEFENSE, OBSIDIAN_ALERT, RUSH_ALERT, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS, RADAR, INVIS_ALERT,
-		HIDDEN_TRAIL};
+		HIDDEN_TRAIL, SAFE_SNEAK};
 
 	/** Label sizes are sliders in percent, from {@link #LABEL_SIZE_MIN} to {@link #LABEL_SIZE_MAX}. */
 	public static final int LABEL_SIZE_MIN = LabelSizeMigration.MIN, LABEL_SIZE_MAX = LabelSizeMigration.MAX;
@@ -397,7 +421,8 @@ public class ExtrasModule extends AbstractModule {
 			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_CENTER,
 			RADAR_BED_FALLBACK, 			RADAR_RANGE, RADAR_SHAPE, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
 			RADAR_SELF, RADAR_TEAMMATES, RADAR_INVISIBLE, RADAR_EDGE, RADAR_BORDER, RADAR_NAMES, RADAR_HEIGHT, RADAR_GRID,
-			HACK_KEY_NOTE);
+			SAFE_SNEAK, SAFE_SNEAK_HOLD_MIN, SAFE_SNEAK_HOLD_MAX, SAFE_SNEAK_RANDOM_EDGE, SAFE_SNEAK_PITCH, SAFE_SNEAK_BLOCKS,
+			SAFE_SNEAK_NOT_FORWARD, HACK_KEY_NOTE);
 		AxolotlClient.CONFIG.addCategory(HACKS);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD

@@ -30,7 +30,7 @@ HUD editor.
 
 ## Hacks
 
-Open the Hacks menu from its own category in AxolotlClient's Right Shift menu. Every hack is off by default and has its own switch; the fine-tuning switches sit under it in the same section. They only draw or print a local chat line: nothing is sent to the server. NPCs (Hypixel's shopkeepers and upgrade villagers, found by their UUID, the tab list and "[NPC]" in the name) are left out, and your team is read from the Bed Wars sidebar ("YOU").
+Open the Hacks menu from its own category in AxolotlClient's Right Shift menu. Every hack is off by default and has its own switch; the fine-tuning switches sit under it in the same section. They only draw or print a local chat line, nothing is sent to the server, except Safe Sneak under Movement. NPCs (Hypixel's shopkeepers and upgrade villagers, found by their UUID, the tab list and "[NPC]" in the name) are left out, and your team is read from the Bed Wars sidebar ("YOU").
 
 Click a category to open it.
 
@@ -118,12 +118,21 @@ Click a category to open it.
 </details>
 
 <details>
+<summary><b>Movement</b> (1)</summary>
+
+| Hack | What it does |
+|---|---|
+| Safe Sneak | Sneaks for you at the edge of a block while bridging, so you do not fall off, and stands up again a random moment later (Sneak Hold Min and Max, 80 to 220 ms by default). The start spot also varies a little at each edge, always before you could fall. Only while looking down (Only Looking Down, 45 degrees), holding blocks and not walking forward, each with its own switch; your own sneak key always wins. **Unlike every other hack, this one changes what the server sees**: it sends real sneak packets, and Hypixel's rules forbid it. The randomness varies the timing, but every sneak still starts at a block edge, so an anticheat can still notice it. |
+
+</details>
+
+<details>
 <summary><b>Hack keys</b> (2)</summary>
 
 | Hack | What it does |
 |---|---|
 | Emergency toggle | G switches every hack off and remembers which were on, H switches exactly those back on. The memory is kept in `config/axolotl-extras/hacks-off.txt`, so it survives a restart. |
-| Toggle keys | Each of the 15 main hack switches has its own toggle key, unbound until you set it. All hack keys are in Controls, section AxolotlClient Extras: Hacks. A short note above the hotbar says what a key did (switch Hack Key Note off for none). |
+| Toggle keys | Each of the 16 main hack switches has its own toggle key, unbound until you set it. All hack keys are in Controls, section AxolotlClient Extras: Hacks. A short note above the hotbar says what a key did (switch Hack Key Note off for none). |
 
 </details>
 

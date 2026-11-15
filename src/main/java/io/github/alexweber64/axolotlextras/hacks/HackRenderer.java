@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -17,6 +18,7 @@ import io.github.axolotlclient.AxolotlClientConfig.options.IntegerOption;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.input.KeyboardInput;
 import net.minecraft.client.particle.ParticleType;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.world.ClientWorld;
@@ -26,9 +28,11 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
+import net.minecraft.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -75,6 +79,7 @@ public final class HackRenderer {
 	private static final Draw3D DRAW = new Draw3D();
 	private static final FreezeWatch WATCH = new FreezeWatch();
 	private static final InvisTracker INVIS = new InvisTracker();
+	private static final SafeSneak SNEAK = new SafeSneak(new Random());
 	private static final HiddenTrail TRAIL = new HiddenTrail();
 	private static final Logger LOG = LogManager.getLogger("axolotl-extras");
 	/** How many hidden-trail crumbs are still written to the log in this world (to learn what a server sends). */
@@ -892,6 +897,34 @@ public final class HackRenderer {
 		}
 		Radar.render(client, left, top, targets, tickDelta, radarOnBed() ? radarBed(client) : null);
 		WATCH.end("radar (drawing)", t);
+	}
+
+	/**
+	 * Safe Sneak, called at the end of the movement input tick: turns sneaking on (as the sneak key does, with the same
+	 * slower movement) while the next step would leave the block, and a random moment after.
+	 */
+	public static void safeSneak(KeyboardInput input) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		ClientPlayerEntity player = client.player;
+		if (player == null || client.world == null || player.input != input) {
+			return;
+		}
+		Integer pitch = ExtrasModule.SAFE_SNEAK_PITCH.get();
+		ItemStack held = player.getStackInHand();
+		boolean active = ExtrasModule.SAFE_SNEAK.get() && client.currentScreen == null && player.onGround
+			&& !player.abilities.flying && player.pitch >= (pitch == null ? 0 : pitch)
+			&& (!ExtrasModule.SAFE_SNEAK_BLOCKS.get() || (held != null && held.getItem() instanceof BlockItem))
+			&& (!ExtrasModule.SAFE_SNEAK_NOT_FORWARD.get() || input.movementForward <= 0);
+		Integer min = ExtrasModule.SAFE_SNEAK_HOLD_MIN.get(), max = ExtrasModule.SAFE_SNEAK_HOLD_MAX.get();
+		boolean sneak = SNEAK.tick(active, input.sneaking, inset -> client.world.doesBoxCollide(player,
+				player.getBoundingBox().expand(-inset, 0, -inset).offset(player.velocityX, -1, player.velocityZ)).isEmpty(),
+			ExtrasModule.SAFE_SNEAK_RANDOM_EDGE.get(), min == null ? 80 : min, max == null ? 220 : max,
+			System.currentTimeMillis());
+		if (sneak) {
+			input.sneaking = true;
+			input.movementSideways *= 0.3f;
+			input.movementForward *= 0.3f;
+		}
 	}
 
 	/** Called when the HUD is drawn: every label at its place on screen. */

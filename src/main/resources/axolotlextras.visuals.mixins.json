@@ -11,7 +11,8 @@
 		"HackWorldRenderMixin",
 		"HackHudMixin",
 		"NoBlindnessMixin",
-		"HiddenTrailMixin"
+		"HiddenTrailMixin",
+		"SafeSneakMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

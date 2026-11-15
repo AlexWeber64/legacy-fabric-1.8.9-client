@@ -30,6 +30,9 @@ public class HacksScreen extends ExtrasScreen {
 			ExtrasModule.RADAR_TEAMMATES, ExtrasModule.RADAR_INVISIBLE, ExtrasModule.RADAR_EDGE, ExtrasModule.RADAR_BORDER,
 			ExtrasModule.RADAR_NAMES, ExtrasModule.RADAR_HEIGHT, ExtrasModule.RADAR_GRID);
 		section("axolotlextras.section.vision", ExtrasModule.NO_BLINDNESS);
+		section("axolotlextras.section.movement", ExtrasModule.SAFE_SNEAK, ExtrasModule.SAFE_SNEAK_HOLD_MIN,
+			ExtrasModule.SAFE_SNEAK_HOLD_MAX, ExtrasModule.SAFE_SNEAK_RANDOM_EDGE, ExtrasModule.SAFE_SNEAK_PITCH,
+			ExtrasModule.SAFE_SNEAK_BLOCKS, ExtrasModule.SAFE_SNEAK_NOT_FORWARD);
 		section("axolotlextras.section.hackKeys", ExtrasModule.HACK_KEY_NOTE);
 	}
 }
