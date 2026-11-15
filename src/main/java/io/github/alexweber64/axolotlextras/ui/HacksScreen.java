@@ -18,7 +18,7 @@ public class HacksScreen extends ExtrasScreen {
 			ExtrasModule.OBSIDIAN_SOUND, ExtrasModule.INVIS_ALERT, ExtrasModule.INVIS_NEED_POTION, ExtrasModule.INVIS_WAYPOINTS, ExtrasModule.INVIS_SOUND,
 			ExtrasModule.HIDDEN_TRAIL, ExtrasModule.TRAIL_TIME, ExtrasModule.TRAIL_STYLE, ExtrasModule.TRAIL_LABELS,
 			ExtrasModule.TRAIL_CHAT,
-			ExtrasModule.RUSH_ALERT, ExtrasModule.RUSH_DISTANCE, ExtrasModule.RUSH_SOUND);
+			ExtrasModule.RUSH_ALERT, ExtrasModule.RUSH_DISTANCE, ExtrasModule.RUSH_SOUND, ExtrasModule.RUSH_TEAMMATES);
 		section("axolotlextras.section.projectiles", ExtrasModule.FIREBALL_WARNING, ExtrasModule.FIREBALL_BLOCKS,
 			ExtrasModule.FIREBALL_SOUND, ExtrasModule.PEARL_LANDING, ExtrasModule.TRAJECTORIES, ExtrasModule.TRAJECTORY_BOW,
 			ExtrasModule.TRAJECTORY_THROWN);
