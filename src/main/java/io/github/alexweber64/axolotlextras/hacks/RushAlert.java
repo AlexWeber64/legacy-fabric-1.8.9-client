@@ -36,16 +36,17 @@ final class RushAlert {
 	}
 
 	/**
-	 * @param enemies the other players, teammates and NPCs already left out
-	 * @param quiet   true right after the start, when everyone still stands on their own island: enemies are noted as
-	 *                inside but not announced
+	 * @param players   the players to watch: enemies, and teammates too with Rush: Include Teammates (NPCs left out)
+	 * @param teammates the UUIDs of those players who are on your team, marked "[Teammate]" in the chat line
+	 * @param quiet     true right after the start, when everyone still stands on their own island: players are noted
+	 *                  as inside but not announced
 	 */
-	void tick(MinecraftClient client, BedTracker.Info ownBed, List<PlayerEntity> enemies, double radius, int tick,
-		boolean quiet) {
+	void tick(MinecraftClient client, BedTracker.Info ownBed, List<PlayerEntity> players, Set<UUID> teammates,
+		double radius, int tick, boolean quiet) {
 		if (ownBed == null) {
 			return;
 		}
-		for (PlayerEntity player : enemies) {
+		for (PlayerEntity player : players) {
 			double dx = player.x - ownBed.centerX(), dz = player.z - ownBed.centerZ();
 			double distance = Math.sqrt(dx * dx + dz * dz);
 			UUID id = player.getUuid();
@@ -54,8 +55,8 @@ final class RushAlert {
 					Integer last = lastAlert.get(id);
 					if (last == null || tick - last >= COOLDOWN) {
 						lastAlert.put(id, tick);
-						client.inGameHud.getChatHud().addMessage(new LiteralText("§c§lRush §r"
-							+ player.getName().asFormattedString() + " §f" + Math.round(distance) + "m from your bed"));
+						client.inGameHud.getChatHud().addMessage(new LiteralText(HackMath.rushMessage(
+							player.getName().asFormattedString(), teammates.contains(id), Math.round(distance))));
 						if (ExtrasModule.RUSH_SOUND.get()) {
 							client.player.playSound("note.pling", 1f, 0.5f);
 						}
