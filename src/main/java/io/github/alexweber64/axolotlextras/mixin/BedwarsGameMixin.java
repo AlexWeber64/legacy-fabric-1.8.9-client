@@ -40,8 +40,9 @@ public abstract class BedwarsGameMixin {
 	@Final
 	private Map<String, BedwarsPlayer> players;
 
+	/** You, or null while AxolotlClient has not found you (getSelf() then returns a stand-in, see BedwarsGameSelfMixin). */
 	@Shadow
-	public abstract BedwarsPlayer getSelf();
+	private BedwarsPlayer me;
 
 	@Shadow
 	public abstract Optional<BedwarsPlayer> getPlayer(UUID uuid);
@@ -120,7 +121,6 @@ public abstract class BedwarsGameMixin {
 			return;
 		}
 		BedwarsPlayer killer = getPlayer(m.group(2)).orElse(null);
-		BedwarsPlayer me = getSelf();
 		BedwarsPlayerStats stats = realStats(killer);
 		if (killer == null || me == null || stats == null || killer.getTeam() != me.getTeam()) {
 			return;
@@ -196,7 +196,6 @@ public abstract class BedwarsGameMixin {
 			return;
 		}
 		event.setNewMessage(null);
-		BedwarsPlayer me = getSelf();
 		BedwarsPlayerStats stats = realStats(breaker);
 		if (breaker == null || me == null || stats == null || breaker.getTeam() != me.getTeam()) {
 			return;
