@@ -94,10 +94,14 @@ public final class HackRenderer {
 	/** True once names carry team colours: the sidebar shows your team, or the game start was seen. */
 	private static boolean gameRunning;
 	/**
-	 * True while your own name has a Bed Wars team prefix ("§9§lB You"). Then every player in the game has one, and a
-	 * player without it is a spectator or an eliminated player.
+	 * True once your own name had a Bed Wars team prefix ("§9§lB You") in this world. Then every player in the game has
+	 * one, and a player without it is a spectator, an eliminated player or a player waiting to respawn (Hypixel turns
+	 * their name gray for that, and they reappear next to your bed still gray for a moment). It stays true while you are
+	 * dead yourself; a new world clears it.
 	 */
 	private static boolean prefixesInUse;
+	/** Your team from your own prefix, kept while your name is gray (dead or respawning), or {@link TeamGuess#UNKNOWN}. */
+	private static int prefixTeam = TeamGuess.UNKNOWN;
 	/** No rush alerts this long after the start spot is taken: everyone still stands on their own island. */
 	private static final int RUSH_QUIET_TICKS = 200;
 	private static final ItemStack[] RESOURCE_ICONS = new ItemStack[ResourceMath.COUNT];
@@ -130,6 +134,7 @@ public final class HackRenderer {
 		ownTeam = TeamGuess.UNKNOWN;
 		gameRunning = false;
 		prefixesInUse = false;
+		prefixTeam = TeamGuess.UNKNOWN;
 		generatorLabels = Collections.emptyList();
 		waypointLabels = Collections.emptyList();
 		captured = false;
@@ -221,14 +226,19 @@ public final class HackRenderer {
 	}
 
 	/**
-	 * Your team. First the team prefix on your own name ("§9§lB You"), which only exists in a running game; then the Bed
-	 * Wars sidebar ("R Red: YOU"); then your name colour, but only after the game start: in the waiting lobby names are in
-	 * rank colours (VIP is green), which used to make you "Green".
+	 * Your team. First the team prefix on your own name ("§9§lB You"), which only exists in a running game, and kept while
+	 * you are dead (your name is gray then); then the Bed Wars sidebar ("R Red: YOU"); then your name colour, but only
+	 * after the game start: in the waiting lobby names are in rank colours (VIP is green), which used to make you "Green".
 	 */
 	private static void findOwnTeam(MinecraftClient client, ClientWorld world) {
 		String ownName = client.player.getName().asFormattedString();
 		int team = TeamGuess.fromTeamPrefix(ownName);
-		prefixesInUse = team != TeamGuess.UNKNOWN;
+		if (team != TeamGuess.UNKNOWN) {
+			prefixesInUse = true;
+			prefixTeam = team;
+		} else if (prefixesInUse) {
+			team = prefixTeam;
+		}
 		if (team == TeamGuess.UNKNOWN) {
 			team = sidebarTeam(world);
 		}

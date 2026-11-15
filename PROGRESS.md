@@ -318,7 +318,10 @@ Last updated: 2026-11-14.
   Hypixel puts in front of every name in a game ("§9§lB Name"; both must agree), your own team comes from your own
   prefix first (then the sidebar, then your name colour), and while your name has a prefix, players without one are
   left out of every hack (ESP, radar, Rush Alert, Invisibility Alert, bed team votes). Without prefixes (another
-  server or mode) it works as before. 1 test.
+  server or mode) it works as before. 1 test. You then said the alert named a teammate right after they respawned,
+  gray and without a letter: Hypixel grays out players waiting to respawn, and they reappear next to your bed still
+  gray for a moment. Those are left out by the same rule, and the rule (and your team) now holds for the whole world,
+  also while you are dead yourself (your own name is gray then, which would otherwise have made you "Gray").
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.
