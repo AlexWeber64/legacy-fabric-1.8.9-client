@@ -42,7 +42,7 @@ Click a category to open it.
 | Player ESP | A box around every other player, through walls, in their team colour, invisible players included, NPCs and anything not in the tab list skipped. |
 | Tracers | A line from the middle of the screen to each of them. |
 
-**Fine tuning:** ESP Style (outline, filled, both), ESP Color (team, distance, health), ESP Range, Show Invisible Players, Show Teammates.
+**Fine tuning:** ESP Style (outline, filled, both), ESP Color (team, distance, health), ESP Range, ESP: Show Invisible, ESP: Show Teammates (these also cover tracers and nametags; the radar has its own two).
 
 </details>
 
@@ -104,7 +104,7 @@ Click a category to open it.
 |---|---|
 | Radar | A minimap on the HUD with every other player shown by the face of their skin (face and hat layer, framed in the team colour), NPCs skipped. Radar Centre puts you or your own bed in the middle (a key switches it); the bed radar turns gray with the reason ("Bed out of range (143m)", "No bed") while the bed is beyond your render distance or not known, since players there are not sent to you. Move it by dragging its "Radar" box in AxolotlClient's HUD editor, like any HUD module. |
 
-**Fine tuning:** Range (16 to 128 blocks), Shape (circle or square), Size, Face Size, Background Opacity, Turn With View (or north up), Show Own Face, Show Teammates, Show Invisible, Keep Far Players on Edge, Team Colour Frame, Show Names, Height Arrows, Grid and North.
+**Fine tuning:** Range (16 to 128 blocks), Shape (circle or square), Size, Face Size, Background Opacity, Turn With View (or north up), Show Own Face, Radar: Show Teammates, Radar: Show Invisible, Keep Far Players on Edge, Team Colour Frame, Show Names, Height Arrows, Grid and North.
 
 </details>
 
