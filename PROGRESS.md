@@ -289,7 +289,11 @@ Last updated: 2026-11-14.
   `Radar.face`). In these yarn mappings `AbstractClientPlayerEntity.getSkinId()` returns the cape (null without one)
   and `getCapeId()` returns the skin; the radar used `getSkinId()`, so a player without a cape crashed it (and one
   with a cape would have shown a piece of the cape). It now uses `getCapeId()` and draws a gray square if there is
-  no texture at all.
+  no texture at all. Deployed to the play clone 1.8.9-lunarlike on 2026-11-14; the crashing jar is in mods-backup as
+  axolotl-extras-0.1.0.before-radar-crash-fix.jar.
+- README (2026-11-14): the hacks moved out of the one long table row into their own "Hacks" section, grouped like the
+  Hacks menu (ESP, Nametags and labels, Bed Wars info, Alerts, Projectiles, Radar, Vision, Hack keys). Each category
+  is a collapsed block (`<details>`) with a table of its hacks and their fine-tuning switches.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.
