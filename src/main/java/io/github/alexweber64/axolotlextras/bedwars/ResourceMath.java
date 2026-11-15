@@ -102,6 +102,31 @@ public final class ResourceMath {
 		return null;
 	}
 
+	/**
+	 * Compares the ender chest count the counter expected with what the open ender chest really holds.
+	 *
+	 * @return a log text like "expected iron 24, gold 6, diamond 0, emerald 0; found iron 20, gold 6, diamond 0,
+	 *         emerald 0", or null when they match
+	 */
+	public static String chestMismatch(int[] expected, int[] found) {
+		boolean same = true;
+		for (int i = 0; i < COUNT; i++) {
+			same &= expected[i] == found[i];
+		}
+		return same ? null : "expected " + counts(expected) + "; found " + counts(found);
+	}
+
+	private static String counts(int[] values) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < COUNT; i++) {
+			if (i > 0) {
+				sb.append(", ");
+			}
+			sb.append(DISPLAY_NAMES[i].toLowerCase()).append(' ').append(values[i]);
+		}
+		return sb.toString();
+	}
+
 	/** True when a sidebar title belongs to Hypixel Bed Wars. */
 	public static boolean isBedWarsTitle(String sidebarTitle) {
 		return stripFormatting(sidebarTitle).toUpperCase().contains("BED WARS");

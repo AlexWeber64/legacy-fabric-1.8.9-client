@@ -35,6 +35,13 @@ class ResourceMathTest {
 	}
 
 	@Test
+	void chestMismatchNamesBothCounts() {
+		assertNull(ResourceMath.chestMismatch(new int[] {24, 6, 0, 0}, new int[] {24, 6, 0, 0}));
+		assertEquals("expected iron 24, gold 6, diamond 0, emerald 0; found iron 20, gold 6, diamond 0, emerald 0",
+			ResourceMath.chestMismatch(new int[] {24, 6, 0, 0}, new int[] {20, 6, 0, 0}));
+	}
+
+	@Test
 	void indexOfKnownItems() {
 		assertEquals(ResourceMath.IRON, ResourceMath.indexOf("iron_ingot"));
 		assertEquals(ResourceMath.GOLD, ResourceMath.indexOf("minecraft:gold_ingot"));

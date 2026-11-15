@@ -41,6 +41,10 @@ Last updated: 2026-11-15.
     press of the attack key on an ender chest and a drop in the inventory within half a second; holding the button
     and switching from iron to gold deposits both, but only the first was counted (reported by you). The guessing
     (`DepositTracker`) is removed. 2 tests with lines from the logs.
+  - debug line in latest.log (2026-11-16): when the ender chest opens, the counter compares its count with the real
+    contents 5 ticks later and logs "[Extras] Resource Counter: the ender chest did not match: expected ...; found
+    ..." when they differ (items moved inside the chest in the first quarter second show up too). A chest whose title
+    contains "ender" but is not read as the ender chest is logged once. 1 test.
 - Quickplay menu (key Y), Doubles uses `/play bedwars_eight_two`.
 - Toggle Sprint: found that it was dead because its HUD module was switched off (the toggle lives in that module's tick).
   Re-enabled it in your clone config and measured 11.22 blocks per 2 s toggled against 8.63 walking.
