@@ -195,7 +195,7 @@ public final class HackRenderer {
 			}
 			if (ExtrasModule.RUSH_ALERT.get() && gameRunning) {
 				// Every enemy counts here, also invisible and far ones (the ESP filters do not apply), and teammates too
-				// with Rush: Teammates Too.
+				// with Rush: Include Teammates.
 				boolean teammates = ExtrasModule.RUSH_TEAMMATES.get();
 				List<PlayerEntity> enemies = new ArrayList<>();
 				for (PlayerEntity player : realPlayers(client)) {
