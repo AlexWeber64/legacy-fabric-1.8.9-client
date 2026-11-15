@@ -192,6 +192,26 @@ class HacksTest {
 	}
 
 	@Test
+	void teamFromPrefixLeavesSpectatorsOut() {
+		assertEquals(0, TeamGuess.fromTeamPrefix("§c§lR §cSteve"));
+		assertEquals(1, TeamGuess.fromTeamPrefix("§9§lB §r§9WalterSpalter"));
+		assertEquals(7, TeamGuess.fromTeamPrefix("§8§lS §8Alex"));
+		// Spectators and eliminated players: plain gray, no letter.
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromTeamPrefix("§7nufikfufik"));
+		// Lobby names start with a rank.
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromTeamPrefix("§a[VIP] Cyverno"));
+		// Letter and colour must agree, and the letter needs its space.
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromTeamPrefix("§a§lR §aSteve"));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromTeamPrefix("§cRob"));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromTeamPrefix("R Steve"));
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromTeamPrefix(null));
+		// Gray spectators count as Gray only while names have no prefixes at all.
+		assertEquals(TeamGuess.UNKNOWN, TeamGuess.ofPlayer("§7nufikfufik", true));
+		assertEquals(7, TeamGuess.ofPlayer("§7nufikfufik", false));
+		assertEquals(1, TeamGuess.ofPlayer("§9§lB §9Bob", true));
+	}
+
+	@Test
 	void rushMessageMarksTeammates() {
 		assertEquals("§c§lRush §r§9§lB §9Steve §f15m from your bed", HackMath.rushMessage("§9§lB §9Steve", false, 15));
 		assertEquals("§c§lRush §r§b§lA §bAlex §a[Teammate] §f12m from your bed",

@@ -285,7 +285,7 @@ final class BedTracker {
 				&& client.getNetworkHandler().getPlayerListEntry(player.getUuid()) == null)) {
 				continue; // an NPC
 			}
-			int team = TeamGuess.fromFormattedName(player.getName().asFormattedString());
+			int team = TeamGuess.ofPlayer(player.getName().asFormattedString(), HackRenderer.prefixesInUse());
 			if (team != TeamGuess.UNKNOWN) {
 				playerVotes[team]++;
 			}

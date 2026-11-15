@@ -30,7 +30,7 @@ HUD editor.
 
 ## Hacks
 
-Open the Hacks menu from its own category in AxolotlClient's Right Shift menu. Every hack is off by default and has its own switch; the fine-tuning switches sit under it in the same section. They only draw or print a local chat line: nothing is sent to the server. NPCs (Hypixel's shopkeepers and upgrade villagers, found by their UUID, the tab list and "[NPC]" in the name) are left out, and your team is read from the Bed Wars sidebar ("YOU").
+Open the Hacks menu from its own category in AxolotlClient's Right Shift menu. Every hack is off by default and has its own switch; the fine-tuning switches sit under it in the same section. They only draw or print a local chat line: nothing is sent to the server. NPCs (Hypixel's shopkeepers and upgrade villagers, found by their UUID, the tab list and "[NPC]" in the name) are left out, and your team is read from the team letter in front of your name ("§9§lB" is Blue), else from the Bed Wars sidebar ("YOU"). Other players count as teammates when their letter and colour match yours. Once names carry these letters, a player without one is a spectator or an eliminated player and no hack counts them.
 
 Click a category to open it.
 
