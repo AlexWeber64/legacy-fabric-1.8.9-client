@@ -241,6 +241,9 @@ public class ExtrasModule extends AbstractModule {
 	/** The Rush Alert plays a sound with its chat line. */
 	public static final BooleanOption RUSH_SOUND = new BooleanOption("axolotlextras.rushSound", true);
 
+	/** The Rush Alert also counts teammates near your bed (off: enemies only). */
+	public static final BooleanOption RUSH_TEAMMATES = new BooleanOption("axolotlextras.rushTeammates", false);
+
 	/** The Fireball Warning marks the blocks the blast will likely break. */
 	public static final BooleanOption FIREBALL_BLOCKS = new BooleanOption("axolotlextras.fireballBlocks", true);
 
@@ -392,7 +395,7 @@ public class ExtrasModule extends AbstractModule {
 			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_IRON, GEN_GOLD, GEN_DIAMOND,
 			GEN_EMERALD, BED_DEFENSE, BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, INVIS_ALERT,
 			INVIS_NEED_POTION, INVIS_WAYPOINTS, INVIS_SOUND, HIDDEN_TRAIL, TRAIL_TIME, TRAIL_STYLE,
-			TRAIL_LABELS, TRAIL_CHAT, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
+			TRAIL_LABELS, TRAIL_CHAT, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND, RUSH_TEAMMATES,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
 			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_CENTER,
 			RADAR_BED_FALLBACK, 			RADAR_RANGE, RADAR_SHAPE, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
