@@ -90,6 +90,15 @@ class RadarMathTest {
 	}
 
 	@Test
+	void aBrokenBedSendsTheRadarBackToYou() {
+		assertEquals(true, RadarMath.centreOnBed(true, true, false));
+		assertEquals(false, RadarMath.centreOnBed(true, true, true));
+		// Switched off: it stays on the bed (gray, "No bed").
+		assertEquals(true, RadarMath.centreOnBed(true, false, true));
+		assertEquals(false, RadarMath.centreOnBed(false, true, false));
+	}
+
+	@Test
 	void heightMarks() {
 		assertEquals(1, RadarMath.heightMark(4, 3));
 		assertEquals(-1, RadarMath.heightMark(-4, 3));

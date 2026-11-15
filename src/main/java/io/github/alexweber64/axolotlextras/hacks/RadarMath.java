@@ -56,6 +56,17 @@ public final class RadarMath {
 		return new double[] {px * shrink, py * shrink, 1};
 	}
 
+	/**
+	 * Whether the radar is centred on your bed right now.
+	 *
+	 * @param bedChosen   Radar Centre is set to Your Bed
+	 * @param fallback    Back to You When Bed Breaks is on
+	 * @param bedBroken   your bed was broken in this game (cleared when a new game starts)
+	 */
+	public static boolean centreOnBed(boolean bedChosen, boolean fallback, boolean bedBroken) {
+		return bedChosen && !(fallback && bedBroken);
+	}
+
 	/** What a bed-centred radar can show. */
 	public enum BedState {
 		/** The bed is near enough: the players around it are loaded. */
