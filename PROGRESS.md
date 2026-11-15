@@ -151,7 +151,8 @@ Last updated: 2026-11-14.
     switch, off by default. On, the alert also counts teammates near your bed (same distance, cooldown and chat
     line); off, it stays enemies only, as after this fix. Played once with it off on 2026-11-15, together with the
     team prefix fix (pull request #10): a doubles game as Aqua, one Rush line for the whole game, for a Gray enemy
-    who broke your bed 11 seconds later, and no line for anyone else, also not while players respawned.
+    who broke your bed 11 seconds later, and no line for anyone else, also not while players respawned. A teammate's
+    line now has a green "[Teammate]" after the name (`HackMath.rushMessage`, 1 test).
   - NPCs left out of ESP, tracers, nametags, enemy armor, rush and the aim line: version 2 UUIDs (Hypixel's fake players),
     a hidden name tag (team rule "never"), or "[NPC]" in the name, on top of the tab list check.
   - Fine tuning switches: ESP Style, ESP Color, ESP Range, Show Invisible Players, Show Teammates, Nametag Health, Nametag

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.alexweber64.axolotlextras.ExtrasModule;
@@ -196,17 +197,22 @@ public final class HackRenderer {
 			if (ExtrasModule.RUSH_ALERT.get() && gameRunning) {
 				// Every enemy counts here, also invisible and far ones (the ESP filters do not apply), and teammates too
 				// with Rush: Include Teammates.
-				boolean teammates = ExtrasModule.RUSH_TEAMMATES.get();
-				List<PlayerEntity> enemies = new ArrayList<>();
+				boolean includeTeammates = ExtrasModule.RUSH_TEAMMATES.get();
+				List<PlayerEntity> watched = new ArrayList<>();
+				Set<UUID> teammates = new HashSet<>();
 				for (PlayerEntity player : realPlayers(client)) {
-					if (teammates || !isTeammate(client, player)) {
-						enemies.add(player);
+					boolean teammate = isTeammate(client, player);
+					if (teammate && includeTeammates) {
+						teammates.add(player.getUuid());
+					}
+					if (includeTeammates || !teammate) {
+						watched.add(player);
 					}
 				}
 				boolean quiet = spawnTick >= 0 && ticks - spawnTick < RUSH_QUIET_TICKS;
 				t = WATCH.start();
-				RUSH.tick(client, BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z), enemies, rushDistance(),
-					ticks, quiet);
+				RUSH.tick(client, BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z), watched, teammates,
+					rushDistance(), ticks, quiet);
 				WATCH.end("rush alert", t);
 			}
 		} else if (!BEDS.labels().isEmpty() || !waypointLabels.isEmpty()) {

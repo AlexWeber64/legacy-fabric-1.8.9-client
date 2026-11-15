@@ -110,4 +110,12 @@ public final class HackMath {
 			m[2] * x + m[6] * y + m[10] * z + m[14] * w,
 			m[3] * x + m[7] * y + m[11] * z + m[15] * w};
 	}
+
+	/**
+	 * The Rush Alert chat line, like "§c§lRush §r§9§lB §9Steve §f15m from your bed". With Rush: Include Teammates, a
+	 * teammate gets a green "[Teammate]" after the name, so it is clear at a glance that nobody is attacking.
+	 */
+	public static String rushMessage(String formattedName, boolean teammate, long distance) {
+		return "§c§lRush §r" + formattedName + (teammate ? " §a[Teammate]" : "") + " §f" + distance + "m from your bed";
+	}
 }

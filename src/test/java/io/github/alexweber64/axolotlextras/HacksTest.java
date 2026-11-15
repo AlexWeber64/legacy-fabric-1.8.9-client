@@ -192,6 +192,13 @@ class HacksTest {
 	}
 
 	@Test
+	void rushMessageMarksTeammates() {
+		assertEquals("§c§lRush §r§9§lB §9Steve §f15m from your bed", HackMath.rushMessage("§9§lB §9Steve", false, 15));
+		assertEquals("§c§lRush §r§b§lA §bAlex §a[Teammate] §f12m from your bed",
+			HackMath.rushMessage("§b§lA §bAlex", true, 12));
+	}
+
+	@Test
 	void teamFromNamesAndDyes() {
 		assertEquals(0, TeamGuess.fromFormattedName("§c§lR §cSteve"));
 		assertEquals(7, TeamGuess.fromFormattedName("§8§lS §8Alex"));
