@@ -15,7 +15,6 @@ import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.entity.PlayerModelPart;
-import net.minecraft.client.util.Window;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -74,21 +73,15 @@ final class Radar {
 	}
 
 	/**
-	 * @param bed null: the radar is centred on you; else centred on your bed, and gray (no other players) unless the bed is
-	 *     within your render distance
+	 * @param left the radar's left edge on screen (from its place in the HUD editor)
+	 * @param top  the radar's top edge on screen
+	 * @param bed  null: the radar is centred on you; else centred on your bed, and gray (no other players) unless the bed
+	 *     is within your render distance
 	 */
-	static void render(MinecraftClient client, List<Target> targets, float t, Bed bed) {
+	static void render(MinecraftClient client, int left, int top, List<Target> targets, float t, Bed bed) {
 		PlayerEntity me = client.player;
-		Window window = new Window(client);
 		int size = value(ExtrasModule.RADAR_SIZE, 100);
 		double half = size / 2.0;
-		String corner = ExtrasModule.RADAR_CORNER.get();
-		int offX = value(ExtrasModule.RADAR_OFFSET_X, 5), offY = value(ExtrasModule.RADAR_OFFSET_Y, 5);
-		int left = corner.endsWith("Right") ? window.getWidth() - size - offX : offX;
-		int top = corner.endsWith(".bottomLeft") || corner.endsWith(".bottomRight") ? window.getHeight() - size - offY : offY;
-		// Keep it on screen when the window is small or the offsets are large.
-		left = Math.max(0, Math.min(left, window.getWidth() - size));
-		top = Math.max(0, Math.min(top, window.getHeight() - size));
 		double cx = left + half, cy = top + half;
 
 		boolean circle = !ExtrasModule.RADAR_SHAPE.get().endsWith(".square");

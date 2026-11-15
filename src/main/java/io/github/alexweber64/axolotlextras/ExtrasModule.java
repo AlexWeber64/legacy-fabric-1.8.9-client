@@ -8,6 +8,7 @@ import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
 import io.github.alexweber64.axolotlextras.hacks.HackPanic;
 import io.github.alexweber64.axolotlextras.hacks.HackRenderer;
+import io.github.alexweber64.axolotlextras.hacks.RadarHud;
 import io.github.alexweber64.axolotlextras.perf.BenchDriver;
 import io.github.alexweber64.axolotlextras.perf.FrameBench;
 import io.github.alexweber64.axolotlextras.ui.ExtrasScreen;
@@ -111,14 +112,6 @@ public class ExtrasModule extends AbstractModule {
 	/** Round or square. */
 	public static final EnumOption RADAR_SHAPE = new EnumOption("axolotlextras.radarShape",
 		new String[] {"axolotlextras.radarShape.circle", "axolotlextras.radarShape.square"}, "axolotlextras.radarShape.circle");
-
-	/** The screen corner the radar sits in, moved in by the two offsets below. */
-	public static final EnumOption RADAR_CORNER = new EnumOption("axolotlextras.radarCorner",
-		new String[] {"axolotlextras.corner.topLeft", "axolotlextras.corner.topRight", "axolotlextras.corner.bottomLeft",
-			"axolotlextras.corner.bottomRight"}, "axolotlextras.corner.topRight");
-
-	public static final IntegerOption RADAR_OFFSET_X = new IntegerOption("axolotlextras.radarOffsetX", 5, 0, 400);
-	public static final IntegerOption RADAR_OFFSET_Y = new IntegerOption("axolotlextras.radarOffsetY", 5, 0, 300);
 
 	/** The radar's width and height, in GUI pixels. */
 	public static final IntegerOption RADAR_SIZE = new IntegerOption("axolotlextras.radarSize", 100, 50, 250);
@@ -396,7 +389,7 @@ public class ExtrasModule extends AbstractModule {
 			TRAIL_LABELS, TRAIL_CHAT, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
 			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_CENTER,
-			RADAR_RANGE, RADAR_SHAPE, RADAR_CORNER, RADAR_OFFSET_X, RADAR_OFFSET_Y, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
+			RADAR_RANGE, RADAR_SHAPE, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
 			RADAR_SELF, RADAR_TEAMMATES, RADAR_INVISIBLE, RADAR_EDGE, RADAR_BORDER, RADAR_NAMES, RADAR_HEIGHT, RADAR_GRID,
 			HACK_KEY_NOTE);
 		AxolotlClient.CONFIG.addCategory(HACKS);
@@ -412,6 +405,12 @@ public class ExtrasModule extends AbstractModule {
 		HudManager.getInstance().add(upgradeDisplay);
 		upgradeDisplay.init();
 		upgradeDisplay.onBoundsUpdate();
+
+		// The radar's place in the HUD editor (it is drawn there and moved there, while the Radar hack is on).
+		RadarHud radarHud = new RadarHud();
+		HudManager.getInstance().add(radarHud);
+		radarHud.init();
+		radarHud.onBoundsUpdate();
 
 		menuKey = new KeyBinding("key.axolotlextras.menu", Keyboard.KEY_F8, "category.axolotlclient");
 		KeyBindingHelper.registerKeyBinding(menuKey);

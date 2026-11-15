@@ -104,7 +104,7 @@ public class ExtrasScreen extends Screen {
 		if (name.contains("labelSize") || name.contains("radarIconSize") || name.contains("radarOpacity")) {
 			return "%";
 		}
-		return name.contains("radarSize") || name.contains("radarOffset") ? " px" : "";
+		return name.contains("radarSize") ? " px" : "";
 	}
 
 	private static String label(Object option) {

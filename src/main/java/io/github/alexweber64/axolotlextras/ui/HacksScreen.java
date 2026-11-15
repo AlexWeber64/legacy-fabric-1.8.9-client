@@ -25,7 +25,7 @@ public class HacksScreen extends ExtrasScreen {
 		section("axolotlextras.section.labelSizes", ExtrasModule.SIZE_GENERATORS, ExtrasModule.SIZE_BEDS,
 			ExtrasModule.SIZE_WAYPOINTS, ExtrasModule.SIZE_NAMETAGS, ExtrasModule.SIZE_ARMOR, ExtrasModule.SIZE_PROJECTILES);
 		section("axolotlextras.section.radar", ExtrasModule.RADAR, ExtrasModule.RADAR_CENTER, ExtrasModule.RADAR_RANGE, ExtrasModule.RADAR_SHAPE,
-			ExtrasModule.RADAR_CORNER, ExtrasModule.RADAR_OFFSET_X, ExtrasModule.RADAR_OFFSET_Y, ExtrasModule.RADAR_SIZE,
+			ExtrasModule.RADAR_SIZE,
 			ExtrasModule.RADAR_ICON_SIZE, ExtrasModule.RADAR_OPACITY, ExtrasModule.RADAR_ROTATE, ExtrasModule.RADAR_SELF,
 			ExtrasModule.RADAR_TEAMMATES, ExtrasModule.RADAR_INVISIBLE, ExtrasModule.RADAR_EDGE, ExtrasModule.RADAR_BORDER,
 			ExtrasModule.RADAR_NAMES, ExtrasModule.RADAR_HEIGHT, ExtrasModule.RADAR_GRID);
