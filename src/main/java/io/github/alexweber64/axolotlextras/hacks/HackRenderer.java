@@ -93,6 +93,11 @@ public final class HackRenderer {
 	private static int ownTeam = TeamGuess.UNKNOWN;
 	/** True once names carry team colours: the sidebar shows your team, or the game start was seen. */
 	private static boolean gameRunning;
+	/**
+	 * True while your own name has a Bed Wars team prefix ("§9§lB You"). Then every player in the game has one, and a
+	 * player without it is a spectator or an eliminated player.
+	 */
+	private static boolean prefixesInUse;
 	/** No rush alerts this long after the start spot is taken: everyone still stands on their own island. */
 	private static final int RUSH_QUIET_TICKS = 200;
 	private static final ItemStack[] RESOURCE_ICONS = new ItemStack[ResourceMath.COUNT];
@@ -124,6 +129,7 @@ public final class HackRenderer {
 		ownBedBroken = false;
 		ownTeam = TeamGuess.UNKNOWN;
 		gameRunning = false;
+		prefixesInUse = false;
 		generatorLabels = Collections.emptyList();
 		waypointLabels = Collections.emptyList();
 		captured = false;
@@ -215,13 +221,19 @@ public final class HackRenderer {
 	}
 
 	/**
-	 * Your team. The Bed Wars sidebar says it on every map ("R Red: YOU"). Without it, your name colour, but only after
-	 * the game start: in the waiting lobby names are in rank colours (VIP is green), which used to make you "Green".
+	 * Your team. First the team prefix on your own name ("§9§lB You"), which only exists in a running game; then the Bed
+	 * Wars sidebar ("R Red: YOU"); then your name colour, but only after the game start: in the waiting lobby names are in
+	 * rank colours (VIP is green), which used to make you "Green".
 	 */
 	private static void findOwnTeam(MinecraftClient client, ClientWorld world) {
-		int team = sidebarTeam(world);
+		String ownName = client.player.getName().asFormattedString();
+		int team = TeamGuess.fromTeamPrefix(ownName);
+		prefixesInUse = team != TeamGuess.UNKNOWN;
+		if (team == TeamGuess.UNKNOWN) {
+			team = sidebarTeam(world);
+		}
 		if (team == TeamGuess.UNKNOWN && spawn != null) {
-			team = TeamGuess.fromFormattedName(client.player.getName().asFormattedString());
+			team = TeamGuess.fromFormattedName(ownName);
 		}
 		ownTeam = team;
 		gameRunning = team != TeamGuess.UNKNOWN || spawn != null;
@@ -261,7 +273,7 @@ public final class HackRenderer {
 			s.id = player.getUuid().toString();
 			s.entityId = player.getEntityId();
 			s.name = player.getName().asFormattedString();
-			s.team = TeamGuess.fromFormattedName(s.name);
+			s.team = TeamGuess.ofPlayer(s.name, prefixesInUse);
 			s.invisible = player.isInvisible();
 			s.holdingPotion = holdsInvisPotion(player);
 			s.alive = player.isAlive() && player.getHealth() > 0;
@@ -695,7 +707,13 @@ public final class HackRenderer {
 			if (team != null && team.getNameTagVisibilityRule() == AbstractTeam.VisibilityRule.NEVER && !player.isInvisible()) {
 				continue;
 			}
-			if (player.getName().asFormattedString().contains("[NPC]")) {
+			String name = player.getName().asFormattedString();
+			if (name.contains("[NPC]")) {
+				continue;
+			}
+			// A spectator (or an eliminated player) flies around invisible with a plain gray name and no team prefix; it
+			// is not in the game, so no hack counts it (it used to set off the Rush Alert as a "Gray" enemy).
+			if (prefixesInUse && TeamGuess.fromTeamPrefix(name) == TeamGuess.UNKNOWN) {
 				continue;
 			}
 			out.add(player);
@@ -703,7 +721,7 @@ public final class HackRenderer {
 		return out;
 	}
 
-	/** A teammate: only once the game runs (in the lobby nobody is), by scoreboard team or by team colour. */
+	/** A teammate: only once the game runs (in the lobby nobody is), by scoreboard team or by team prefix (or colour). */
 	private static boolean isTeammate(MinecraftClient client, PlayerEntity player) {
 		if (!gameRunning) {
 			return false;
@@ -711,8 +729,13 @@ public final class HackRenderer {
 		if (client.player.isInSameTeam(player)) {
 			return true;
 		}
-		int team = TeamGuess.fromFormattedName(player.getName().asFormattedString());
+		int team = TeamGuess.ofPlayer(player.getName().asFormattedString(), prefixesInUse);
 		return ownTeam != TeamGuess.UNKNOWN && team == ownTeam;
+	}
+
+	/** See {@link #prefixesInUse}. */
+	static boolean prefixesInUse() {
+		return prefixesInUse;
 	}
 
 	/** The players ESP, tracers, nametags and enemy armor show, after the range, invisible and teammate switches. */

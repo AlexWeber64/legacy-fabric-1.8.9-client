@@ -309,6 +309,16 @@ Last updated: 2026-11-14.
   The bed counts as broken when its chunk is loaded and the bed block is gone (one in an unloaded chunk counts as
   still there). Radar Centre itself is not changed: a new game (or a new world) clears the broken mark, so the radar
   starts on your bed again. Off: the radar stays gray with "No bed" as before. `RadarMath.centreOnBed`, 1 test.
+- Teams from the name prefix, spectators left out (2026-11-15, built, 121 tests pass, not yet seen in game): you
+  reported that teammate detection did not work. The log of the two games on 2026-11-15 shows the Rush Alert was right
+  about every player with a team letter (you were Blue, then Red; the alerts were for Green and Blue players who then
+  broke your bed), but it also fired for gray names without a letter (`nufikfufik`, `_amethyst08`) a few seconds
+  after a team was eliminated: spectators, which Hypixel makes invisible, flying and gray. The old check read the
+  first colour code, and gray counted as the Gray team. Now `TeamGuess.fromTeamPrefix` reads the letter and colour
+  Hypixel puts in front of every name in a game ("§9§lB Name"; both must agree), your own team comes from your own
+  prefix first (then the sidebar, then your name colour), and while your name has a prefix, players without one are
+  left out of every hack (ESP, radar, Rush Alert, Invisibility Alert, bed team votes). Without prefixes (another
+  server or mode) it works as before. 1 test.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.

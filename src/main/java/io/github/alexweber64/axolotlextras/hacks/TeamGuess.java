@@ -12,6 +12,8 @@ public final class TeamGuess {
 	public static final String[] NAMES = {"Red", "Blue", "Green", "Yellow", "Aqua", "White", "Pink", "Gray"};
 	public static final char[] CODES = {'c', '9', 'a', 'e', 'b', 'f', 'd', '8'};
 	public static final int COUNT = NAMES.length;
+	/** The letter in front of every name in a Bed Wars game ("§9§lB Steve" is Blue); Gray is "S". */
+	static final String LETTERS = "RBGYAWPS";
 
 	/** The coloured blocks needed before they decide the team, and how far the top colour has to lead the next one. */
 	static final int MIN_BLOCKS = 4;
@@ -61,6 +63,42 @@ public final class TeamGuess {
 			}
 		}
 		return UNKNOWN;
+	}
+
+	/**
+	 * The team from the prefix Hypixel puts in front of every name during a Bed Wars game: the team colour, then the team
+	 * letter and a space ("§c§lR §cSteve" is Red, "§8§lS §8Alex" is Gray). Unlike {@link #fromFormattedName}, a name
+	 * without that prefix has no team: spectators and eliminated players are plain gray ("§7Steve"), and lobby names
+	 * start with a rank ("§a[VIP] Steve").
+	 *
+	 * @return the team, or {@link #UNKNOWN} when the name has no team prefix (or letter and colour disagree)
+	 */
+	public static int fromTeamPrefix(String formatted) {
+		if (formatted == null) {
+			return UNKNOWN;
+		}
+		char colour = 0;
+		int i = 0;
+		while (i + 1 < formatted.length() && formatted.charAt(i) == '§') {
+			char code = Character.toLowerCase(formatted.charAt(i + 1));
+			if ("0123456789abcdef".indexOf(code) >= 0) {
+				colour = code;
+			}
+			i += 2;
+		}
+		if (colour == 0 || i + 1 >= formatted.length() || formatted.charAt(i + 1) != ' ') {
+			return UNKNOWN;
+		}
+		int team = LETTERS.indexOf(formatted.charAt(i));
+		return team >= 0 && fromColorCode(colour) == team ? team : UNKNOWN;
+	}
+
+	/**
+	 * A player's team. Once names carry team prefixes (yours does), only the prefix counts, so a gray spectator is not
+	 * taken for the Gray team; before that, the first colour in the name.
+	 */
+	public static int ofPlayer(String formatted, boolean prefixesInUse) {
+		return prefixesInUse ? fromTeamPrefix(formatted) : fromFormattedName(formatted);
 	}
 
 	/**
