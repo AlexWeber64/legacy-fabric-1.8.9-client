@@ -321,8 +321,9 @@ Last updated: 2026-11-15.
   top bar text (your kills, deaths, beds) from crashing the same way. The add-on's own code reads the real field, so
   the stand-in never counts as a teammate there. Both cases write one line to latest.log ("[Extras] Bed Wars self
   fix: ..."), so a test can see that the fix stepped in.
-- Test install (2026-11-15): the Rush: Teammates Too branch (pull request #6, not merged) is in the play clone
-  1.8.9-lunarlike for testing; the jar before it is in mods-backup as axolotl-extras-0.1.0.before-rush-teammates.jar.
+- Test install (2026-11-15, 22:32): main (with #6 and #10) plus pull requests #8 and #9, and a test-only hook that
+  forgets you right after AxolotlClient's game start (the state that crashed Hardcore Hearts; the hook is not in any
+  commit). The jar before it is in mods-backup as axolotl-extras-0.1.0.before-test-pr8-pr9.jar.
 
 ## In progress
 
