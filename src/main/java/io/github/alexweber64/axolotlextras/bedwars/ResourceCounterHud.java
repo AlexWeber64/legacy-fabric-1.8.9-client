@@ -2,6 +2,7 @@ package io.github.alexweber64.axolotlextras.bedwars;
 
 import java.util.List;
 
+import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.Option;
 import io.github.axolotlclient.modules.hud.gui.entry.TextHudEntry;
@@ -37,6 +38,16 @@ public class ResourceCounterHud extends TextHudEntry {
 	private final int[] inventory = new int[ResourceMath.COUNT];
 	private final int[] enderChest = new int[ResourceMath.COUNT];
 	private boolean inBedWars;
+
+	/** Ticks the contents wait after the ender chest opens before they are compared (Hypixel sends them just after). */
+	private static final int CHECK_TICKS = 5;
+	/** Ticks the ender chest has been open, or -1 while it is closed. */
+	private int chestOpenTicks = -1;
+	/** The ender chest count when it opened, for the comparison. */
+	private final int[] expectedChest = new int[ResourceMath.COUNT];
+	private boolean chestChecked;
+	/** The last container title logged as not read as an ender chest, so each one is logged once. */
+	private String loggedTitle;
 	private boolean wasInBedWars;
 	private ItemStack[] icons;
 
@@ -101,11 +112,33 @@ public class ResourceCounterHud extends TextHudEntry {
 
 		// While the ender chest is open, its real contents replace the count, every tick (so items moved inside it count).
 		Screen screen = client.currentScreen;
-		if (screen instanceof HandledScreen) {
-			int[] real = readEnderChest((HandledScreen) screen);
-			if (real != null) {
-				System.arraycopy(real, 0, enderChest, 0, real.length);
-			}
+		int[] real = screen instanceof HandledScreen ? readEnderChest((HandledScreen) screen) : null;
+		if (real == null) {
+			chestOpenTicks = -1;
+			return;
+		}
+		if (chestOpenTicks < 0) {
+			chestOpenTicks = 0;
+			System.arraycopy(enderChest, 0, expectedChest, 0, expectedChest.length);
+			chestChecked = false;
+		} else {
+			chestOpenTicks++;
+		}
+		if (!chestChecked && chestOpenTicks >= CHECK_TICKS) {
+			chestChecked = true;
+			checkAgainstExpected(real);
+		}
+		System.arraycopy(real, 0, enderChest, 0, real.length);
+	}
+
+	/**
+	 * For debugging: once per opening, a line in latest.log when the ender chest holds something else than the counter
+	 * expected. Items moved inside the chest in the first quarter second also show up here.
+	 */
+	private void checkAgainstExpected(int[] real) {
+		String mismatch = ResourceMath.chestMismatch(expectedChest, real);
+		if (mismatch != null) {
+			AxolotlClient.LOGGER.info("[Extras] Resource Counter: the ender chest did not match: " + mismatch);
 		}
 	}
 
@@ -119,7 +152,13 @@ public class ResourceCounterHud extends TextHudEntry {
 		if (container == null || container instanceof PlayerInventory || container.getName() == null) {
 			return null;
 		}
-		if (!ResourceMath.isEnderChestTitle(container.getName().asUnformattedString())) {
+		String title = container.getName().asUnformattedString();
+		if (!ResourceMath.isEnderChestTitle(title)) {
+			// For debugging: a chest that looks like the ender chest but is not read as one.
+			if (title != null && title.toLowerCase().contains("ender") && !title.equals(loggedTitle)) {
+				loggedTitle = title;
+				AxolotlClient.LOGGER.info("[Extras] Resource Counter: opened \"" + title + "\", not read as the ender chest");
+			}
 			return null;
 		}
 		int[] counts = new int[ResourceMath.COUNT];
