@@ -15,6 +15,7 @@ import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
 import io.github.axolotlclient.AxolotlClientConfig.options.IntegerOption;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.particle.ParticleType;
 import net.minecraft.client.util.Window;
@@ -98,6 +99,10 @@ public final class HackRenderer {
 	private static List<HudLabel> generatorLabels = Collections.emptyList();
 	private static List<HudLabel> waypointLabels = Collections.emptyList();
 	private static int ticks;
+	/** Where your own bed was last seen in this game ({headX, y, headZ}), or null. */
+	private static int[] ownBedSpot;
+	/** Your own bed was broken in this game: the radar can go back to you (Back to You When Bed Breaks). */
+	private static boolean ownBedBroken;
 
 	private HackRenderer() {
 	}
@@ -115,6 +120,8 @@ public final class HackRenderer {
 		spawn = null;
 		spawnCountdown = -1;
 		spawnTick = -1;
+		ownBedSpot = null;
+		ownBedBroken = false;
 		ownTeam = TeamGuess.UNKNOWN;
 		gameRunning = false;
 		generatorLabels = Collections.emptyList();
@@ -124,6 +131,8 @@ public final class HackRenderer {
 
 	/** A Bed Wars game started: two seconds from now you stand on your own island, which tells which bed is yours. */
 	public static void onGameStart() {
+		ownBedSpot = null;
+		ownBedBroken = false;
 		spawn = null;
 		spawnTick = -1;
 		spawnCountdown = 40;
@@ -179,6 +188,7 @@ public final class HackRenderer {
 				t = WATCH.start();
 				BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z);
 				BEDS.update(client, world, SCANNER.beds(), ticks, ownTeam, gameRunning);
+				watchOwnBed(client, world);
 				waypointLabels = ExtrasModule.OBSIDIAN_ALERT.get() && ExtrasModule.OBSIDIAN_WAYPOINTS.get()
 					? waypointLabels(client) : Collections.<HudLabel>emptyList();
 				WATCH.end("bed defense, teams and obsidian", t);
@@ -547,9 +557,28 @@ public final class HackRenderer {
 		return -1;
 	}
 
-	/** True when the radar is on and centred on your bed (then the bed scan runs for it, too). */
+	/**
+	 * True when the radar is on and centred on your bed (then the bed scan runs for it, too): Radar Centre is Your Bed,
+	 * unless the bed was broken in this game and Back to You When Bed Breaks is on.
+	 */
 	private static boolean radarOnBed() {
-		return ExtrasModule.RADAR.get() && ExtrasModule.RADAR_CENTER.get().endsWith(".bed");
+		return ExtrasModule.RADAR.get() && RadarMath.centreOnBed(ExtrasModule.RADAR_CENTER.get().endsWith(".bed"),
+			ExtrasModule.RADAR_BED_FALLBACK.get(), ownBedBroken);
+	}
+
+	/**
+	 * Remembers where your bed is, and notices when it is broken: its chunk is loaded and the bed block is gone. A bed in
+	 * a chunk that is not loaded counts as still there.
+	 */
+	private static void watchOwnBed(MinecraftClient client, ClientWorld world) {
+		BedTracker.Info own = BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z);
+		if (own != null) {
+			ownBedSpot = new int[] {own.bed.headX, own.bed.y, own.bed.headZ};
+		} else if (ownBedSpot != null && !ownBedBroken && gameRunning
+			&& !world.getChunk(ownBedSpot[0] >> 4, ownBedSpot[2] >> 4).isEmpty()
+			&& world.getBlockState(new BlockPos(ownBedSpot[0], ownBedSpot[1], ownBedSpot[2])).getBlock() != Blocks.BED) {
+			ownBedBroken = true;
+		}
 	}
 
 	/** Your bed for the radar: where it is and whether it is within your render distance. */

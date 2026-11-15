@@ -304,6 +304,11 @@ Last updated: 2026-11-14.
   looked like duplicates. They are now "ESP: Show Invisible", "ESP: Show Teammates" (ESP, tracers and nametags) and
   "Radar: Show Invisible", "Radar: Show Teammates" (the radar only), and each tooltip points to the other switch.
   Labels only; the saved option names are unchanged, so settings carry over.
+- Back to You When Bed Breaks (2026-11-15, built, 120 tests pass, not yet seen in game): a radar option, on by
+  default. With Radar Centre on Your Bed, once your bed is broken the radar centres on you for the rest of the game.
+  The bed counts as broken when its chunk is loaded and the bed block is gone (one in an unloaded chunk counts as
+  still there). Radar Centre itself is not changed: a new game (or a new world) clears the broken mark, so the radar
+  starts on your bed again. Off: the radar stays gray with "No bed" as before. `RadarMath.centreOnBed`, 1 test.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.

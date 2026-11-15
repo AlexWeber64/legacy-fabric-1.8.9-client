@@ -104,6 +104,12 @@ public class ExtrasModule extends AbstractModule {
 	public static final EnumOption RADAR_CENTER = new EnumOption("axolotlextras.radarCenter",
 		new String[] {"axolotlextras.radarCenter.player", "axolotlextras.radarCenter.bed"}, "axolotlextras.radarCenter.player");
 
+	/**
+	 * With Radar Centre on Your Bed: once your bed is broken the radar centres on you for the rest of that game. Radar
+	 * Centre itself is not changed, so the next game starts on the bed again.
+	 */
+	public static final BooleanOption RADAR_BED_FALLBACK = new BooleanOption("axolotlextras.radarBedFallback", true);
+
 	/** How many blocks the radar's edge stands for. */
 	public static final EnumOption RADAR_RANGE = new EnumOption("axolotlextras.radarRange",
 		new String[] {"axolotlextras.range.16", "axolotlextras.range.32", "axolotlextras.range.64", "axolotlextras.range.128"},
@@ -389,7 +395,7 @@ public class ExtrasModule extends AbstractModule {
 			TRAIL_LABELS, TRAIL_CHAT, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
 			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_CENTER,
-			RADAR_RANGE, RADAR_SHAPE, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
+			RADAR_BED_FALLBACK, 			RADAR_RANGE, RADAR_SHAPE, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
 			RADAR_SELF, RADAR_TEAMMATES, RADAR_INVISIBLE, RADAR_EDGE, RADAR_BORDER, RADAR_NAMES, RADAR_HEIGHT, RADAR_GRID,
 			HACK_KEY_NOTE);
 		AxolotlClient.CONFIG.addCategory(HACKS);

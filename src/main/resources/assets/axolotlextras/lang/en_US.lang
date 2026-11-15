@@ -260,4 +260,6 @@ axolotlextras.radarCenter=Radar Centre
 axolotlextras.radarCenter.tooltip=What the middle of the radar is. You: the players around you. Your Bed: the players around your own bed, with you shown where you are. The bed radar only works while your bed is within your render distance (players further away are not sent to you), so beyond that, or when your bed is not known or is broken, it turns gray and says why.
 axolotlextras.radarCenter.player=You
 axolotlextras.radarCenter.bed=Your Bed
+axolotlextras.radarBedFallback=Back to You When Bed Breaks
+axolotlextras.radarBedFallback.tooltip=With Radar Centre on Your Bed: once your bed is broken, the radar centres on you for the rest of the game. The next game starts on your bed again (Radar Centre itself is not changed). Off: the radar stays gray with "No bed".
 key.axolotlextras.radarCenter=Radar: You / Your Bed
