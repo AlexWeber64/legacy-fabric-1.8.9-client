@@ -15,7 +15,7 @@ Last updated: 2026-11-15.
 | Potion Effects | AxolotlClient | Done, enabled |
 | Zoom | AxolotlClient | Done, enabled |
 | Time Changer | AxolotlClient | Done, enabled |
-| Upgrade Display | Extras (text list like Lunar's), AxolotlClient has an icon version | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your lists, team size detected automatically (lobby line checked against a screenshot, in-game team lines from memory) |
+| Upgrade Display | Extras (text list like Lunar's); AxolotlClient's icon version (Team Upgrades HUD) is removed | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your lists, team size detected automatically (lobby line checked against a screenshot, in-game team lines from memory) |
 | Toggle Sprint | AxolotlClient (Toggle Sprint HUD) | Works in singleplayer, see "In progress" for the Hypixel side |
 | Freelook | AxolotlClient | Works in singleplayer, Hypixel check removed (untested there) |
 | Raw Mouse Input | RawInput mod | Done |
@@ -310,6 +310,10 @@ Last updated: 2026-11-15.
   looked like duplicates. They are now "ESP: Show Invisible", "ESP: Show Teammates" (ESP, tracers and nametags) and
   "Radar: Show Invisible", "Radar: Show Teammates" (the radar only), and each tooltip points to the other switch.
   Labels only; the saved option names are unchanged, so settings carry over.
+- Team Upgrades HUD removed (2026-11-15, built, 120 tests pass, not yet seen in game): AxolotlClient's icon overlay
+  is no longer put in the HUD list (`mixin/TeamUpgradesRemovalMixin`, so it is not drawn and not in the HUD editor)
+  and its settings are left out of the Bed Wars menu (`mixin/BedwarsModMixin`). The overlay object stays because
+  AxolotlClient's game start and end code still calls it. The add-on's Upgrade Display never used it.
 - Back to You When Bed Breaks (2026-11-15, built, 120 tests pass, not yet seen in game): a radar option, on by
   default. With Radar Centre on Your Bed, once your bed is broken the radar centres on you for the rest of the game.
   The bed counts as broken when its chunk is loaded and the bed block is gone (one in an unloaded chunk counts as
