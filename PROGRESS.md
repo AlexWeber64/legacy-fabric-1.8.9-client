@@ -36,7 +36,11 @@ Last updated: 2026-11-14.
   - inventory plus ender chest equals total, per resource
   - resets when you leave the world, leave Bed Wars, or a game starts
   - opening the ender chest replaces the ender chest count with the real contents
-  - punching the ender chest with resources in hand adds the amount that left your inventory within half a second (inferred)
+  - deposits are counted from Hypixel's message "Deposited xN Item into Ender Chest! (T Total)" (2026-11-16, built, not
+    yet seen in game): it carries the new total, so it is the real count. Before, a deposit was guessed from a fresh
+    press of the attack key on an ender chest and a drop in the inventory within half a second; holding the button
+    and switching from iron to gold deposits both, but only the first was counted (reported by you). The guessing
+    (`DepositTracker`) is removed. 2 tests with lines from the logs.
 - Quickplay menu (key Y), Doubles uses `/play bedwars_eight_two`.
 - Toggle Sprint: found that it was dead because its HUD module was switched off (the toggle lives in that module's tick).
   Re-enabled it in your clone config and measured 11.22 blocks per 2 s toggled against 8.63 walking.

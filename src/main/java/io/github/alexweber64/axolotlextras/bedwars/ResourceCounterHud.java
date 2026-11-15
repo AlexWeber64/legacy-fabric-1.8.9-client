@@ -7,7 +7,6 @@ import io.github.axolotlclient.AxolotlClientConfig.options.Option;
 import io.github.axolotlclient.modules.hud.gui.entry.TextHudEntry;
 import io.github.axolotlclient.modules.hud.util.DrawPosition;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.entity.player.PlayerInventory;
@@ -18,11 +17,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
 
 /**
  * Bed Wars resource counter: iron, gold, diamonds and emeralds as "inventory + ender chest = total".
- * Ported from the MCRust 1.8.9 client. The ender chest is the count from the last time it was open.
+ * Ported from the MCRust 1.8.9 client. The ender chest count comes from Hypixel's deposit messages, which carry the new
+ * total, and is replaced by the real contents whenever the ender chest is open.
  */
 public class ResourceCounterHud extends TextHudEntry {
 
@@ -37,11 +36,8 @@ public class ResourceCounterHud extends TextHudEntry {
 
 	private final int[] inventory = new int[ResourceMath.COUNT];
 	private final int[] enderChest = new int[ResourceMath.COUNT];
-	private final DepositTracker deposits = new DepositTracker();
 	private boolean inBedWars;
 	private boolean wasInBedWars;
-	private boolean attackWasPressed;
-	private int tickCount;
 	private ItemStack[] icons;
 
 	public ResourceCounterHud() {
@@ -53,12 +49,23 @@ public class ResourceCounterHud extends TextHudEntry {
 		resetAll();
 	}
 
-	/** Forgets everything: the ender chest counts, the inventory counts and any pending deposit. */
+	/** Forgets everything: the ender chest counts and the inventory counts. */
 	public void resetAll() {
 		java.util.Arrays.fill(enderChest, 0);
 		java.util.Arrays.fill(inventory, 0);
-		deposits.reset();
 		wasInBedWars = false;
+	}
+
+	/**
+	 * Called from the chat event. "Deposited x24 Iron Ingot into Ender Chest! (24 Total)" sets the iron in the ender
+	 * chest to 24. Every deposit has its own message, also several in one click (hold the button and switch from iron to
+	 * gold), which counting the punch could not see.
+	 */
+	public void onChatLine(String line) {
+		int[] deposit = ResourceMath.enderChestDeposit(line);
+		if (deposit != null) {
+			enderChest[deposit[0]] = deposit[1];
+		}
 	}
 
 	@Override
@@ -68,7 +75,6 @@ public class ResourceCounterHud extends TextHudEntry {
 
 	@Override
 	public void tick() {
-		tickCount++;
 		if (client.world == null || client.player == null) {
 			// Left the world (or disconnected): nothing carries over to the next one.
 			inBedWars = false;
@@ -93,62 +99,34 @@ public class ResourceCounterHud extends TextHudEntry {
 		}
 		add(inventory, playerInventory.getCursorStack());
 
+		// While the ender chest is open, its real contents replace the count, every tick (so items moved inside it count).
 		Screen screen = client.currentScreen;
-		boolean readChest = false;
 		if (screen instanceof HandledScreen) {
-			readChest = readEnderChest((HandledScreen) screen);
-		}
-		if (readChest) {
-			// The real contents just replaced the remembered counts, so any estimate from a punch is obsolete.
-			deposits.clearPending();
-			deposits.update(inventory, tickCount, enderChest);
-			deposits.clearPending();
-		} else {
-			detectPunch();
-			deposits.update(inventory, tickCount, enderChest);
+			int[] real = readEnderChest((HandledScreen) screen);
+			if (real != null) {
+				System.arraycopy(real, 0, enderChest, 0, real.length);
+			}
 		}
 	}
 
-	/** Left-clicking an ender chest with resources in hand deposits them (Hypixel Bed Wars). */
-	private void detectPunch() {
-		boolean attack = client.options.attackKey.isPressed();
-		boolean fresh = attack && !attackWasPressed;
-		attackWasPressed = attack;
-		if (!fresh || client.currentScreen != null) {
-			return;
-		}
-		BlockHitResult target = client.result;
-		if (target == null || target.type != BlockHitResult.Type.BLOCK) {
-			return;
-		}
-		if (client.world.getBlockState(target.getBlockPos()).getBlock() != Blocks.ENDERCHEST) {
-			return;
-		}
-		ItemStack held = client.player.inventory.getMainHandStack();
-		if (held != null) {
-			deposits.onPunch(indexOf(held.getItem()), held.count, tickCount);
-		}
-	}
-
-	/** @return true when an ender chest was open and its contents were read */
-	private boolean readEnderChest(HandledScreen screen) {
+	/** @return the resources in the open ender chest, or null when no ender chest is open */
+	private int[] readEnderChest(HandledScreen screen) {
 		List<Slot> slots = screen.screenHandler.slots;
 		if (slots.isEmpty()) {
-			return false;
+			return null;
 		}
 		Inventory container = slots.get(0).inventory;
 		if (container == null || container instanceof PlayerInventory || container.getName() == null) {
-			return false;
+			return null;
 		}
 		if (!ResourceMath.isEnderChestTitle(container.getName().asUnformattedString())) {
-			return false;
+			return null;
 		}
 		int[] counts = new int[ResourceMath.COUNT];
 		for (int i = 0; i < container.getInvSize(); i++) {
 			add(counts, container.getInvStack(i));
 		}
-		System.arraycopy(counts, 0, enderChest, 0, counts.length);
-		return true;
+		return counts;
 	}
 
 	private static void add(int[] counts, ItemStack stack) {

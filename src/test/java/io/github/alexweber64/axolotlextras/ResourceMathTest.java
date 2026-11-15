@@ -1,13 +1,38 @@
 package io.github.alexweber64.axolotlextras;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import org.junit.jupiter.api.Test;
 
 class ResourceMathTest {
+
+	@Test
+	void enderChestDepositsGiveTheNewTotal() {
+		// Lines from the play clone's logs.
+		assertArrayEquals(new int[] {ResourceMath.IRON, 24},
+			ResourceMath.enderChestDeposit("Deposited x24 Iron Ingot into Ender Chest! (24 Total)"));
+		assertArrayEquals(new int[] {ResourceMath.GOLD, 6},
+			ResourceMath.enderChestDeposit("Deposited x6 Gold Ingot into Ender Chest! (6 Total)"));
+		assertArrayEquals(new int[] {ResourceMath.DIAMOND, 3},
+			ResourceMath.enderChestDeposit("§aDeposited x1 §bDiamond §ainto Ender Chest! §7(3 Total)"));
+		// With AxolotlClient's game clock in front.
+		assertArrayEquals(new int[] {ResourceMath.EMERALD, 2},
+			ResourceMath.enderChestDeposit("§70:23§r Deposited x2 Emerald into Ender Chest! (2 Total)"));
+	}
+
+	@Test
+	void otherDepositsAreNotCounted() {
+		assertNull(ResourceMath.enderChestDeposit("Deposited x4 Gold Ingot into Team Chest! (4 Total)"));
+		assertNull(ResourceMath.enderChestDeposit("Deposited x16 Red Wool into Ender Chest! (16 Total)"));
+		assertNull(ResourceMath.enderChestDeposit("Deposited x1 Normal Lucky Block into Ender Chest! (1 Total)"));
+		assertNull(ResourceMath.enderChestDeposit("You purchased Wool"));
+		assertNull(ResourceMath.enderChestDeposit(null));
+	}
 
 	@Test
 	void indexOfKnownItems() {
