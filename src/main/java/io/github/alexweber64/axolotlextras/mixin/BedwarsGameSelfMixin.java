@@ -3,6 +3,7 @@ package io.github.alexweber64.axolotlextras.mixin;
 import java.util.Map;
 import java.util.UUID;
 
+import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.modules.hypixel.bedwars.BedwarsGame;
 import io.github.axolotlclient.modules.hypixel.bedwars.BedwarsPlayer;
 import io.github.axolotlclient.modules.hypixel.bedwars.BedwarsTeam;
@@ -47,6 +48,10 @@ public abstract class BedwarsGameSelfMixin {
 	@Unique
 	private static BedwarsPlayer axolotlextras$standIn;
 
+	/** True once the stand-in was handed out in this game, so the log gets one line per game, not one per frame. */
+	@Unique
+	private boolean axolotlextras$standInLogged;
+
 	/** You, looked up by your UUID first (names can be scrambled), then by name. */
 	@Inject(method = "tick", at = @At("HEAD"), require = 1)
 	private void axolotlextras$findSelf(CallbackInfo ci) {
@@ -63,6 +68,8 @@ public abstract class BedwarsGameSelfMixin {
 		}
 		if (found != null) {
 			me = found;
+			AxolotlClient.LOGGER.info("[Extras] Bed Wars self fix: found you in this game after the start (AxolotlClient"
+				+ " had missed you)");
 		}
 	}
 
@@ -74,6 +81,11 @@ public abstract class BedwarsGameSelfMixin {
 				axolotlextras$standIn = new BedwarsPlayer(BedwarsTeam.values()[0], null, 0);
 			}
 			cir.setReturnValue(axolotlextras$standIn);
+			if (!axolotlextras$standInLogged) {
+				axolotlextras$standInLogged = true;
+				AxolotlClient.LOGGER.info("[Extras] Bed Wars self fix: AxolotlClient has not found you yet, Hardcore Hearts"
+					+ " uses a stand-in (this used to crash the game)");
+			}
 		}
 	}
 
