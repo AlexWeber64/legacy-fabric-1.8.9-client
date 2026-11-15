@@ -9,7 +9,10 @@
 		"HypixelAbstractionLayerMixin",
 		"LevelHeadTextMixin",
 		"BedwarsPlayerStatsMixin",
-		"PlayerListHudMixin"
+		"PlayerListHudMixin",
+		"BedwarsGameSelfMixin",
+		"BedwarsModMixin",
+		"TeamUpgradesRemovalMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

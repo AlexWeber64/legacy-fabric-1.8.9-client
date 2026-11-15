@@ -4,7 +4,7 @@ Goal: a Lunar Client style setup for Minecraft 1.8.9 on Legacy Fabric (Prism ins
 feature can be switched on and off at will. Features come from AxolotlClient where it has them, and from the
 `axolotl-extras` add-on in this folder where it does not.
 
-Last updated: 2026-11-14.
+Last updated: 2026-11-15.
 
 ## Lunar module map
 
@@ -15,7 +15,7 @@ Last updated: 2026-11-14.
 | Potion Effects | AxolotlClient | Done, enabled |
 | Zoom | AxolotlClient | Done, enabled |
 | Time Changer | AxolotlClient | Done, enabled |
-| Upgrade Display | Extras (text list like Lunar's), AxolotlClient has an icon version | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your lists, team size detected automatically (lobby line checked against a screenshot, in-game team lines from memory) |
+| Upgrade Display | Extras (text list like Lunar's); AxolotlClient's icon version (Team Upgrades HUD) is removed | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your lists, team size detected automatically (lobby line checked against a screenshot, in-game team lines from memory) |
 | Toggle Sprint | AxolotlClient (Toggle Sprint HUD) | Works in singleplayer, see "In progress" for the Hypixel side |
 | Freelook | AxolotlClient | Works in singleplayer, Hypixel check removed (untested there) |
 | Raw Mouse Input | RawInput mod | Done |
@@ -312,6 +312,20 @@ Last updated: 2026-11-14.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.
+- Bed Wars crash fix (2026-11-15, built, 120 tests pass, not yet seen in game): the game crashed on 2026-11-15 at
+  20:39 with a NullPointerException in AxolotlClient's `displayHardcoreHearts` (InGameHudMixin), right at a game
+  start (names still scrambled). Cause, in AxolotlClient: `BedwarsGame.onStart` sets you (`me`) only if your own tab
+  list entry already has a team prefix at that moment, and never looks again; the Hardcore Hearts option then calls
+  `getSelf().isBed()` on null every frame. `mixin/BedwarsGameSelfMixin` looks for you every tick until found (UUID,
+  then name), makes `getSelf()` return a stand-in with its bed (normal hearts) while you are not found, and keeps the
+  top bar text (your kills, deaths, beds) from crashing the same way. The add-on's own code reads the real field, so
+  the stand-in never counts as a teammate there.
+- Team Upgrades HUD removed (2026-11-15, built, not yet seen in game): AxolotlClient's icon overlay is no longer put
+  in the HUD list (`mixin/TeamUpgradesRemovalMixin`, so it is not drawn and not in the HUD editor) and its settings
+  are left out of the Bed Wars menu (`mixin/BedwarsModMixin`). The overlay object stays because AxolotlClient's game
+  start and end code still calls it. The add-on's Upgrade Display never used it.
+- Test install (2026-11-15): the Rush: Teammates Too branch (pull request #6, not merged) is in the play clone
+  1.8.9-lunarlike for testing; the jar before it is in mods-backup as axolotl-extras-0.1.0.before-rush-teammates.jar.
 
 ## In progress
 
