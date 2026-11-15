@@ -1,8 +1,12 @@
 package io.github.alexweber64.axolotlextras;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.github.alexweber64.axolotlextras.bedwars.ChatStat;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
+import io.github.alexweber64.axolotlextras.hacks.HackPanic;
 import io.github.alexweber64.axolotlextras.hacks.HackRenderer;
 import io.github.alexweber64.axolotlextras.perf.BenchDriver;
 import io.github.alexweber64.axolotlextras.perf.FrameBench;
@@ -28,6 +32,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.legacyfabric.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.LiteralText;
 import org.lwjgl.input.Keyboard;
 
@@ -89,6 +94,68 @@ public class ExtrasModule extends AbstractModule {
 	/** The flight of your own pearl, snowball, egg or arrow (while drawing the bow) and where it would hit. */
 	public static final BooleanOption TRAJECTORIES = new BooleanOption("axolotlextras.trajectories", false);
 
+	/** A minimap of the players around you, each shown by the face of their skin. */
+	public static final BooleanOption RADAR = new BooleanOption("axolotlextras.radar", false);
+
+	// Fine tuning for the radar.
+
+	/** What the radar's middle is: you, or your own bed (live only while the bed is within your render distance). */
+	public static final EnumOption RADAR_CENTER = new EnumOption("axolotlextras.radarCenter",
+		new String[] {"axolotlextras.radarCenter.player", "axolotlextras.radarCenter.bed"}, "axolotlextras.radarCenter.player");
+
+	/** How many blocks the radar's edge stands for. */
+	public static final EnumOption RADAR_RANGE = new EnumOption("axolotlextras.radarRange",
+		new String[] {"axolotlextras.range.16", "axolotlextras.range.32", "axolotlextras.range.64", "axolotlextras.range.128"},
+		"axolotlextras.range.64");
+
+	/** Round or square. */
+	public static final EnumOption RADAR_SHAPE = new EnumOption("axolotlextras.radarShape",
+		new String[] {"axolotlextras.radarShape.circle", "axolotlextras.radarShape.square"}, "axolotlextras.radarShape.circle");
+
+	/** The screen corner the radar sits in, moved in by the two offsets below. */
+	public static final EnumOption RADAR_CORNER = new EnumOption("axolotlextras.radarCorner",
+		new String[] {"axolotlextras.corner.topLeft", "axolotlextras.corner.topRight", "axolotlextras.corner.bottomLeft",
+			"axolotlextras.corner.bottomRight"}, "axolotlextras.corner.topRight");
+
+	public static final IntegerOption RADAR_OFFSET_X = new IntegerOption("axolotlextras.radarOffsetX", 5, 0, 400);
+	public static final IntegerOption RADAR_OFFSET_Y = new IntegerOption("axolotlextras.radarOffsetY", 5, 0, 300);
+
+	/** The radar's width and height, in GUI pixels. */
+	public static final IntegerOption RADAR_SIZE = new IntegerOption("axolotlextras.radarSize", 100, 50, 250);
+
+	/** The size of the faces, in percent of 10 GUI pixels. */
+	public static final IntegerOption RADAR_ICON_SIZE = new IntegerOption("axolotlextras.radarIconSize", 100, 50, 250);
+
+	/** How dark the radar's background is, in percent (0 is no background). */
+	public static final IntegerOption RADAR_OPACITY = new IntegerOption("axolotlextras.radarOpacity", 50, 0, 100);
+
+	/** The radar turns with you, so your view always points up (off: north is up). */
+	public static final BooleanOption RADAR_ROTATE = new BooleanOption("axolotlextras.radarRotate", true);
+
+	/** Your own face in the middle (off: an arrow). */
+	public static final BooleanOption RADAR_SELF = new BooleanOption("axolotlextras.radarSelf", true);
+
+	/** The radar also shows your teammates. */
+	public static final BooleanOption RADAR_TEAMMATES = new BooleanOption("axolotlextras.radarTeammates", true);
+
+	/** The radar also shows players with the invisibility effect. */
+	public static final BooleanOption RADAR_INVISIBLE = new BooleanOption("axolotlextras.radarInvisible", true);
+
+	/** Players out of range stay on the radar's edge, faded, in their direction. */
+	public static final BooleanOption RADAR_EDGE = new BooleanOption("axolotlextras.radarEdge", true);
+
+	/** A frame in the team colour around each face. */
+	public static final BooleanOption RADAR_BORDER = new BooleanOption("axolotlextras.radarBorder", true);
+
+	/** The name under each face. */
+	public static final BooleanOption RADAR_NAMES = new BooleanOption("axolotlextras.radarNames", false);
+
+	/** A small arrow next to players more than 3 blocks above or below you. */
+	public static final BooleanOption RADAR_HEIGHT = new BooleanOption("axolotlextras.radarHeight", true);
+
+	/** Cross lines, a ring at half the range, and an N for north. */
+	public static final BooleanOption RADAR_GRID = new BooleanOption("axolotlextras.radarGrid", true);
+
 	// Fine tuning for the hacks above.
 
 	/** ESP, tracers and nametags also show players with the invisibility effect. */
@@ -121,11 +188,50 @@ public class ExtrasModule extends AbstractModule {
 	/** Enemy Armor also shows the held item. */
 	public static final BooleanOption ARMOR_HELD = new BooleanOption("axolotlextras.armorHeld", true);
 
-	/** Generator Counts for diamonds and emeralds (the middle and side generators). */
-	public static final BooleanOption GEN_RARE = new BooleanOption("axolotlextras.genRare", true);
+	/** Generator Counts for iron. */
+	public static final BooleanOption GEN_IRON = new BooleanOption("axolotlextras.genIron", true);
 
-	/** Generator Counts for iron and gold (the island generators). */
-	public static final BooleanOption GEN_BASE = new BooleanOption("axolotlextras.genBase", true);
+	/** Generator Counts for gold. */
+	public static final BooleanOption GEN_GOLD = new BooleanOption("axolotlextras.genGold", true);
+
+	/** Generator Counts for diamonds. */
+	public static final BooleanOption GEN_DIAMOND = new BooleanOption("axolotlextras.genDiamond", true);
+
+	/** Generator Counts for emeralds. */
+	public static final BooleanOption GEN_EMERALD = new BooleanOption("axolotlextras.genEmerald", true);
+
+	/** A chat note when an enemy goes invisible, and a mark where it happened for 60 seconds. */
+	public static final BooleanOption INVIS_ALERT = new BooleanOption("axolotlextras.invisAlert", false);
+
+	/** The Invisibility Alert also puts a beam and a label over the mark, like the obsidian waypoints. */
+	public static final BooleanOption INVIS_WAYPOINTS = new BooleanOption("axolotlextras.invisWaypoints", true);
+
+	/** The Invisibility Alert only counts players seen holding an invisibility potion just before. */
+	public static final BooleanOption INVIS_NEED_POTION = new BooleanOption("axolotlextras.invisNeedPotion", true);
+
+	/**
+	 * A breadcrumb trail of players you cannot see, from the footstep, hurt, drink and bow sounds, footstep particles and
+	 * block breaking the server still sends for them.
+	 */
+	public static final BooleanOption HIDDEN_TRAIL = new BooleanOption("axolotlextras.hiddenTrail", false);
+
+	/** How long the hidden trail's crumbs stay. */
+	public static final EnumOption TRAIL_TIME = new EnumOption("axolotlextras.trailTime",
+		new String[] {"axolotlextras.seconds.5", "axolotlextras.seconds.10", "axolotlextras.seconds.20", "axolotlextras.seconds.30"},
+		"axolotlextras.seconds.10");
+
+	/** Drawn markers through walls, or particles in the world. */
+	public static final EnumOption TRAIL_STYLE = new EnumOption("axolotlextras.trailStyle",
+		new String[] {"axolotlextras.trailStyle.markers", "axolotlextras.trailStyle.particles"}, "axolotlextras.trailStyle.markers");
+
+	/** A label over the newest crumb of each trail. */
+	public static final BooleanOption TRAIL_LABELS = new BooleanOption("axolotlextras.trailLabels", true);
+
+	/** A chat line when a new hidden trail starts. */
+	public static final BooleanOption TRAIL_CHAT = new BooleanOption("axolotlextras.trailChat", true);
+
+	/** The Invisibility Alert plays a sound with its chat line. */
+	public static final BooleanOption INVIS_SOUND = new BooleanOption("axolotlextras.invisSound", true);
 
 	/** Bed Defense also labels your own bed. */
 	public static final BooleanOption BED_DEFENSE_OWN = new BooleanOption("axolotlextras.bedDefenseOwn", true);
@@ -147,6 +253,17 @@ public class ExtrasModule extends AbstractModule {
 
 	/** Trajectories while holding a pearl, snowball or egg. */
 	public static final BooleanOption TRAJECTORY_THROWN = new BooleanOption("axolotlextras.trajectoryThrown", true);
+
+	/** A short note above the hotbar when a hack key is used (the emergency toggle, G and H by default, or a toggle key). */
+	public static final BooleanOption HACK_KEY_NOTE = new BooleanOption("axolotlextras.hackKeyNote", true);
+
+	/**
+	 * The main switch of every hack: what the emergency toggle turns off and back on, and what gets a toggle key. Their
+	 * fine-tuning switches (style, sounds, sizes) are left out: they do nothing while the hack is off.
+	 */
+	public static final BooleanOption[] HACK_MAIN_SWITCHES = {PLAYER_ESP, ESP_TRACERS, NAMETAGS, ENEMY_ARMOR, GENERATOR_COUNTS,
+		BED_DEFENSE, OBSIDIAN_ALERT, RUSH_ALERT, FIREBALL_WARNING, PEARL_LANDING, TRAJECTORIES, NO_BLINDNESS, RADAR, INVIS_ALERT,
+		HIDDEN_TRAIL};
 
 	/** Label sizes are sliders in percent, from {@link #LABEL_SIZE_MIN} to {@link #LABEL_SIZE_MAX}. */
 	public static final int LABEL_SIZE_MIN = LabelSizeMigration.MIN, LABEL_SIZE_MAX = LabelSizeMigration.MAX;
@@ -248,7 +365,17 @@ public class ExtrasModule extends AbstractModule {
 	private static boolean labelSizesMigrated;
 
 	private static KeyBinding quickplayKey;
+	/** The emergency toggle: every hack off (G), and back on as they were (H). */
+	private static KeyBinding hacksOffKey, hacksOnKey;
+	/** One toggle key per {@link #HACK_MAIN_SWITCHES} entry, unbound until set in Controls. */
+	private static KeyBinding[] hackToggleKeys = new KeyBinding[0];
+	private static final String HACK_KEY_CATEGORY = "category.axolotlextras.hacks";
+	private static HackPanic hackPanic;
 	private static KeyBinding menuKey;
+	/** Flips AxolotlClient's own Dynamic FOV option (the FOV widening when you sprint, draw a bow or have Speed). */
+	private static KeyBinding dynamicFovKey;
+	/** Switches the radar's middle between you and your bed. */
+	private static KeyBinding radarCenterKey;
 	private static ResourceCounterHud resourceCounter;
 	private static UpgradeDisplayHud upgradeDisplay;
 
@@ -263,10 +390,15 @@ public class ExtrasModule extends AbstractModule {
 		HACKS.add(new GenericOption("axolotlextras.openHacks", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new HacksScreen(client.currentScreen))));
 		HACKS.add(PLAYER_ESP, ESP_TRACERS, ESP_STYLE, ESP_COLOR, ESP_RANGE, ESP_INVISIBLE, ESP_TEAMMATES, NAMETAGS,
-			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_RARE, GEN_BASE, BED_DEFENSE,
-			BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
+			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_HELD, GENERATOR_COUNTS, GEN_IRON, GEN_GOLD, GEN_DIAMOND,
+			GEN_EMERALD, BED_DEFENSE, BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, INVIS_ALERT,
+			INVIS_NEED_POTION, INVIS_WAYPOINTS, INVIS_SOUND, HIDDEN_TRAIL, TRAIL_TIME, TRAIL_STYLE,
+			TRAIL_LABELS, TRAIL_CHAT, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND,
 			FIREBALL_WARNING, FIREBALL_BLOCKS, FIREBALL_SOUND, PEARL_LANDING, TRAJECTORIES, TRAJECTORY_BOW, TRAJECTORY_THROWN,
-			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS);
+			SIZE_GENERATORS, SIZE_BEDS, SIZE_WAYPOINTS, SIZE_NAMETAGS, SIZE_ARMOR, SIZE_PROJECTILES, NO_BLINDNESS, RADAR, RADAR_CENTER,
+			RADAR_RANGE, RADAR_SHAPE, RADAR_CORNER, RADAR_OFFSET_X, RADAR_OFFSET_Y, RADAR_SIZE, RADAR_ICON_SIZE, RADAR_OPACITY, RADAR_ROTATE,
+			RADAR_SELF, RADAR_TEAMMATES, RADAR_INVISIBLE, RADAR_EDGE, RADAR_BORDER, RADAR_NAMES, RADAR_HEIGHT, RADAR_GRID,
+			HACK_KEY_NOTE);
 		AxolotlClient.CONFIG.addCategory(HACKS);
 
 		// HudManager.init() has already run by now (modules are initialised in order, external ones last), so the HUD
@@ -286,6 +418,28 @@ public class ExtrasModule extends AbstractModule {
 
 		quickplayKey = new KeyBinding("key.axolotlextras.quickplay", Keyboard.KEY_Y, "category.axolotlclient");
 		KeyBindingHelper.registerKeyBinding(quickplayKey);
+
+		// Unbound by default, so it takes no key used in game.
+		dynamicFovKey = new KeyBinding("key.axolotlextras.dynamicFov", Keyboard.KEY_NONE, "category.axolotlclient");
+		KeyBindingHelper.registerKeyBinding(dynamicFovKey);
+
+		// The hack keys have their own section in Controls. Only the emergency toggle has keys by default; the toggle keys
+		// start unbound so they do not take keys used in game.
+		hacksOffKey = new KeyBinding("key.axolotlextras.hacksOff", Keyboard.KEY_G, HACK_KEY_CATEGORY);
+		KeyBindingHelper.registerKeyBinding(hacksOffKey);
+		hacksOnKey = new KeyBinding("key.axolotlextras.hacksOn", Keyboard.KEY_H, HACK_KEY_CATEGORY);
+		KeyBindingHelper.registerKeyBinding(hacksOnKey);
+		hackToggleKeys = new KeyBinding[HACK_MAIN_SWITCHES.length];
+		for (int i = 0; i < HACK_MAIN_SWITCHES.length; i++) {
+			// "axolotlextras.playerEsp" gets the key "key.axolotlextras.toggle.playerEsp"
+			String name = HACK_MAIN_SWITCHES[i].getName();
+			hackToggleKeys[i] = new KeyBinding("key.axolotlextras.toggle." + name.substring(name.indexOf('.') + 1),
+				Keyboard.KEY_NONE, HACK_KEY_CATEGORY);
+			KeyBindingHelper.registerKeyBinding(hackToggleKeys[i]);
+		}
+		radarCenterKey = new KeyBinding("key.axolotlextras.radarCenter", Keyboard.KEY_NONE, HACK_KEY_CATEGORY);
+		KeyBindingHelper.registerKeyBinding(radarCenterKey);
+		hackPanic = new HackPanic(FabricLoader.getInstance().getConfigDir().resolve("axolotl-extras").resolve("hacks-off.txt"));
 
 		// Loading a different world (including joining another server or game) forgets the remembered counts.
 		Events.WORLD_LOAD_EVENT.register(event -> {
@@ -433,6 +587,39 @@ public class ExtrasModule extends AbstractModule {
 		BenchDriver.tick(client);
 		FrameBench.onTick(client);
 		HackRenderer.tick(client);
+		if (hacksOffKey != null && hacksOffKey.wasPressed() && client.currentScreen == null) {
+			int count = hackPanic.allOff(hackSwitches());
+			saveConfig();
+			emergencyNote("§cHacks off" + (count > 0 ? " §7(" + count + ")" : ""));
+		}
+		if (hacksOnKey != null && hacksOnKey.wasPressed() && client.currentScreen == null) {
+			int count = hackPanic.restore(hackSwitches());
+			saveConfig();
+			emergencyNote(count < 0 ? "§7Hacks: nothing to turn back on" : "§aHacks back on §7(" + count + ")");
+		}
+		for (int i = 0; i < hackToggleKeys.length; i++) {
+			if (hackToggleKeys[i].wasPressed() && client.currentScreen == null) {
+				BooleanOption option = HACK_MAIN_SWITCHES[i];
+				option.toggle();
+				saveConfig();
+				emergencyNote((option.get() ? "§a" : "§c") + I18n.translate(option.getName())
+					+ (option.get() ? " on" : " off"));
+			}
+		}
+		if (radarCenterKey != null && radarCenterKey.wasPressed() && client.currentScreen == null) {
+			boolean toBed = !RADAR_CENTER.get().endsWith(".bed");
+			RADAR_CENTER.set(toBed ? "axolotlextras.radarCenter.bed" : "axolotlextras.radarCenter.player");
+			saveConfig();
+			emergencyNote(toBed ? "§eRadar: centred on your bed" : "§eRadar: centred on you");
+		}
+		if (dynamicFovKey != null && dynamicFovKey.wasPressed() && client.currentScreen == null) {
+			BooleanOption dynamicFov = AxolotlClient.CONFIG.dynamicFOV;
+			dynamicFov.toggle();
+			saveConfig();
+			if (client.inGameHud != null) {
+				client.inGameHud.setOverlayMessage(dynamicFov.get() ? "§aDynamic FOV on" : "§cDynamic FOV off", false);
+			}
+		}
 		if (menuKey != null && menuKey.wasPressed() && client.currentScreen == null) {
 			client.setScreen(new ExtrasScreen(null));
 		}
@@ -450,6 +637,45 @@ public class ExtrasModule extends AbstractModule {
 		if (quickplayKey != null && quickplayKey.wasPressed() && QUICKPLAY.get() && client.currentScreen == null
 			&& client.world != null && client.player != null && quickplayAllowedHere()) {
 			client.setScreen(new QuickplayScreen());
+		}
+	}
+
+	/** The main switch of every hack (their fine-tuning switches stay as they are, they do nothing while the hack is off). */
+	private static List<HackPanic.Switch> hackSwitches() {
+		List<HackPanic.Switch> out = new ArrayList<>();
+		for (BooleanOption option : HACK_MAIN_SWITCHES) {
+			out.add(new HackPanic.Switch() {
+				@Override
+				public String name() {
+					return option.getName();
+				}
+
+				@Override
+				public boolean on() {
+					return option.get();
+				}
+
+				@Override
+				public void set(boolean on) {
+					option.set(on);
+				}
+			});
+		}
+		return out;
+	}
+
+	/** A short note above the hotbar (it fades after a few seconds), unless the Hack Key Note switch is off. */
+	private void emergencyNote(String text) {
+		if (HACK_KEY_NOTE.get() && client.inGameHud != null) {
+			client.inGameHud.setOverlayMessage(text, false);
+		}
+	}
+
+	private static void saveConfig() {
+		try {
+			AxolotlClient.configManager.save();
+		} catch (RuntimeException e) {
+			AxolotlClient.LOGGER.error("[Extras] Could not save the config: " + e);
 		}
 	}
 

@@ -4,7 +4,7 @@ Goal: a Lunar Client style setup for Minecraft 1.8.9 on Legacy Fabric (Prism ins
 feature can be switched on and off at will. Features come from AxolotlClient where it has them, and from the
 `axolotl-extras` add-on in this folder where it does not.
 
-Last updated: 2026-11-07.
+Last updated: 2026-11-14.
 
 ## Lunar module map
 
@@ -198,6 +198,101 @@ Last updated: 2026-11-07.
   over to sliders that were never saved (`LabelSizeMigration`, 4 tests). 87 tests pass. Built, not yet seen in game.
   Deployed to the play clone 1.8.9-lunarlike on 2026-11-08 together with the freeze stack logger; the previous jar (label size
   buttons) is in mods-backup as axolotl-extras-0.1.0.before-label-sliders.jar.
+- Emergency toggle (2026-11-10): two keys, rebindable in Controls under AxolotlClient: G ("Hacks: All Off") switches the 12
+  main hack switches off and remembers which were on, H ("Hacks: Back On") switches exactly those back on. Pressing G again
+  while off keeps the memory and adds any hack switched on by hand since. The memory is in
+  `config/axolotl-extras/hacks-off.txt` (deleted on H), so it survives a restart or crash. The keys only work in game (no
+  menu or chat open). The config is saved right away. A note above the hotbar ("Hacks off (3)", "Hacks back on (3)") unless
+  Hack Key Note is off. `hacks/HackPanic`, 4 tests.
+- Hack toggle keys (2026-11-10): one toggle key per main hack switch (the same 12 as the emergency toggle,
+  `ExtrasModule.HACK_MAIN_SWITCHES`), unbound by default so they take no keys used in game. All hack keys, G and H included,
+  are in their own Controls section "AxolotlClient Extras: Hacks". A key flips its hack, saves the config and shows
+  "Player ESP on" / "off" above the hotbar (option Hack Key Note, which replaced Emergency Toggle Note before it was ever
+  deployed). Fine-tuning switches (style, sounds, sizes) have no keys. 91 tests pass.
+  Deployed to the play clone 1.8.9-lunarlike on 2026-11-10 together with the emergency toggle, not yet seen in game; the
+  previous jar (label size sliders) is in mods-backup as axolotl-extras-0.1.0.before-hack-keys.jar.
+- Radar (2026-11-12, built, 100 tests pass, not yet seen in game): a minimap on the HUD (main switch Radar, off by
+  default, in the Hacks menu section "Radar" and with its own toggle key, so now 13 main hack switches). Every other real
+  player (same NPC and tab list filter as ESP) is drawn as the face of their skin: the 8x8 face plus the hat layer from the
+  skin texture, the way the tab list draws heads, framed in the team colour. Options: Range (16, 32, 64, 128 blocks), Shape
+  (circle, square), Corner plus side and top/bottom offsets in GUI pixels, Size (50 to 250 px), Face Size (50% to 250% of
+  10 px), Background Opacity, Turn With View (on: ahead is up; off: north up with a view arrow), Show Own Face (off: an
+  arrow), Show Teammates, Show Invisible (faded), Keep Far Players on Edge (faded, in their direction), Team Colour Frame,
+  Show Names (half size), Height Arrows (green above, red below, more than 3 blocks) and Grid and North. Drawn in the HUD
+  pass before the hack labels, so the hotbar and HUD modules stay on top. `hacks/Radar` (drawing), `hacks/RadarMath`
+  (placement, 9 tests). Deployed to the play clone 1.8.9-lunarlike on 2026-11-13.
+- Dynamic FOV toggle (2026-11-13, built, 100 tests pass, not yet seen in game): key "Toggle Dynamic FOV" (Controls,
+  section AxolotlClient, unbound by default) flips AxolotlClient's own `dynamicFov` option (on by default; off keeps
+  the FOV still when sprinting, drawing a bow or with Speed), saves the config and shows "Dynamic FOV on/off" above
+  the hotbar. The option is also listed in the Extras menu under Look, with a tooltip. Deployed to the play clone 1.8.9-lunarlike on 2026-11-13.
+- Radar Centre (2026-11-13, built, 101 tests pass, not yet seen in game): option You (default) or Your Bed, plus an
+  unbound key "Radar: You / Your Bed" in the hack keys section. On the bed, the bed icon is in the middle and you are
+  drawn where you are (on the rim, faded, when out of range). Your bed comes from the same tracker as Bed Defense and
+  the Rush Alert (nearest bed to the start spot, else your team's), so the bed scan now also runs for the radar. The
+  bed radar is live only while the bed's chunk is loaded and the bed is within your render distance (render distance
+  x 16 blocks, `RadarMath.bedState`, 1 test). Otherwise it turns gray, hides other players and says "Bed out of
+  range (143m)" or "No bed" (not in a game, not found yet, or broken). Note: a server may send players over a
+  shorter distance than its chunks, so near the edge of render distance the live radar can still miss some.
+  Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 together with the radar and the Dynamic FOV toggle, not yet
+  seen in game; the previous jar (hack keys) is in mods-backup as axolotl-extras-0.1.0.before-radar.jar.
+- Generator Counts per ore (2026-11-13, built, 101 tests pass, not yet seen in game): the two switches Diamonds and
+  Emeralds / Iron and Gold are replaced by four, Count Iron, Count Gold, Count Diamonds and Count Emeralds (all on by
+  default). The old two are no longer read, so anyone who had one of them off gets it back on once.
+- Invisibility Alert (2026-11-13, built, 107 tests pass, not yet seen in game): a hack (off by default, in the Alerts
+  section, with its own toggle key and on the emergency toggle). `hacks/InvisTracker` (no Minecraft imports, 6 tests)
+  watches every enemy once the game runs: when one seen visible turns invisible and stays so for half a second, it
+  keeps a mark where it happened (position, head yaw and pitch, team) for 60 seconds, one per player, and the chat
+  gets `Invis <name> went invisible 23m NE` plus a ping (Invisibility Sound). Players first seen already invisible,
+  teammates and spectators give no mark; a player who leaves range while waiting is dropped. The mark is a
+  see-through box (0.6 x 1.8, filled and outlined in the team colour, through walls) with a 3-block line from the eyes
+  the way they looked, fading over the last 5 seconds. Invisibility Waypoints (on by default) adds the obsidian-style
+  beam and a label "<name> invis 12s 23m NE" (Waypoints label size, renamed from Obsidian Waypoints). Drawing and a
+  local chat line only, nothing is sent. Players leaving render distance cannot be flagged: the server despawns
+  them on your side, they drop out of the tracker, and coming back already invisible gives no mark (tested). Only
+  After a Potion (on by default) also needs the enemy seen holding a potion with the invisibility effect (from the
+  held item the server sends, read with `PotionItem.getCustomPotionEffects`) in the 3 seconds before; 110 tests pass
+  (4 new). To check in game: that Hypixel shows the potion in hand while drinking (if not, switch it off),
+  that a potion really sets the invisible flag on Hypixel before the armor hides, and that dying or respawning does
+  not give false alerts.
+- Invisibility Alert, vanish case (2026-11-13): the user saw that Hypixel does not show invisible players at all (ESP
+  with Show Invisible found nothing), so the server likely stops sending them, and the flag path never fires there.
+  `InvisTracker` now also gives a mark when an enemy disappears from your side while alive, nearer than 32 blocks,
+  within 3 seconds of holding an invisibility potion (Hypixel does show the bottle while drinking, the user says).
+  The mark is at their last seen spot and look. Dying players are fed in as not alive, so a death is not taken for
+  vanishing; walking out of range without a potion, or beyond 32 blocks, never gives a mark; flagged then gone gives
+  one mark. Tests rewritten around `InvisTracker.Sighting` (11).
+- Hidden Player Trail (2026-11-13, built, 119 tests pass, not yet seen in game): a hack (off by default, Alerts
+  section, own toggle key, on the emergency toggle). `mixin/HiddenTrailMixin` (visuals config) reads, without
+  changing anything, the server's sound packets, particle packets and block breaking progress (main thread run
+  only). Footstep (`step.*`), hurt, drink, eat, burp and bow sounds and footstep particles become a crumb when no
+  loaded living entity (armor stands left out: generators carry them) is within 2 blocks; block breaking counts when
+  the breaking entity id is not loaded (and not you). `hacks/HiddenTrail` (no Minecraft imports, 7 tests) snaps each
+  crumb to the middle of the block (for a sound at the feet, the lower block of the two), skips the same block
+  again within half a second, links crumbs within 4.5 blocks and 2 seconds into a walk, keeps at most 300, and drops
+  them after Trail Time (5/10/20/30 s, default 10). Who it is: the Invisibility Alert mark of that entity id for
+  block breaking, else the only mark there is (two or more: unknown, drawn pale purple). Style Markers: cubes and
+  lines through walls, a red cube for a hit, an outline round a block being broken. Style Particles: coloured
+  redstone dust at each crumb every 4 ticks (walls hide it). Labels over the newest crumb of each walk (Waypoints
+  size) and a chat line when a trail starts after 5 quiet seconds. The first 40 crumbs per world are written to
+  latest.log ("Hidden trail: step.stone at x y z"), so one game shows what Hypixel really sends. Only reads packets
+  and draws, nothing is sent. To check in game: whether Hypixel sends step sounds for hidden invisible players (if
+  not, only hits, drinking, bow shots and block breaking give crumbs), false crumbs from mobs or players at the edge
+  of what is loaded, and teammates who drink invisibility (they may show up as hidden too).
+- Fix (2026-11-13): invisible players were dropped as NPCs. The user saw no ESP box on an invisible player (Show
+  Invisible on) although their held item still showed, so the player was still sent. The NPC filter skipped every
+  player on a team with name tags set to "never", and servers hide invisible players' name tags that way. The rule
+  now only counts for visible players (NPCs are still caught by version 2 UUIDs, the tab list and "[NPC]"). This
+  fixes ESP, tracers, nametags, the radar and the Invisibility Alert for invisible players. Invisible players also no
+  longer "explain" a sound for the hidden trail, so their steps go on it too. An Invisibility Alert now writes one
+  line to latest.log saying whether the player was still sent (flagged) or gone from your side.
+- Fix (2026-11-14): the game crashed when the radar was switched on ("Registering texture", NullPointerException in
+  `Radar.face`). In these yarn mappings `AbstractClientPlayerEntity.getSkinId()` returns the cape (null without one)
+  and `getCapeId()` returns the skin; the radar used `getSkinId()`, so a player without a cape crashed it (and one
+  with a cape would have shown a piece of the cape). It now uses `getCapeId()` and draws a gray square if there is
+  no texture at all.
+- Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
+  the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
+  axolotl-extras-0.1.0.before-invis.jar.
 
 ## In progress
 

@@ -4,8 +4,10 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.alexweber64.axolotlextras.ExtrasModule;
@@ -14,22 +16,32 @@ import io.github.alexweber64.axolotlextras.ui.RoundedRect;
 import io.github.axolotlclient.AxolotlClientConfig.options.IntegerOption;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.particle.ParticleType;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.PotionItem;
 import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardPlayerScore;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
@@ -61,6 +73,16 @@ public final class HackRenderer {
 	private static final RushAlert RUSH = new RushAlert();
 	private static final Draw3D DRAW = new Draw3D();
 	private static final FreezeWatch WATCH = new FreezeWatch();
+	private static final InvisTracker INVIS = new InvisTracker();
+	private static final HiddenTrail TRAIL = new HiddenTrail();
+	private static final Logger LOG = LogManager.getLogger("axolotl-extras");
+	/** How many hidden-trail crumbs are still written to the log in this world (to learn what a server sends). */
+	private static int trailLogLeft;
+	private static final int TRAIL_LOG_LIMIT = 40;
+	/** The colour of crumbs nobody is known for, and of hurt crumbs. */
+	private static final int TRAIL_RGB = 0xD8C8FF, TRAIL_HURT_RGB = 0xFF5050;
+	/** How far the look line of an invisibility mark reaches, in blocks. */
+	private static final double LOOK_LINE = 3;
 	/** {x, z} where you stood shortly after the game started (for finding your own bed), or null. */
 	private static double[] spawn;
 	private static int spawnCountdown = -1;
@@ -87,6 +109,9 @@ public final class HackRenderer {
 		PROJECTILES.reset();
 		RUSH.reset();
 		WATCH.reset();
+		INVIS.reset();
+		TRAIL.reset();
+		trailLogLeft = TRAIL_LOG_LIMIT;
 		spawn = null;
 		spawnCountdown = -1;
 		spawnTick = -1;
@@ -129,7 +154,23 @@ public final class HackRenderer {
 		t = WATCH.start();
 		generatorLabels = ExtrasModule.GENERATOR_COUNTS.get() ? findGenerators(world) : Collections.<HudLabel>emptyList();
 		WATCH.end("generator counts", t);
-		boolean beds = ExtrasModule.BED_DEFENSE.get() || ExtrasModule.OBSIDIAN_ALERT.get() || ExtrasModule.RUSH_ALERT.get();
+		if (ExtrasModule.INVIS_ALERT.get() && gameRunning) {
+			t = WATCH.start();
+			trackInvisible(client);
+			WATCH.end("invisibility alert", t);
+		} else if (!INVIS.marks().isEmpty()) {
+			INVIS.reset();
+		}
+		if (ExtrasModule.HIDDEN_TRAIL.get()) {
+			TRAIL.expire(ticks, trailTicks());
+			if (ExtrasModule.TRAIL_STYLE.get().endsWith(".particles") && ticks % 4 == 0) {
+				trailParticles(world);
+			}
+		} else if (!TRAIL.crumbs().isEmpty()) {
+			TRAIL.reset();
+		}
+		boolean beds = ExtrasModule.BED_DEFENSE.get() || ExtrasModule.OBSIDIAN_ALERT.get() || ExtrasModule.RUSH_ALERT.get()
+			|| radarOnBed();
 		if (beds) {
 			t = WATCH.start();
 			SCANNER.tick(world, client.player.x, client.player.z);
@@ -193,6 +234,274 @@ public final class HackRenderer {
 		return TeamGuess.UNKNOWN;
 	}
 
+	/**
+	 * Watches every enemy for going invisible (flagged on your side, or gone from your side right after holding the potion);
+	 * a new mark gets a chat line (only shown here, nothing is sent).
+	 */
+	private static void trackInvisible(MinecraftClient client) {
+		Set<String> seen = new HashSet<>();
+		boolean needPotion = ExtrasModule.INVIS_NEED_POTION.get();
+		InvisTracker.Sighting s = new InvisTracker.Sighting();
+		// Dying players are included (as not alive), so a death is not taken for vanishing.
+		for (PlayerEntity player : realPlayers(client, true)) {
+			// Spectators (dead players waiting to respawn) are invisible without a potion.
+			if (isTeammate(client, player) || player.isSpectator()) {
+				continue;
+			}
+			s.id = player.getUuid().toString();
+			s.entityId = player.getEntityId();
+			s.name = player.getName().asFormattedString();
+			s.team = TeamGuess.fromFormattedName(s.name);
+			s.invisible = player.isInvisible();
+			s.holdingPotion = holdsInvisPotion(player);
+			s.alive = player.isAlive() && player.getHealth() > 0;
+			s.x = player.x;
+			s.y = player.y;
+			s.z = player.z;
+			s.yaw = player.headYaw;
+			s.pitch = player.pitch;
+			s.distance = Math.sqrt(player.squaredDistanceTo(client.player));
+			seen.add(s.id);
+			announce(client, INVIS.see(s, needPotion, ticks));
+		}
+		for (InvisTracker.Mark mark : INVIS.endTick(seen, ticks)) {
+			announce(client, mark);
+		}
+	}
+
+	private static void announce(MinecraftClient client, InvisTracker.Mark mark) {
+		if (mark == null) {
+			return;
+		}
+		LOG.info("[axolotl-extras] Invisibility Alert: {} ({})", mark.name.replaceAll("\u00a7.", ""),
+			mark.vanished ? "gone from your side after holding the potion" : "still sent, flagged invisible");
+		client.inGameHud.getChatHud().addMessage(new LiteralText("\u00a7bInvis \u00a7f" + mark.name
+			+ " \u00a77went invisible " + markDistance(client, mark.x, mark.z)));
+		if (ExtrasModule.INVIS_SOUND.get()) {
+			client.player.playSound("note.pling", 1f, 0.8f);
+		}
+	}
+
+	// ----------------------------------------------------------------------------------------------- hidden trail
+
+	/** The Trail Time option in ticks. */
+	private static int trailTicks() {
+		return (int) (HackMath.optionNumber(ExtrasModule.TRAIL_TIME.get(), 10) * 20);
+	}
+
+	/** True when the hidden trail should take server events now. */
+	private static boolean trailActive(MinecraftClient client) {
+		return ExtrasModule.HIDDEN_TRAIL.get() && gameRunning && client.world != null && client.player != null;
+	}
+
+	/** A sound the server played: a crumb when it tells where a player stands and nobody loaded is there. */
+	public static void onServerSound(String sound, double x, double y, double z) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		HiddenTrail.Kind kind = HiddenTrail.soundKind(sound);
+		if (kind == null || !trailActive(client) || explained(client, x, y, z)) {
+			return;
+		}
+		addCrumb(client, x, y, z, kind, null, sound);
+	}
+
+	/** A particle the server sent: footstep particles count like footstep sounds. */
+	public static void onServerParticle(ParticleType type, double x, double y, double z) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		if (type != ParticleType.FOOTSTEP || !trailActive(client) || explained(client, x, y, z)) {
+			return;
+		}
+		addCrumb(client, x, y, z, HiddenTrail.Kind.STEP, null, "footstep particle");
+	}
+
+	/** A block being broken: a crumb when the one breaking it is not loaded on your side. */
+	public static void onBlockBreaking(int entityId, BlockPos pos, int progress) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		if (progress < 0 || progress > 9 || !trailActive(client) || entityId == client.player.getEntityId()
+			|| client.world.getEntityById(entityId) != null) {
+			return;
+		}
+		addCrumb(client, pos.getX(), pos.getY(), pos.getZ(), HiddenTrail.Kind.BREAK, INVIS.byEntityId(entityId),
+			"block breaking by entity " + entityId);
+	}
+
+	/**
+	 * True when a loaded player or mob (not an armor stand: generators carry those) stands at the spot, so the sound is
+	 * theirs. You count, too. Invisible ones do not: their steps go on the trail as well.
+	 */
+	private static boolean explained(MinecraftClient client, double x, double y, double z) {
+		for (Entity entity : client.world.getLoadedEntities()) {
+			if (!(entity instanceof LivingEntity) || entity instanceof ArmorStandEntity
+				|| (entity != MinecraftClient.getInstance().player && entity.isInvisible())) {
+				continue;
+			}
+			double dx = entity.x - x, dz = entity.z - z, dy = y - entity.y;
+			if (dx * dx + dz * dz <= 4 && dy >= -1.5 && dy <= 2.5) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Adds a crumb. Who it is: the given mark, or else the only invisibility mark there is (with two or more there is no
+	 * telling), or nobody.
+	 */
+	private static void addCrumb(MinecraftClient client, double x, double y, double z, HiddenTrail.Kind kind,
+		InvisTracker.Mark who, String what) {
+		if (who == null && INVIS.marks().size() == 1) {
+			who = INVIS.marks().get(0);
+		}
+		boolean fresh = TRAIL.quietBefore(ticks);
+		HiddenTrail.Crumb crumb = TRAIL.add(x, y, z, kind, ticks, who == null ? TeamGuess.UNKNOWN : who.team,
+			who == null ? null : who.name);
+		if (crumb == null) {
+			return;
+		}
+		if (trailLogLeft > 0) {
+			trailLogLeft--;
+			LOG.info("[axolotl-extras] Hidden trail: {} at {} {} {} ({} more logged in this world)", what,
+				Math.round(x * 10) / 10.0, Math.round(y * 10) / 10.0, Math.round(z * 10) / 10.0, trailLogLeft);
+		}
+		if (fresh && ExtrasModule.TRAIL_CHAT.get()) {
+			client.inGameHud.getChatHud().addMessage(new LiteralText("\u00a7dHidden \u00a7f"
+				+ (crumb.name == null ? "player" : crumb.name) + " \u00a77" + verb(kind) + " "
+				+ markDistance(client, crumb.x, crumb.z)));
+		}
+	}
+
+	private static String verb(HiddenTrail.Kind kind) {
+		switch (kind) {
+			case HURT:
+				return "got hit";
+			case BREAK:
+				return "breaking a block";
+			default:
+				return "heard";
+		}
+	}
+
+	private static int crumbColor(HiddenTrail.Crumb crumb) {
+		if (crumb.kind == HiddenTrail.Kind.HURT) {
+			return TRAIL_HURT_RGB;
+		}
+		return crumb.team == TeamGuess.UNKNOWN ? TRAIL_RGB : HackMath.teamColor("\u00a7" + TeamGuess.CODES[crumb.team]);
+	}
+
+	/** Markers: a small cube per crumb, lines along each walk, an outline round blocks being broken. */
+	private static void drawTrail(Draw3D draw) {
+		List<HiddenTrail.Crumb> crumbs = TRAIL.crumbs();
+		int lifetime = trailTicks();
+		for (int i = 0; i < crumbs.size(); i++) {
+			HiddenTrail.Crumb c = crumbs.get(i);
+			double fade = c.fade(ticks, lifetime);
+			int rgb = crumbColor(c);
+			double x = c.x - camX, y = c.y - camY, z = c.z - camZ;
+			if (c.kind == HiddenTrail.Kind.BREAK) {
+				draw.boxOutline(x - 0.51, y - 0.51, z - 0.51, x + 0.51, y + 0.51, z + 0.51, alpha(0xC0, fade) | rgb);
+				continue;
+			}
+			double h = c.kind == HiddenTrail.Kind.STEP ? 0.12 : 0.18;
+			draw.filledBox(x - h, y - h, z - h, x + h, y + h, z + h, alpha(0x90, fade) | rgb);
+			draw.boxOutline(x - h, y - h, z - h, x + h, y + h, z + h, alpha(0xD0, fade) | rgb);
+			for (int j = i + 1; j < crumbs.size(); j++) {
+				HiddenTrail.Crumb next = crumbs.get(j);
+				if (HiddenTrail.linked(c, next)) {
+					draw.line(x, y, z, alpha(0xB0, fade) | rgb, next.x - camX, next.y - camY, next.z - camZ,
+						alpha(0xB0, next.fade(ticks, lifetime)) | crumbColor(next));
+					break;
+				}
+			}
+		}
+	}
+
+	/** Particles: coloured dust at every crumb (in the world, so walls hide it). Drawing only. */
+	private static void trailParticles(ClientWorld world) {
+		for (HiddenTrail.Crumb c : TRAIL.crumbs()) {
+			int rgb = crumbColor(c);
+			// Redstone dust takes its colour from the speed arguments; a red of exactly 0 would turn it red.
+			double r = Math.max(0.01, ((rgb >> 16) & 0xFF) / 255.0), g = ((rgb >> 8) & 0xFF) / 255.0, b = (rgb & 0xFF) / 255.0;
+			double y = c.kind == HiddenTrail.Kind.BREAK ? c.y + 0.6 : c.y;
+			world.addParticle(ParticleType.REDSTONE, c.x, y, c.z, r, g, b);
+		}
+	}
+
+	/** "Hidden 3s 14m NE" (or the name, when known) over the newest crumb of each walk. */
+	private static List<HudLabel> trailLabels(MinecraftClient client) {
+		List<HudLabel> labels = new ArrayList<>();
+		for (HiddenTrail.Crumb c : TRAIL.heads()) {
+			HudLabel label = new HudLabel(c.x, c.y + 1.0, c.z);
+			label.text = (c.name == null ? "\u00a7dHidden" : c.name) + " \u00a7f" + Math.max(0, (ticks - c.tick) / 20)
+				+ "s \u00a77" + markDistance(client, c.x, c.z);
+			labels.add(label);
+		}
+		return labels;
+	}
+
+	/** The player holds a potion with the invisibility effect (the held item is sent to everyone who can see them). */
+	private static boolean holdsInvisPotion(PlayerEntity player) {
+		ItemStack held = player.getStackInHand();
+		if (held == null || !(held.getItem() instanceof PotionItem)) {
+			return false;
+		}
+		List<StatusEffectInstance> effects = ((PotionItem) held.getItem()).getCustomPotionEffects(held);
+		if (effects != null) {
+			for (StatusEffectInstance effect : effects) {
+				if (effect.getEffectId() == StatusEffect.INVISIBILITY.id) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/** "23m NE" from you to a spot. */
+	private static String markDistance(MinecraftClient client, double x, double z) {
+		double dx = x - client.player.x, dz = z - client.player.z;
+		return Math.round(Math.sqrt(dx * dx + dz * dz)) + "m " + HackMath.compass(dx, dz);
+	}
+
+	/** The RGB of a mark: its team colour, or the unknown-team purple. */
+	private static int markColor(InvisTracker.Mark mark) {
+		return mark.team == TeamGuess.UNKNOWN ? UNKNOWN_TEAM_RGB : HackMath.teamColor("\u00a7" + TeamGuess.CODES[mark.team]);
+	}
+
+	/** A box where each mark's player went invisible, a line the way they looked, and the waypoint beam. */
+	private static void drawInvisMarks(Draw3D draw) {
+		for (InvisTracker.Mark mark : INVIS.marks()) {
+			double fade = mark.fade(ticks);
+			if (fade <= 0) {
+				continue;
+			}
+			int rgb = markColor(mark);
+			double x = mark.x - camX, y = mark.y - camY, z = mark.z - camZ;
+			draw.filledBox(x - 0.3, y, z - 0.3, x + 0.3, y + 1.8, z + 0.3, alpha(0x50, fade) | rgb);
+			draw.boxOutline(x - 0.3, y, z - 0.3, x + 0.3, y + 1.8, z + 0.3, alpha(0x90, fade) | rgb);
+			double[] look = InvisTracker.look(mark.yaw, mark.pitch);
+			double eye = y + 1.62;
+			draw.line(x, eye, z, alpha(0xE0, fade) | rgb, x + look[0] * LOOK_LINE, eye + look[1] * LOOK_LINE,
+				z + look[2] * LOOK_LINE, alpha(0x40, fade) | rgb);
+			if (ExtrasModule.INVIS_WAYPOINTS.get()) {
+				draw.line(x, y + 1.8, z, alpha(0xE6, fade) | rgb, x, y + 60, z, alpha(0x3C, fade) | rgb);
+			}
+		}
+	}
+
+	/** An alpha value scaled by {@code fade}, shifted into place for an ARGB colour. */
+	private static int alpha(int alpha, double fade) {
+		return ((int) Math.round(alpha * fade) & 0xFF) << 24;
+	}
+
+	/** "Name invis 12s 23m NE" over each invisibility mark. */
+	private static List<HudLabel> invisLabels(MinecraftClient client) {
+		List<HudLabel> labels = new ArrayList<>();
+		for (InvisTracker.Mark mark : INVIS.marks()) {
+			HudLabel label = new HudLabel(mark.x, mark.y + 2.3, mark.z);
+			label.text = mark.name + " \u00a7binvis \u00a7f" + mark.secondsAgo(ticks) + "s \u00a77" + markDistance(client, mark.x, mark.z);
+			labels.add(label);
+		}
+		return labels;
+	}
+
 	private static List<HudLabel> findGenerators(ClientWorld world) {
 		if (RESOURCE_ICONS[0] == null) {
 			RESOURCE_ICONS[ResourceMath.IRON] = new ItemStack(Items.IRON_INGOT);
@@ -226,17 +535,34 @@ public final class HackRenderer {
 
 	/** The resource, or -1 when it is not one or its switch is off. */
 	private static int resourceIndex(Item item) {
-		boolean base = ExtrasModule.GEN_BASE.get(), rare = ExtrasModule.GEN_RARE.get();
-		if (item == Items.IRON_INGOT && base) {
+		if (item == Items.IRON_INGOT && ExtrasModule.GEN_IRON.get()) {
 			return ResourceMath.IRON;
-		} else if (item == Items.GOLD_INGOT && base) {
+		} else if (item == Items.GOLD_INGOT && ExtrasModule.GEN_GOLD.get()) {
 			return ResourceMath.GOLD;
-		} else if (item == Items.DIAMOND && rare) {
+		} else if (item == Items.DIAMOND && ExtrasModule.GEN_DIAMOND.get()) {
 			return ResourceMath.DIAMOND;
-		} else if (item == Items.EMERALD && rare) {
+		} else if (item == Items.EMERALD && ExtrasModule.GEN_EMERALD.get()) {
 			return ResourceMath.EMERALD;
 		}
 		return -1;
+	}
+
+	/** True when the radar is on and centred on your bed (then the bed scan runs for it, too). */
+	private static boolean radarOnBed() {
+		return ExtrasModule.RADAR.get() && ExtrasModule.RADAR_CENTER.get().endsWith(".bed");
+	}
+
+	/** Your bed for the radar: where it is and whether it is within your render distance. */
+	private static Radar.Bed radarBed(MinecraftClient client) {
+		BedTracker.Info info = BEDS.ownBed(ownTeam, spawn, client.player.x, client.player.z);
+		if (info == null) {
+			return new Radar.Bed(0, 0, 0, RadarMath.BedState.NO_BED);
+		}
+		double x = info.centerX(), z = info.centerZ();
+		boolean loaded = !client.world.getChunk(info.bed.headX >> 4, info.bed.headZ >> 4).isEmpty();
+		double distance = Math.hypot(x - client.player.x, z - client.player.z);
+		return new Radar.Bed(x, info.bed.y + 0.5, z,
+			RadarMath.bedState(true, loaded, distance, client.options.viewDistance));
 	}
 
 	/** The Rush Distance option ("axolotlextras.rush.25" and so on) in blocks. */
@@ -292,6 +618,12 @@ public final class HackRenderer {
 				DRAW.line(x, y, z, 0xE6000000 | rgb, x, y + 60, z, 0x3C000000 | rgb);
 			}
 		}
+		if (ExtrasModule.INVIS_ALERT.get()) {
+			drawInvisMarks(DRAW);
+		}
+		if (ExtrasModule.HIDDEN_TRAIL.get() && ExtrasModule.TRAIL_STYLE.get().endsWith(".markers")) {
+			drawTrail(DRAW);
+		}
 		PROJECTILES.render(client, tickDelta, DRAW, camX, camY, camZ);
 		DRAW.flush();
 		WATCH.end("ESP, beams and trajectories (drawing)", t);
@@ -310,10 +642,15 @@ public final class HackRenderer {
 	 * UUIDs, a hidden name tag or "[NPC]" in the name), and players not in the tab list (hidden check bots).
 	 */
 	private static List<PlayerEntity> realPlayers(MinecraftClient client) {
+		return realPlayers(client, false);
+	}
+
+	/** @param dying also players that are dying (their body stays a moment) */
+	private static List<PlayerEntity> realPlayers(MinecraftClient client, boolean dying) {
 		List<PlayerEntity> out = new ArrayList<>();
 		Entity camera = client.getCameraEntity();
 		for (PlayerEntity player : client.world.playerEntities) {
-			if (player == client.player || player == camera || player.removed || !player.isAlive()) {
+			if (player == client.player || player == camera || player.removed || (!dying && !player.isAlive())) {
 				continue;
 			}
 			if (HackMath.isNpc(player.getUuid())) {
@@ -322,8 +659,11 @@ public final class HackRenderer {
 			if (client.getNetworkHandler() != null && client.getNetworkHandler().getPlayerListEntry(player.getUuid()) == null) {
 				continue;
 			}
+			// A hidden name tag marks an NPC, but not on an invisible player: servers hide invisible players' name tags with
+			// a team, too, and they are the ones that matter most. Real NPCs are still caught by the UUID, tab list and
+			// "[NPC]" checks.
 			AbstractTeam team = player.getScoreboardTeam();
-			if (team != null && team.getNameTagVisibilityRule() == AbstractTeam.VisibilityRule.NEVER) {
+			if (team != null && team.getNameTagVisibilityRule() == AbstractTeam.VisibilityRule.NEVER && !player.isInvisible()) {
 				continue;
 			}
 			if (player.getName().asFormattedString().contains("[NPC]")) {
@@ -516,10 +856,26 @@ public final class HackRenderer {
 			return;
 		}
 		long t = WATCH.start();
+		if (ExtrasModule.RADAR.get()) {
+			// Every real player, the radar's own switches filter them (not the ESP range, invisible and teammate ones).
+			List<Radar.Target> targets = new ArrayList<>();
+			for (PlayerEntity player : realPlayers(client)) {
+				targets.add(new Radar.Target(player, isTeammate(client, player)));
+			}
+			Radar.render(client, targets, lastTickDelta, radarOnBed() ? radarBed(client) : null);
+			WATCH.end("radar (drawing)", t);
+			t = WATCH.start();
+		}
 		List<HudLabel> labels = new ArrayList<>();
 		add(labels, generatorLabels, ExtrasModule.SIZE_GENERATORS);
 		add(labels, BEDS.labels(), ExtrasModule.SIZE_BEDS);
 		add(labels, waypointLabels, ExtrasModule.SIZE_WAYPOINTS);
+		if (ExtrasModule.INVIS_ALERT.get() && ExtrasModule.INVIS_WAYPOINTS.get()) {
+			add(labels, invisLabels(client), ExtrasModule.SIZE_WAYPOINTS);
+		}
+		if (ExtrasModule.HIDDEN_TRAIL.get() && ExtrasModule.TRAIL_LABELS.get()) {
+			add(labels, trailLabels(client), ExtrasModule.SIZE_WAYPOINTS);
+		}
 		add(labels, PROJECTILES.labels(), ExtrasModule.SIZE_PROJECTILES);
 		if (ExtrasModule.NAMETAGS.get()) {
 			add(labels, nametags(client), ExtrasModule.SIZE_NAMETAGS);
