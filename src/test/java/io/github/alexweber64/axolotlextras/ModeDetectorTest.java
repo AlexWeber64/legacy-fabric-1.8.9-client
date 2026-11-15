@@ -21,6 +21,34 @@ class ModeDetectorTest {
 	}
 
 	@Test
+	void settlerWaitsForTheSidebarToFillIn() {
+		ModeDetector.Settler settler = new ModeDetector.Settler();
+		// The lobby: no team lines yet.
+		assertNull(settler.offer(0, 100));
+		// A doubles game whose sidebar shows three team lines first: no decision yet.
+		assertNull(settler.offer(3, 101));
+		assertNull(settler.offer(4, 120));
+		// The rest arrive: five or more settle it at once.
+		assertEquals(Mode.SMALL_TEAMS, settler.offer(8, 130));
+	}
+
+	@Test
+	void settlerDecidesBigTeamsAfterTheWait() {
+		ModeDetector.Settler settler = new ModeDetector.Settler();
+		assertNull(settler.offer(4, 0));
+		assertNull(settler.offer(4, ModeDetector.Settler.SETTLE_TICKS - 1));
+		assertEquals(Mode.BIG_TEAMS, settler.offer(4, ModeDetector.Settler.SETTLE_TICKS));
+		// A 4v4 game has two teams.
+		settler.reset();
+		assertNull(settler.offer(2, 500));
+		assertEquals(Mode.BIG_TEAMS, settler.offer(2, 500 + ModeDetector.Settler.SETTLE_TICKS));
+		// The most lines seen count, so a line that flickers away does not matter.
+		settler.reset();
+		assertNull(settler.offer(3, 0));
+		assertEquals(Mode.SMALL_TEAMS, settler.offer(6, 10));
+	}
+
+	@Test
 	void eightTeamLinesMeanSoloOrDoubles() {
 		assertEquals(Mode.SMALL_TEAMS, ModeDetector.detect(Arrays.asList(teams(
 			"Red", "Blue", "Green", "Yellow", "Aqua", "White", "Pink", "Gray"))));
