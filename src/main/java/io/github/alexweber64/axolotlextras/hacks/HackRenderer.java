@@ -194,10 +194,12 @@ public final class HackRenderer {
 				WATCH.end("bed defense, teams and obsidian", t);
 			}
 			if (ExtrasModule.RUSH_ALERT.get() && gameRunning) {
-				// Every enemy counts here, also invisible and far ones (the ESP filters do not apply).
+				// Every enemy counts here, also invisible and far ones (the ESP filters do not apply), and teammates too
+				// with Rush: Teammates Too.
+				boolean teammates = ExtrasModule.RUSH_TEAMMATES.get();
 				List<PlayerEntity> enemies = new ArrayList<>();
 				for (PlayerEntity player : realPlayers(client)) {
-					if (!isTeammate(client, player)) {
+					if (teammates || !isTeammate(client, player)) {
 						enemies.add(player);
 					}
 				}
