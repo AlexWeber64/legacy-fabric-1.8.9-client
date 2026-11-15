@@ -14,6 +14,7 @@ import io.github.alexweber64.axolotlextras.perf.FrameBench;
 import io.github.alexweber64.axolotlextras.ui.ExtrasScreen;
 import io.github.alexweber64.axolotlextras.ui.HacksScreen;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
+import io.github.alexweber64.axolotlextras.bedwars.GameStartWatcher;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.bedwars.UpgradeDisplayHud;
 import io.github.alexweber64.axolotlextras.quickplay.QuickplayScreen;
@@ -357,6 +358,8 @@ public class ExtrasModule extends AbstractModule {
 	public static final EnumOption CHAT_STAT = new EnumOption("axolotlextras.chatStat", ChatStat.keys(), "kdr");
 
 	private static final StatAnnouncer STAT_ANNOUNCER = new StatAnnouncer();
+	/** Sees a game start in the normal and the Dreams modes (the banner title, not only "Protect your bed"). */
+	private static final GameStartWatcher GAME_START = new GameStartWatcher();
 
 	/** Set at startup when a Privacy Lock patch could not be applied. */
 	private static boolean privacyPatchFailed;
@@ -463,7 +466,7 @@ public class ExtrasModule extends AbstractModule {
 
 		Events.RECEIVE_CHAT_MESSAGE_EVENT.register(event -> {
 			String line = event.getFormattedMessage().asUnformattedString();
-			if (ResourceMath.isGameStartMessage(line)) {
+			if (GAME_START.onLine(line)) {
 				resourceCounter.onGameStart();
 				HackRenderer.onGameStart();
 				upgradeDisplay.onGameStart();
