@@ -104,6 +104,12 @@ public class ExtrasScreen extends Screen {
 		if (name.contains("labelSize") || name.contains("radarIconSize") || name.contains("radarOpacity")) {
 			return "%";
 		}
+		if (name.contains("safeSneakHold")) {
+			return " ms";
+		}
+		if (name.contains("safeSneakPitch")) {
+			return "\u00b0";
+		}
 		return name.contains("radarSize") ? " px" : "";
 	}
 
