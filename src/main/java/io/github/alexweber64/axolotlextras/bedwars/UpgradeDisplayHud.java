@@ -3,11 +3,16 @@ package io.github.alexweber64.axolotlextras.bedwars;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.EnumOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.Option;
 import io.github.axolotlclient.modules.hud.gui.entry.TextHudEntry;
 import io.github.axolotlclient.modules.hud.util.DrawPosition;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SwordItem;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardPlayerScore;
@@ -26,6 +31,8 @@ public class UpgradeDisplayHud extends TextHudEntry {
 	private static final int LINE = 11;
 	private static final int SECTION_GAP = 5;
 	private static final int PAD = 4;
+	/** Ticks between two looks at your armor and swords (two seconds). */
+	static final int ITEM_CHECK_TICKS = 40;
 
 	private final BooleanOption onlyInBedWars = new BooleanOption("axolotlextras.ud.onlyBedWars", true);
 	private final BooleanOption showCost = new BooleanOption("axolotlextras.ud.showCost", true);
@@ -84,6 +91,9 @@ public class UpgradeDisplayHud extends TextHudEntry {
 		}
 		wasInBedWars = inBedWars;
 		ticks++;
+		if (inBedWars && ticks % ITEM_CHECK_TICKS == 0) {
+			checkItems();
+		}
 		if (inBedWars && !modeConfirmed) {
 			List<String> lines = sidebarLines(sidebar);
 			// The in-game team count is the second check and wins: it settles solo/doubles against 3s/4s/4v4, once the
@@ -95,6 +105,32 @@ public class UpgradeDisplayHud extends TextHudEntry {
 			} else if (detectedMode == null) {
 				detectedMode = ModeDetector.fromModeLine(lines);
 			}
+		}
+	}
+
+	/**
+	 * Upgrades a chat line can miss (a Lucky Block upgrade, or a game you reconnected to): Reinforced Armor from the
+	 * Protection on your armor, Sharpened Swords from Sharpness on your swords. Only ever raises what is known.
+	 */
+	private void checkItems() {
+		ItemStack[] armor = client.player.inventory.armor;
+		int lowest = Integer.MAX_VALUE;
+		for (ItemStack piece : armor) {
+			lowest = Math.min(lowest, piece == null ? 0 : EnchantmentHelper.getLevel(Enchantment.PROTECTION.id, piece));
+		}
+		if (lowest > 0 && lowest != Integer.MAX_VALUE && tracker.seeArmorProtection(lowest)) {
+			AxolotlClient.LOGGER.info("[Extras] Upgrade Display: Reinforced Armor " + lowest + " read from your armor");
+		}
+		int swords = 0;
+		boolean allSharp = true;
+		for (ItemStack stack : client.player.inventory.main) {
+			if (stack != null && stack.getItem() instanceof SwordItem) {
+				swords++;
+				allSharp &= EnchantmentHelper.getLevel(Enchantment.SHARPNESS.id, stack) > 0;
+			}
+		}
+		if (swords > 0 && allSharp && tracker.seeSharpSwords()) {
+			AxolotlClient.LOGGER.info("[Extras] Upgrade Display: Sharpened Swords read from your swords");
 		}
 	}
 

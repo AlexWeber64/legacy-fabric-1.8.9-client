@@ -109,6 +109,54 @@ class UpgradeTrackerTest {
 	}
 
 	@Test
+	void luckyBlockUnlocksCountWithTheirLevel() {
+		// Lines from a Lucky Blocks game on 2026-11-16: a block gave Reinforced Armor I, a teammate's gave II.
+		UpgradeTracker t = new UpgradeTracker();
+		assertTrue(t.onMessage("Cyverno unlocked Reinforced Armor I"));
+		assertTrue(t.onMessage("Wolff27 unlocked Reinforced Armor II"));
+		assertTrue(t.onMessage("uwureach unlocked Maniac Miner I"));
+		assertTrue(t.onMessage("Wolff27 unlocked Heal Pool"));
+		List<Row> rows = t.upgradeRows(SMALL);
+		assertEquals("Reinforced Armor 2", rows.get(0).name);
+		assertEquals(8, rows.get(0).cost);
+		assertEquals("Maniac Miner 1", rows.get(1).name);
+		assertEquals("Heal Pool", rows.get(2).name);
+	}
+
+	@Test
+	void theLevelComesFromTheLineNotFromCounting() {
+		UpgradeTracker t = new UpgradeTracker();
+		// The line for level I was missed (you reconnected): level III is still level III.
+		t.onMessage("Steve purchased Reinforced Armor III");
+		assertEquals("Reinforced Armor 3", t.upgradeRows(SMALL).get(0).name);
+		// A late or repeated line never lowers it.
+		t.onMessage("Steve purchased Reinforced Armor II");
+		assertEquals("Reinforced Armor 3", t.upgradeRows(SMALL).get(0).name);
+		assertEquals(3, UpgradeTracker.nextLevel("Cushioned Boots", 2));
+	}
+
+	@Test
+	void armorAndSwordsRaiseTheLevel() {
+		UpgradeTracker t = new UpgradeTracker();
+		assertTrue(t.seeArmorProtection(2));
+		assertFalse(t.seeArmorProtection(1));
+		assertFalse(t.seeArmorProtection(2));
+		assertEquals("Reinforced Armor 2", t.upgradeRows(SMALL).get(0).name);
+		assertTrue(t.seeSharpSwords());
+		assertFalse(t.seeSharpSwords());
+		assertEquals("Sharpened Swords", t.upgradeRows(SMALL).get(0).name);
+	}
+
+	@Test
+	void clockPrefixAndPlacedTraps() {
+		UpgradeTracker t = new UpgradeTracker();
+		assertTrue(t.onMessage("§70:32§r Cyverno unlocked Reinforced Armor I"));
+		assertTrue(t.onMessage("A Slow trap has been placed for your team!"));
+		assertEquals(Arrays.asList("Slow Trap"), t.trapNames());
+		assertFalse(t.onMessage("Steve unlocked the Wool"));
+	}
+
+	@Test
 	void playerChatCannotSpoofAPurchase() {
 		UpgradeTracker t = new UpgradeTracker();
 		assertFalse(t.onMessage("[VIP] Steve: Steve purchased Heal Pool"));
