@@ -8,6 +8,7 @@ import io.github.axolotlclient.AxolotlClientConfig.options.Option;
 import io.github.axolotlclient.modules.hud.gui.entry.TextHudEntry;
 import io.github.axolotlclient.modules.hud.util.DrawPosition;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.entity.player.PlayerInventory;
@@ -18,6 +19,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
 
 /**
  * Bed Wars resource counter: iron, gold, diamonds and emeralds as "inventory + ender chest = total".
@@ -48,6 +50,8 @@ public class ResourceCounterHud extends TextHudEntry {
 	private boolean chestChecked;
 	/** The last container title logged as not read as an ender chest, so each one is logged once. */
 	private String loggedTitle;
+	/** True once this game's first ender chest read was logged. */
+	private boolean loggedRead;
 	private boolean wasInBedWars;
 	private ItemStack[] icons;
 
@@ -65,6 +69,7 @@ public class ResourceCounterHud extends TextHudEntry {
 		java.util.Arrays.fill(enderChest, 0);
 		java.util.Arrays.fill(inventory, 0);
 		wasInBedWars = false;
+		loggedRead = false;
 	}
 
 	/**
@@ -118,6 +123,10 @@ public class ResourceCounterHud extends TextHudEntry {
 			return;
 		}
 		if (chestOpenTicks < 0) {
+			if (!loggedRead) {
+				loggedRead = true;
+				AxolotlClient.LOGGER.info("[Extras] Resource Counter: reading the ender chest (once per game in this log)");
+			}
 			chestOpenTicks = 0;
 			System.arraycopy(enderChest, 0, expectedChest, 0, expectedChest.length);
 			chestChecked = false;
@@ -153,7 +162,9 @@ public class ResourceCounterHud extends TextHudEntry {
 			return null;
 		}
 		String title = container.getName().asUnformattedString();
-		if (!ResourceMath.isEnderChestTitle(title)) {
+		// Hypixel's ender chest has no title, so it is also the chest you opened while looking at an ender chest block
+		// (the camera stays still while a chest is open).
+		if (!ResourceMath.isEnderChestTitle(title) && !lookingAtEnderChest()) {
 			// For debugging: a chest that looks like the ender chest but is not read as one.
 			if (title != null && title.toLowerCase().contains("ender") && !title.equals(loggedTitle)) {
 				loggedTitle = title;
@@ -166,6 +177,13 @@ public class ResourceCounterHud extends TextHudEntry {
 			add(counts, container.getInvStack(i));
 		}
 		return counts;
+	}
+
+	/** True when the crosshair is on an ender chest block. */
+	private boolean lookingAtEnderChest() {
+		BlockHitResult hit = client.result;
+		return hit != null && hit.type == BlockHitResult.Type.BLOCK && hit.getBlockPos() != null
+			&& client.world.getBlockState(hit.getBlockPos()).getBlock() == Blocks.ENDERCHEST;
 	}
 
 	private static void add(int[] counts, ItemStack stack) {

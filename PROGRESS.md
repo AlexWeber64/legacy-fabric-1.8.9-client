@@ -45,6 +45,11 @@ Last updated: 2026-11-14.
     contents 5 ticks later and logs "[Extras] Resource Counter: the ender chest did not match: expected ...; found
     ..." when they differ (items moved inside the chest in the first quarter second show up too). A chest whose title
     contains "ender" but is not read as the ender chest is logged once. 1 test.
+  - the open ender chest was never read in game (your test, 2026-11-16): Hypixel's ender chest has no title, and only
+    the title "Ender Chest" was accepted, so the count changed only with deposit messages and manual moves were missed.
+    Now a chest also counts as the ender chest when you opened it looking at an ender chest block (the camera stays
+    still while a chest is open). The first ender chest read of each game is logged ("[Extras] Resource Counter:
+    reading the ender chest"). Built, not yet seen in game.
 - Quickplay menu (key Y), Doubles uses `/play bedwars_eight_two`.
 - Toggle Sprint: found that it was dead because its HUD module was switched off (the toggle lives in that module's tick).
   Re-enabled it in your clone config and measured 11.22 blocks per 2 s toggled against 8.63 walking.
