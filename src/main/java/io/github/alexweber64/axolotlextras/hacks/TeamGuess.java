@@ -14,6 +14,7 @@ public final class TeamGuess {
 	public static final int COUNT = NAMES.length;
 	/** The letter in front of every name in a Bed Wars game ("§9§lB Steve" is Blue); Gray is "S". */
 	static final String LETTERS = "RBGYAWPS";
+	static final int WHITE = 5;
 
 	/** The coloured blocks needed before they decide the team, and how far the top colour has to lead the next one. */
 	static final int MIN_BLOCKS = 4;
@@ -86,10 +87,14 @@ public final class TeamGuess {
 			}
 			i += 2;
 		}
-		if (colour == 0 || i + 1 >= formatted.length() || formatted.charAt(i + 1) != ' ') {
+		if (i + 1 >= formatted.length() || formatted.charAt(i + 1) != ' ') {
 			return UNKNOWN;
 		}
 		int team = LETTERS.indexOf(formatted.charAt(i));
+		if (colour == 0) {
+			// White is the default text colour, so a white prefix may come without its colour code ("§lW Steve").
+			return team == WHITE ? WHITE : UNKNOWN;
+		}
 		return team >= 0 && fromColorCode(colour) == team ? team : UNKNOWN;
 	}
 

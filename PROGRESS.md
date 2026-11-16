@@ -328,6 +328,12 @@ Last updated: 2026-11-14.
   gray and without a letter: Hypixel grays out players waiting to respawn, and they reappear next to your bed still
   gray for a moment. Those are left out by the same rule, and the rule (and your team) now holds for the whole world,
   also while you are dead yourself (your own name is gray then, which would otherwise have made you "Gray").
+- White team players are left out of every hack (you, 2026-11-16: no ESP, held items or Rush Alert for White). The
+  logs did not say why. Likely cause: the team prefix rule above wants a colour code before the letter, and white is
+  the default text colour, so Hypixel may leave it out. A "W " prefix without a colour now counts as White (3 tests).
+  For the next game, every real player the hacks leave out is logged once per world with the reason and the name's
+  colour codes written as "&" ("[Extras] Hacks: left out &7Steve (no team prefix)"), so the log shows what White
+  names really look like if this was not it. Built, not yet seen in game.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.
