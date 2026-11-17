@@ -53,9 +53,9 @@ Click a category to open it.
 | Hack | What it does |
 |---|---|
 | Nametags Through Walls | Name in team colour, health (from the server's health score, never made up) and distance. |
-| Enemy Armor | Over each enemy's head, their best armor piece (leggings show the tier) with its Protection level, and their held item with Sharpness or Knockback. |
+| Enemy Armor | Over each enemy's head, their best armor piece (leggings show the tier) with its Protection level as the item count (like AxolotlClient's Armor HUD shows yours: Protection II shows a 2), and their held item with Sharpness or Knockback. |
 
-**Fine tuning:** Nametag Health, Nametag Distance, Show Held Item. **Label Sizes**: a slider from 25% to 200% (steps of 5%) each for generator counts, bed defense, waypoints, nametags, enemy armor, and fireball and pearl labels.
+**Fine tuning:** Nametag Health, Nametag Distance, Show Protection Level, Show Held Item. **Label Sizes**: a slider from 25% to 200% (steps of 5%) each for generator counts, bed defense, waypoints, nametags, enemy armor, and fireball and pearl labels.
 
 </details>
 

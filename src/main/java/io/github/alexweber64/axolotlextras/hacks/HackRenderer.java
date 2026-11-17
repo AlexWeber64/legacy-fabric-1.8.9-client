@@ -824,7 +824,10 @@ public final class HackRenderer {
 
 	// ------------------------------------------------------------------------------------------------------- HUD pass
 
-	/** Enemy armor over each enemy's head: their best armor piece with its Protection level, and what they hold. */
+	/**
+	 * Enemy armor over each enemy's head: their best armor piece with its Protection level as the item count (as
+	 * AxolotlClient's Armor HUD shows yours), and what they hold.
+	 */
 	private static List<HudLabel> armorLabels(MinecraftClient client) {
 		List<HudLabel> labels = new ArrayList<>();
 		float t = lastTickDelta;
@@ -841,7 +844,7 @@ public final class HackRenderer {
 			ItemStack armor = bestArmor(player);
 			if (armor != null) {
 				int protection = protection(player);
-				label.icon(armor, protection > 0 ? "P" + protection : "");
+				label.icon(armor, ExtrasModule.ARMOR_PROTECTION.get() && protection > 0 ? String.valueOf(protection) : "");
 			}
 			ItemStack held = ExtrasModule.ARMOR_HELD.get() ? player.getStackInHand() : null;
 			if (held != null) {

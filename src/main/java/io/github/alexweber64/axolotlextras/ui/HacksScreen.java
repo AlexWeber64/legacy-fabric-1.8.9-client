@@ -11,7 +11,8 @@ public class HacksScreen extends ExtrasScreen {
 		section("axolotlextras.section.esp", ExtrasModule.PLAYER_ESP, ExtrasModule.ESP_TRACERS, ExtrasModule.ESP_STYLE,
 			ExtrasModule.ESP_COLOR, ExtrasModule.ESP_RANGE, ExtrasModule.ESP_INVISIBLE, ExtrasModule.ESP_TEAMMATES);
 		section("axolotlextras.section.nametags", ExtrasModule.NAMETAGS, ExtrasModule.NAMETAG_HEALTH,
-			ExtrasModule.NAMETAG_DISTANCE, ExtrasModule.ENEMY_ARMOR, ExtrasModule.ARMOR_HELD);
+			ExtrasModule.NAMETAG_DISTANCE, ExtrasModule.ENEMY_ARMOR, ExtrasModule.ARMOR_PROTECTION,
+			ExtrasModule.ARMOR_HELD);
 		section("axolotlextras.section.bedwarsInfo", ExtrasModule.GENERATOR_COUNTS, ExtrasModule.GEN_IRON,
 			ExtrasModule.GEN_GOLD, ExtrasModule.GEN_DIAMOND, ExtrasModule.GEN_EMERALD, ExtrasModule.BED_DEFENSE, ExtrasModule.BED_DEFENSE_OWN);
 		section("axolotlextras.section.alerts", ExtrasModule.OBSIDIAN_ALERT, ExtrasModule.OBSIDIAN_WAYPOINTS,

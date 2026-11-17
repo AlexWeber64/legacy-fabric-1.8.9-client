@@ -368,6 +368,10 @@ Last updated: 2026-11-15.
   hook is not in any commit). An earlier try (#8 and #9 only) was a Lucky Blocks game, where AxolotlClient saw no game
   start, so it tested nothing. The jar before it is in mods-backup as
   axolotl-extras-0.1.0.before-test-pr8-9-11-12-13.jar.
+- Enemy Armor Protection as the item count (2026-11-17, built, not yet seen in game): your request. The armor icon
+  over an enemy's head now shows its Protection level as a plain number in the item count spot ("2" instead of
+  "P2"), the way AxolotlClient's Armor HUD shows yours. New switch Show Protection Level (on by default, Hacks menu
+  under Nametags and Labels); off shows no number. No armor enchantment shows no number, as before.
 
 ## In progress
 
