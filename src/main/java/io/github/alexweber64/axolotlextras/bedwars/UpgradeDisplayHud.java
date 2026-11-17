@@ -38,6 +38,9 @@ public class UpgradeDisplayHud extends TextHudEntry {
 	private UpgradeTracker.Mode detectedMode;
 	/** True once the in-game team count has settled the team size, so the lobby's mode line no longer matters. */
 	private boolean modeConfirmed;
+	/** Waits for the team lines to settle before they decide the team size. */
+	private final ModeDetector.Settler settler = new ModeDetector.Settler();
+	private int ticks;
 
 	public UpgradeDisplayHud() {
 		super(120, 40, true);
@@ -48,6 +51,7 @@ public class UpgradeDisplayHud extends TextHudEntry {
 		tracker.reset();
 		detectedMode = null;
 		modeConfirmed = false;
+		settler.reset();
 		wasInBedWars = false;
 	}
 
@@ -79,10 +83,12 @@ public class UpgradeDisplayHud extends TextHudEntry {
 			resetAll();
 		}
 		wasInBedWars = inBedWars;
+		ticks++;
 		if (inBedWars && !modeConfirmed) {
 			List<String> lines = sidebarLines(sidebar);
-			// The in-game team count is the second check and wins: it settles solo/doubles against 3s/4s/4v4.
-			UpgradeTracker.Mode byTeams = ModeDetector.fromTeamLines(lines);
+			// The in-game team count is the second check and wins: it settles solo/doubles against 3s/4s/4v4, once the
+			// sidebar has filled in (see ModeDetector.Settler).
+			UpgradeTracker.Mode byTeams = settler.offer(ModeDetector.countTeamLines(lines), ticks);
 			if (byTeams != null) {
 				detectedMode = byTeams;
 				modeConfirmed = true;

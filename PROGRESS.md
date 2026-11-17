@@ -332,6 +332,12 @@ Last updated: 2026-11-15.
   gray and without a letter: Hypixel grays out players waiting to respawn, and they reappear next to your bed still
   gray for a moment. Those are left out by the same rule, and the rule (and your team) now holds for the whole world,
   also while you are dead yourself (your own name is gray then, which would otherwise have made you "Gray").
+- Upgrade Display team size waits for the sidebar (2026-11-15, built, 124 tests pass, not yet seen in game): you
+  reported doubles games shown with the 3s/4s prices. Hypixel fills the sidebar's team lines in over a few moments
+  when a game starts, and the first look with two to four team lines decided "3s/4s" for the whole game. Now
+  `ModeDetector.Settler` waits 3 seconds after the first team line and uses the most lines seen; five or more
+  settle it at once, since only solo and doubles have that many. Until then the lobby's "Mode:" line still sets the
+  prices, or none show. 2 tests.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.
