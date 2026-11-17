@@ -372,6 +372,11 @@ Last updated: 2026-11-15.
   over an enemy's head now shows its Protection level as a plain number in the item count spot ("2" instead of
   "P2"), the way AxolotlClient's Armor HUD shows yours. New switch Show Protection Level (on by default, Hacks menu
   under Nametags and Labels); off shows no number. No armor enchantment shows no number, as before.
+- Held Item Count on Enemy Armor (2026-11-17, built, not yet seen in game): your request. The held item icon over an
+  enemy's head shows how many of it they hold (emeralds, diamonds, fireballs, blocks) when it is not a weapon with
+  Sharpness or Knockback. Two switches, both on by default: Held Item Count, and Count Wool (off leaves wool without a
+  number). The number is the stack size the server sends with the held item; whether Hypixel sends the real count
+  for other players is not checked yet (if it always sends 1, no number shows). `HackMath.heldNumber`, 1 test.
 
 ## In progress
 

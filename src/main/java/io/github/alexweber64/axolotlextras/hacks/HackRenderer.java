@@ -850,7 +850,9 @@ public final class HackRenderer {
 			if (held != null) {
 				int sharpness = EnchantmentHelper.getLevel(Enchantment.SHARPNESS.id, held);
 				int knockback = EnchantmentHelper.getLevel(Enchantment.KNOCKBACK.id, held);
-				label.icon(held, sharpness > 0 ? "S" + sharpness : knockback > 0 ? "K" + knockback : "");
+				label.icon(held, HackMath.heldNumber(held.count, sharpness, knockback,
+					held.getItem() == Item.fromBlock(Blocks.WOOL), ExtrasModule.ARMOR_HELD_COUNT.get(),
+					ExtrasModule.ARMOR_HELD_WOOL.get()));
 			}
 			if (!label.icons.isEmpty()) {
 				labels.add(label);

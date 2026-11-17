@@ -190,6 +190,12 @@ public class ExtrasModule extends AbstractModule {
 	/** Enemy Armor shows the Protection level as the armor icon's item count, like AxolotlClient's Armor HUD. */
 	public static final BooleanOption ARMOR_PROTECTION = new BooleanOption("axolotlextras.armorProtection", true);
 
+	/** Enemy Armor shows how many of their held item an enemy holds (emeralds, diamonds, blocks...). */
+	public static final BooleanOption ARMOR_HELD_COUNT = new BooleanOption("axolotlextras.armorHeldCount", true);
+
+	/** Held Item Count also counts wool. */
+	public static final BooleanOption ARMOR_HELD_WOOL = new BooleanOption("axolotlextras.armorHeldWool", true);
+
 	/** Generator Counts for iron. */
 	public static final BooleanOption GEN_IRON = new BooleanOption("axolotlextras.genIron", true);
 
@@ -395,7 +401,8 @@ public class ExtrasModule extends AbstractModule {
 		HACKS.add(new GenericOption("axolotlextras.openHacks", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new HacksScreen(client.currentScreen))));
 		HACKS.add(PLAYER_ESP, ESP_TRACERS, ESP_STYLE, ESP_COLOR, ESP_RANGE, ESP_INVISIBLE, ESP_TEAMMATES, NAMETAGS,
-			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_PROTECTION, ARMOR_HELD, GENERATOR_COUNTS, GEN_IRON, GEN_GOLD, GEN_DIAMOND,
+			NAMETAG_HEALTH, NAMETAG_DISTANCE, ENEMY_ARMOR, ARMOR_PROTECTION, ARMOR_HELD, ARMOR_HELD_COUNT, ARMOR_HELD_WOOL,
+			GENERATOR_COUNTS, GEN_IRON, GEN_GOLD, GEN_DIAMOND,
 			GEN_EMERALD, BED_DEFENSE, BED_DEFENSE_OWN, OBSIDIAN_ALERT, OBSIDIAN_WAYPOINTS, OBSIDIAN_SOUND, INVIS_ALERT,
 			INVIS_NEED_POTION, INVIS_WAYPOINTS, INVIS_SOUND, HIDDEN_TRAIL, TRAIL_TIME, TRAIL_STYLE,
 			TRAIL_LABELS, TRAIL_CHAT, RUSH_ALERT, RUSH_DISTANCE, RUSH_SOUND, RUSH_TEAMMATES,

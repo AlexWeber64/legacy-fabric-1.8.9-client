@@ -118,4 +118,24 @@ public final class HackMath {
 	public static String rushMessage(String formattedName, boolean teammate, long distance) {
 		return "§c§lRush §r" + formattedName + (teammate ? " §a[Teammate]" : "") + " §f" + distance + "m from your bed";
 	}
+
+	/**
+	 * The number on an enemy's held item icon: Sharpness or Knockback first (weapons), else how many of the item they
+	 * hold when Held Item Count is on. A single item gets no number, like in the hotbar, and wool gets none when Count
+	 * Wool is off.
+	 *
+	 * @param count      the stack size the server sent for the held item
+	 * @param showCount  the Held Item Count switch
+	 * @param countWool  the Count Wool switch
+	 */
+	public static String heldNumber(int count, int sharpness, int knockback, boolean wool, boolean showCount,
+		boolean countWool) {
+		if (sharpness > 0) {
+			return "S" + sharpness;
+		}
+		if (knockback > 0) {
+			return "K" + knockback;
+		}
+		return showCount && count > 1 && (countWool || !wool) ? String.valueOf(count) : "";
+	}
 }

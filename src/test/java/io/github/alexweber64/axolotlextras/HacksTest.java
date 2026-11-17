@@ -282,4 +282,16 @@ class HacksTest {
 		assertEquals(0xFFFF20, HackMath.redToGreen(0.5));
 		assertEquals(0x00FF20, HackMath.redToGreen(3));
 	}
+
+	@Test
+	void heldItemNumberShowsEnchantsThenTheCount() {
+		assertEquals("S2", HackMath.heldNumber(1, 2, 1, false, true, true));
+		assertEquals("K1", HackMath.heldNumber(1, 0, 1, false, true, true));
+		assertEquals("12", HackMath.heldNumber(12, 0, 0, false, true, true));
+		assertEquals("", HackMath.heldNumber(1, 0, 0, false, true, true));
+		assertEquals("", HackMath.heldNumber(12, 0, 0, false, false, true));
+		assertEquals("64", HackMath.heldNumber(64, 0, 0, true, true, true));
+		assertEquals("", HackMath.heldNumber(64, 0, 0, true, true, false));
+		assertEquals("3", HackMath.heldNumber(3, 0, 0, false, true, false));
+	}
 }
