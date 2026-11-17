@@ -472,6 +472,7 @@ public class ExtrasModule extends AbstractModule {
 				}
 			}
 			upgradeDisplay.onChatLine(line);
+			resourceCounter.onChatLine(line);
 			// Test hook: "AXBENCH label seconds" starts the frame recorder, singleplayer only.
 			if (line.startsWith("AXBENCH ") && client.isInSingleplayer()) {
 				String[] parts = line.split(" ");

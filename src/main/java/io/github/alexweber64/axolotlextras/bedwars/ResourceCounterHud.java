@@ -2,6 +2,7 @@ package io.github.alexweber64.axolotlextras.bedwars;
 
 import java.util.List;
 
+import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.options.Option;
 import io.github.axolotlclient.modules.hud.gui.entry.TextHudEntry;
@@ -22,7 +23,8 @@ import net.minecraft.util.hit.BlockHitResult;
 
 /**
  * Bed Wars resource counter: iron, gold, diamonds and emeralds as "inventory + ender chest = total".
- * Ported from the MCRust 1.8.9 client. The ender chest is the count from the last time it was open.
+ * Ported from the MCRust 1.8.9 client. The ender chest count comes from Hypixel's deposit messages, which carry the new
+ * total, and is replaced by the real contents whenever the ender chest is open.
  */
 public class ResourceCounterHud extends TextHudEntry {
 
@@ -37,11 +39,20 @@ public class ResourceCounterHud extends TextHudEntry {
 
 	private final int[] inventory = new int[ResourceMath.COUNT];
 	private final int[] enderChest = new int[ResourceMath.COUNT];
-	private final DepositTracker deposits = new DepositTracker();
 	private boolean inBedWars;
+
+	/** Ticks the contents wait after the ender chest opens before they are compared (Hypixel sends them just after). */
+	private static final int CHECK_TICKS = 5;
+	/** Ticks the ender chest has been open, or -1 while it is closed. */
+	private int chestOpenTicks = -1;
+	/** The ender chest count when it opened, for the comparison. */
+	private final int[] expectedChest = new int[ResourceMath.COUNT];
+	private boolean chestChecked;
+	/** The last container title logged as not read as an ender chest, so each one is logged once. */
+	private String loggedTitle;
+	/** True once this game's first ender chest read was logged. */
+	private boolean loggedRead;
 	private boolean wasInBedWars;
-	private boolean attackWasPressed;
-	private int tickCount;
 	private ItemStack[] icons;
 
 	public ResourceCounterHud() {
@@ -53,12 +64,24 @@ public class ResourceCounterHud extends TextHudEntry {
 		resetAll();
 	}
 
-	/** Forgets everything: the ender chest counts, the inventory counts and any pending deposit. */
+	/** Forgets everything: the ender chest counts and the inventory counts. */
 	public void resetAll() {
 		java.util.Arrays.fill(enderChest, 0);
 		java.util.Arrays.fill(inventory, 0);
-		deposits.reset();
 		wasInBedWars = false;
+		loggedRead = false;
+	}
+
+	/**
+	 * Called from the chat event. "Deposited x24 Iron Ingot into Ender Chest! (24 Total)" sets the iron in the ender
+	 * chest to 24. Every deposit has its own message, also several in one click (hold the button and switch from iron to
+	 * gold), which counting the punch could not see.
+	 */
+	public void onChatLine(String line) {
+		int[] deposit = ResourceMath.enderChestDeposit(line);
+		if (deposit != null) {
+			enderChest[deposit[0]] = deposit[1];
+		}
 	}
 
 	@Override
@@ -68,7 +91,6 @@ public class ResourceCounterHud extends TextHudEntry {
 
 	@Override
 	public void tick() {
-		tickCount++;
 		if (client.world == null || client.player == null) {
 			// Left the world (or disconnected): nothing carries over to the next one.
 			inBedWars = false;
@@ -93,62 +115,75 @@ public class ResourceCounterHud extends TextHudEntry {
 		}
 		add(inventory, playerInventory.getCursorStack());
 
+		// While the ender chest is open, its real contents replace the count, every tick (so items moved inside it count).
 		Screen screen = client.currentScreen;
-		boolean readChest = false;
-		if (screen instanceof HandledScreen) {
-			readChest = readEnderChest((HandledScreen) screen);
+		int[] real = screen instanceof HandledScreen ? readEnderChest((HandledScreen) screen) : null;
+		if (real == null) {
+			chestOpenTicks = -1;
+			return;
 		}
-		if (readChest) {
-			// The real contents just replaced the remembered counts, so any estimate from a punch is obsolete.
-			deposits.clearPending();
-			deposits.update(inventory, tickCount, enderChest);
-			deposits.clearPending();
+		if (chestOpenTicks < 0) {
+			if (!loggedRead) {
+				loggedRead = true;
+				AxolotlClient.LOGGER.info("[Extras] Resource Counter: reading the ender chest (once per game in this log)");
+			}
+			chestOpenTicks = 0;
+			System.arraycopy(enderChest, 0, expectedChest, 0, expectedChest.length);
+			chestChecked = false;
 		} else {
-			detectPunch();
-			deposits.update(inventory, tickCount, enderChest);
+			chestOpenTicks++;
+		}
+		if (!chestChecked && chestOpenTicks >= CHECK_TICKS) {
+			chestChecked = true;
+			checkAgainstExpected(real);
+		}
+		System.arraycopy(real, 0, enderChest, 0, real.length);
+	}
+
+	/**
+	 * For debugging: once per opening, a line in latest.log when the ender chest holds something else than the counter
+	 * expected. Items moved inside the chest in the first quarter second also show up here.
+	 */
+	private void checkAgainstExpected(int[] real) {
+		String mismatch = ResourceMath.chestMismatch(expectedChest, real);
+		if (mismatch != null) {
+			AxolotlClient.LOGGER.info("[Extras] Resource Counter: the ender chest did not match: " + mismatch);
 		}
 	}
 
-	/** Left-clicking an ender chest with resources in hand deposits them (Hypixel Bed Wars). */
-	private void detectPunch() {
-		boolean attack = client.options.attackKey.isPressed();
-		boolean fresh = attack && !attackWasPressed;
-		attackWasPressed = attack;
-		if (!fresh || client.currentScreen != null) {
-			return;
-		}
-		BlockHitResult target = client.result;
-		if (target == null || target.type != BlockHitResult.Type.BLOCK) {
-			return;
-		}
-		if (client.world.getBlockState(target.getBlockPos()).getBlock() != Blocks.ENDERCHEST) {
-			return;
-		}
-		ItemStack held = client.player.inventory.getMainHandStack();
-		if (held != null) {
-			deposits.onPunch(indexOf(held.getItem()), held.count, tickCount);
-		}
-	}
-
-	/** @return true when an ender chest was open and its contents were read */
-	private boolean readEnderChest(HandledScreen screen) {
+	/** @return the resources in the open ender chest, or null when no ender chest is open */
+	private int[] readEnderChest(HandledScreen screen) {
 		List<Slot> slots = screen.screenHandler.slots;
 		if (slots.isEmpty()) {
-			return false;
+			return null;
 		}
 		Inventory container = slots.get(0).inventory;
 		if (container == null || container instanceof PlayerInventory || container.getName() == null) {
-			return false;
+			return null;
 		}
-		if (!ResourceMath.isEnderChestTitle(container.getName().asUnformattedString())) {
-			return false;
+		String title = container.getName().asUnformattedString();
+		// Hypixel's ender chest has no title, so it is also the chest you opened while looking at an ender chest block
+		// (the camera stays still while a chest is open).
+		if (!ResourceMath.isEnderChestTitle(title) && !lookingAtEnderChest()) {
+			// For debugging: a chest that looks like the ender chest but is not read as one.
+			if (title != null && title.toLowerCase().contains("ender") && !title.equals(loggedTitle)) {
+				loggedTitle = title;
+				AxolotlClient.LOGGER.info("[Extras] Resource Counter: opened \"" + title + "\", not read as the ender chest");
+			}
+			return null;
 		}
 		int[] counts = new int[ResourceMath.COUNT];
 		for (int i = 0; i < container.getInvSize(); i++) {
 			add(counts, container.getInvStack(i));
 		}
-		System.arraycopy(counts, 0, enderChest, 0, counts.length);
-		return true;
+		return counts;
+	}
+
+	/** True when the crosshair is on an ender chest block. */
+	private boolean lookingAtEnderChest() {
+		BlockHitResult hit = client.result;
+		return hit != null && hit.type == BlockHitResult.Type.BLOCK && hit.getBlockPos() != null
+			&& client.world.getBlockState(hit.getBlockPos()).getBlock() == Blocks.ENDERCHEST;
 	}
 
 	private static void add(int[] counts, ItemStack stack) {
