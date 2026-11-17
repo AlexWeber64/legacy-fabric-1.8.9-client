@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.github.alexweber64.axolotlextras.bedwars.GameStartWatcher;
 import org.junit.jupiter.api.Test;
 
-/** The chat lines are copied from the play clone's logs (2026-11-13 to 2026-11-15). */
+/** The chat lines are copied from the play clone's logs (2026-11-13 to 2026-11-17). */
 class GameStartWatcherTest {
 
 	private static final String BAR = "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬";
@@ -29,10 +29,11 @@ class GameStartWatcherTest {
 		GameStartWatcher watcher = new GameStartWatcher();
 		assertFalse(watcher.onLine("The game starts in 1 second!"));
 		assertFalse(watcher.onLine(BAR));
-		assertTrue(watcher.onLine("                                  Bed Wars"));
+		// The title alone does not decide (the end of a game has it too): the next line that is not blank does.
+		assertFalse(watcher.onLine("                                  Bed Wars"));
 		assertFalse(watcher.onLine(""));
-		// The line AxolotlClient used: the same start, so it does not count twice.
-		assertFalse(watcher.onLine("     Protect your bed and destroy the enemy beds."));
+		assertTrue(watcher.onLine("     Protect your bed and destroy the enemy beds."));
+		assertEquals("Bed Wars", watcher.lastTitle());
 		assertFalse(watcher.onLine("      Upgrade yourself and your team by collecting"));
 		assertFalse(watcher.onLine(BAR));
 	}
@@ -51,6 +52,15 @@ class GameStartWatcherTest {
 		assertEquals(0, starts(BAR, "+10 tokens! (Time Played)", BAR));
 		// "Bed Wars" without the banner border before it, as in other chat.
 		assertEquals(0, starts("Bed Wars", "§70:14§r +15 Bed Wars XP (Time Played)"));
+	}
+
+	@Test
+	void theEndOfAGameIsNotAStart() {
+		// Lines from a doubles game end on 2026-11-17: the same banner and title as a start.
+		assertEquals(0, starts("Cyverno was killed by _Raiinn. FINAL KILL!", "You have been eliminated!", BAR,
+			"                                  Bed Wars", "", "                  Red - [VIP] _Raiinn, [MVP++] HADN0T", "",
+			"                        1st Killer - Noricake - 9", "                       2nd Killer - hqndscme - 9", "", BAR));
+		assertEquals(0, starts(BAR, "Bed Wars", "", "1st Killer - Noricake - 9", BAR));
 	}
 
 	@Test
