@@ -3,6 +3,7 @@ package io.github.alexweber64.axolotlextras;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.alexweber64.axolotlextras.bedwars.BuildHeightShade;
 import io.github.alexweber64.axolotlextras.bedwars.ChatStat;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceCounterHud;
 import io.github.alexweber64.axolotlextras.bedwars.StatAnnouncer;
@@ -307,6 +308,12 @@ public class ExtrasModule extends AbstractModule {
 	/** Loads Bed Wars stats with the add-on's own loader (parallel, with retries) instead of AxolotlClient's. On by default. */
 	public static final BooleanOption RELIABLE_STATS = new BooleanOption("axolotlextras.reliableStats", true);
 
+	/**
+	 * Draws wool, and red and blue stained clay (The Bridge), darker on the topmost layer you can build at. Bed Wars maps
+	 * come from a bundled table, The Bridge from its start message.
+	 */
+	public static final BooleanOption BUILD_HEIGHT = new BooleanOption("axolotlextras.buildHeight", false);
+
 	/** Removes the fog on land and under water. */
 	public static final BooleanOption NO_FOG = new BooleanOption("axolotlextras.noFog", false);
 
@@ -385,7 +392,7 @@ public class ExtrasModule extends AbstractModule {
 	public void init() {
 		CATEGORY.add(new GenericOption("axolotlextras.openMenu", "axolotlextras.openMenuLabel",
 			(x, y) -> client.setScreen(new ExtrasScreen(client.currentScreen))));
-		CATEGORY.add(MODERN_MENUS, HUD_CORNERS, PRIVACY_LOCK, NORMAL_MESSAGES, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
+		CATEGORY.add(MODERN_MENUS, HUD_CORNERS, PRIVACY_LOCK, NORMAL_MESSAGES, CHAT_STATS, CHAT_STAT, IGNORE_SERVER_BLOCKS, TOGGLE_WITHOUT_HUD, KDR_LEVEL_HEAD, KDR_TAB, BUILD_HEIGHT, NO_FOG, KEEP_INVENTORY_CENTERED, TRANSPARENT_UI, QUICKPLAY,
 			QUICKPLAY_HYPIXEL_ONLY, OLD_BLOCK_HITTING, OLD_FIRST_PERSON, OLD_SNEAK, OLD_THIRD_PERSON, RELIABLE_STATS);
 		AxolotlClient.CONFIG.addCategory(CATEGORY);
 
@@ -413,6 +420,7 @@ public class ExtrasModule extends AbstractModule {
 		upgradeDisplay = new UpgradeDisplayHud();
 		HudManager.getInstance().add(upgradeDisplay);
 		upgradeDisplay.init();
+		BuildHeightShade.init();
 		upgradeDisplay.onBoundsUpdate();
 
 		// The radar's place in the HUD editor (it is drawn there and moved there, while the Radar hack is on).
@@ -455,6 +463,7 @@ public class ExtrasModule extends AbstractModule {
 			upgradeDisplay.resetAll();
 			STAT_ANNOUNCER.reset();
 			HackRenderer.reset();
+			BuildHeightShade.reset();
 			if (privacyPatchFailed) {
 				client.inGameHud.getChatHud().addMessage(new LiteralText(
 					"§c[Extras] The Privacy Lock could not be applied: AxolotlClient may contact its server. See the log."));
@@ -473,6 +482,7 @@ public class ExtrasModule extends AbstractModule {
 			}
 			upgradeDisplay.onChatLine(line);
 			resourceCounter.onChatLine(line);
+			BuildHeightShade.onChatLine(line);
 			// Test hook: "AXBENCH label seconds" starts the frame recorder, singleplayer only.
 			if (line.startsWith("AXBENCH ") && client.isInSingleplayer()) {
 				String[] parts = line.split(" ");
@@ -596,6 +606,7 @@ public class ExtrasModule extends AbstractModule {
 		BenchDriver.tick(client);
 		FrameBench.onTick(client);
 		HackRenderer.tick(client);
+		BuildHeightShade.tick(client);
 		if (hacksOffKey != null && hacksOffKey.wasPressed() && client.currentScreen == null) {
 			int count = hackPanic.allOff(hackSwitches());
 			saveConfig();

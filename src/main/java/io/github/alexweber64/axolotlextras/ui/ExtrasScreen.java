@@ -64,7 +64,7 @@ public class ExtrasScreen extends Screen {
 		this(parent, "§lAxolotlClient Extras");
 		section("axolotlextras.section.privacy", ExtrasModule.PRIVACY_LOCK, ExtrasModule.IGNORE_SERVER_BLOCKS);
 		section("axolotlextras.section.bedwars", ExtrasModule.NORMAL_MESSAGES, ExtrasModule.CHAT_STATS,
-			ExtrasModule.CHAT_STAT, ExtrasModule.KDR_LEVEL_HEAD, ExtrasModule.KDR_TAB, ExtrasModule.RELIABLE_STATS);
+			ExtrasModule.CHAT_STAT, ExtrasModule.KDR_LEVEL_HEAD, ExtrasModule.KDR_TAB, ExtrasModule.RELIABLE_STATS, ExtrasModule.BUILD_HEIGHT);
 		section("axolotlextras.section.controls", ExtrasModule.TOGGLE_WITHOUT_HUD, ExtrasModule.QUICKPLAY,
 			ExtrasModule.QUICKPLAY_HYPIXEL_ONLY);
 		section("axolotlextras.section.look", ExtrasModule.MODERN_MENUS, ExtrasModule.HUD_CORNERS, ExtrasModule.NO_FOG,

@@ -11,7 +11,8 @@
 		"HackWorldRenderMixin",
 		"HackHudMixin",
 		"NoBlindnessMixin",
-		"HiddenTrailMixin"
+		"HiddenTrailMixin",
+		"BuildHeightMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
