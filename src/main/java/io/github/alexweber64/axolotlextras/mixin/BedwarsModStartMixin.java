@@ -39,7 +39,7 @@ public abstract class BedwarsModStartMixin {
 		String line = event.getFormattedMessage().asUnformattedString();
 		if (axolotlextras$startWatcher.onLine(line) && currentGame == null && isEnabled() && targetTick < 0) {
 			targetTick = MinecraftClient.getInstance().inGameHud.getTicks() + 10;
-			AxolotlClient.LOGGER.info("[Extras] Bed Wars game start seen (" + line.trim() + ")");
+			AxolotlClient.LOGGER.info("[Extras] Bed Wars game start seen (" + axolotlextras$startWatcher.lastTitle() + ")");
 		}
 	}
 }

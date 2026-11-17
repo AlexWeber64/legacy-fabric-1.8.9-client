@@ -315,6 +315,12 @@ Last updated: 2026-11-14.
   banner); the add-on's own start handling uses it, and `mixin/BedwarsModStartMixin` starts AxolotlClient's game the
   same way AxolotlClient does (a 10 tick countdown) and logs "[Extras] Bed Wars game start seen". The other Dreams
   modes (Rush, Ultimate, Voidless, Armed, Swappage, Castle) are not checked yet. 5 tests.
+  - Seen in game (2026-11-17): starts in doubles and Lucky Blocks were seen. But you got the FKDR report at the end
+    of every game too: the end-of-game summary opens with the same "▬" line and "Bed Wars" title, then the winners
+    ("Red - [VIP] _Raiinn, [MVP++] HADN0T") and the top killers ("1st Killer - Noricake - 9"). That also reset the
+    Resource Counter, the hacks and the Upgrade Display. Now the title alone does not decide: the next line that is
+    not blank does (a description starts the game; a line with " - ", "Killer", "Winner" or "Draw" ends it). The start
+    is reported on that line, in the same tick. 1 test with the end lines from your log.
 - Clearer names (2026-11-15): ESP and the radar each have a "Show Invisible" and a "Show Teammates" switch, which
   looked like duplicates. They are now "ESP: Show Invisible", "ESP: Show Teammates" (ESP, tracers and nametags) and
   "Radar: Show Invisible", "Radar: Show Teammates" (the radar only), and each tooltip points to the other switch.
