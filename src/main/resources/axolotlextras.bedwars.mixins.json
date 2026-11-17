@@ -5,11 +5,14 @@
 	"compatibilityLevel": "JAVA_8",
 	"client": [
 		"BedwarsGameMixin",
+		"BedwarsGameSelfMixin",
 		"BedwarsPlayerMixin",
 		"HypixelAbstractionLayerMixin",
 		"LevelHeadTextMixin",
 		"BedwarsPlayerStatsMixin",
-		"PlayerListHudMixin"
+		"PlayerListHudMixin",
+		"BedwarsModMixin",
+		"TeamUpgradesRemovalMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

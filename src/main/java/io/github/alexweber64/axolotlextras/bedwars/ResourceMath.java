@@ -1,5 +1,8 @@
 package io.github.alexweber64.axolotlextras.bedwars;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Pure logic for the Bed Wars resource counter. It has no Minecraft dependencies so it can be unit tested.
  * The behaviour follows the MCRust 1.8.9 client: iron, gold, diamonds and emeralds are counted in the main
@@ -17,6 +20,15 @@ public final class ResourceMath {
 	/** Item registry names (without namespace) in the same order as the indexes above. */
 	public static final String[] ITEM_NAMES = {"iron_ingot", "gold_ingot", "diamond", "emerald"};
 	public static final String[] DISPLAY_NAMES = {"Iron", "Gold", "Diamond", "Emerald"};
+	/** The item names in Hypixel's deposit messages, in the same order. */
+	private static final String[] CHAT_NAMES = {"Iron Ingot", "Gold Ingot", "Diamond", "Emerald"};
+
+	/**
+	 * "Deposited x24 Iron Ingot into Ender Chest! (24 Total)", sometimes after AxolotlClient's game clock ("0:23 ").
+	 * The Team Chest has the same message with "Team Chest" and is not counted.
+	 */
+	private static final Pattern DEPOSIT =
+		Pattern.compile("^(?:\\d+:\\d{2}\\s+)?Deposited x(\\d+) (.+?) into Ender Chest! \\((\\d+) Total\\)$");
 
 	private ResourceMath() {
 	}
@@ -61,6 +73,56 @@ public final class ResourceMath {
 				continue;
 			}
 			sb.append(c);
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Hypixel's message for a deposit into your ender chest, one per deposit (also when you hold the button and switch
+	 * from iron to gold). It ends with the new total of that item in the ender chest, so it is the real count, not an
+	 * estimate.
+	 *
+	 * @param chatLine the chat line, with or without colour codes
+	 * @return {resource index, ender chest total}, or null when the line is no ender chest deposit of a counted resource
+	 */
+	public static int[] enderChestDeposit(String chatLine) {
+		Matcher m = DEPOSIT.matcher(stripFormatting(chatLine).trim());
+		if (!m.matches()) {
+			return null;
+		}
+		for (int i = 0; i < COUNT; i++) {
+			if (CHAT_NAMES[i].equals(m.group(2))) {
+				try {
+					return new int[] {i, Integer.parseInt(m.group(3))};
+				} catch (NumberFormatException e) {
+					return null;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Compares the ender chest count the counter expected with what the open ender chest really holds.
+	 *
+	 * @return a log text like "expected iron 24, gold 6, diamond 0, emerald 0; found iron 20, gold 6, diamond 0,
+	 *         emerald 0", or null when they match
+	 */
+	public static String chestMismatch(int[] expected, int[] found) {
+		boolean same = true;
+		for (int i = 0; i < COUNT; i++) {
+			same &= expected[i] == found[i];
+		}
+		return same ? null : "expected " + counts(expected) + "; found " + counts(found);
+	}
+
+	private static String counts(int[] values) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < COUNT; i++) {
+			if (i > 0) {
+				sb.append(", ");
+			}
+			sb.append(DISPLAY_NAMES[i].toLowerCase()).append(' ').append(values[i]);
 		}
 		return sb.toString();
 	}

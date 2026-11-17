@@ -4,7 +4,7 @@ Goal: a Lunar Client style setup for Minecraft 1.8.9 on Legacy Fabric (Prism ins
 feature can be switched on and off at will. Features come from AxolotlClient where it has them, and from the
 `axolotl-extras` add-on in this folder where it does not.
 
-Last updated: 2026-11-14.
+Last updated: 2026-11-15.
 
 ## Lunar module map
 
@@ -15,7 +15,7 @@ Last updated: 2026-11-14.
 | Potion Effects | AxolotlClient | Done, enabled |
 | Zoom | AxolotlClient | Done, enabled |
 | Time Changer | AxolotlClient | Done, enabled |
-| Upgrade Display | Extras (text list like Lunar's), AxolotlClient has an icon version | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your lists, team size detected automatically (lobby line checked against a screenshot, in-game team lines from memory) |
+| Upgrade Display | Extras (text list like Lunar's); AxolotlClient's icon version (Team Upgrades HUD) is removed | Written 2026-11-05, unit tested, not seen in game or on Hypixel. Prices filled in from your lists, team size detected automatically (lobby line checked against a screenshot, in-game team lines from memory) |
 | Toggle Sprint | AxolotlClient (Toggle Sprint HUD) | Works in singleplayer, see "In progress" for the Hypixel side |
 | Freelook | AxolotlClient | Works in singleplayer, Hypixel check removed (untested there) |
 | Raw Mouse Input | RawInput mod | Done |
@@ -36,7 +36,20 @@ Last updated: 2026-11-14.
   - inventory plus ender chest equals total, per resource
   - resets when you leave the world, leave Bed Wars, or a game starts
   - opening the ender chest replaces the ender chest count with the real contents
-  - punching the ender chest with resources in hand adds the amount that left your inventory within half a second (inferred)
+  - deposits are counted from Hypixel's message "Deposited xN Item into Ender Chest! (T Total)" (2026-11-16, built, not
+    yet seen in game): it carries the new total, so it is the real count. Before, a deposit was guessed from a fresh
+    press of the attack key on an ender chest and a drop in the inventory within half a second; holding the button
+    and switching from iron to gold deposits both, but only the first was counted (reported by you). The guessing
+    (`DepositTracker`) is removed. 2 tests with lines from the logs.
+  - debug line in latest.log (2026-11-16): when the ender chest opens, the counter compares its count with the real
+    contents 5 ticks later and logs "[Extras] Resource Counter: the ender chest did not match: expected ...; found
+    ..." when they differ (items moved inside the chest in the first quarter second show up too). A chest whose title
+    contains "ender" but is not read as the ender chest is logged once. 1 test.
+  - the open ender chest was never read in game (your test, 2026-11-16): Hypixel's ender chest has no title, and only
+    the title "Ender Chest" was accepted, so the count changed only with deposit messages and manual moves were missed.
+    Now a chest also counts as the ender chest when you opened it looking at an ender chest block (the camera stays
+    still while a chest is open). The first ender chest read of each game is logged ("[Extras] Resource Counter:
+    reading the ender chest"). Built, not yet seen in game.
 - Quickplay menu (key Y), Doubles uses `/play bedwars_eight_two`.
 - Toggle Sprint: found that it was dead because its HUD module was switched off (the toggle lives in that module's tick).
   Re-enabled it in your clone config and measured 11.22 blocks per 2 s toggled against 8.63 walking.
@@ -310,6 +323,10 @@ Last updated: 2026-11-14.
   looked like duplicates. They are now "ESP: Show Invisible", "ESP: Show Teammates" (ESP, tracers and nametags) and
   "Radar: Show Invisible", "Radar: Show Teammates" (the radar only), and each tooltip points to the other switch.
   Labels only; the saved option names are unchanged, so settings carry over.
+- Team Upgrades HUD removed (2026-11-15, built, 120 tests pass, not yet seen in game): AxolotlClient's icon overlay
+  is no longer put in the HUD list (`mixin/TeamUpgradesRemovalMixin`, so it is not drawn and not in the HUD editor)
+  and its settings are left out of the Bed Wars menu (`mixin/BedwarsModMixin`). The overlay object stays because
+  AxolotlClient's game start and end code still calls it. The add-on's Upgrade Display never used it.
 - Back to You When Bed Breaks (2026-11-15, built, 120 tests pass, not yet seen in game): a radar option, on by
   default. With Radar Centre on Your Bed, once your bed is broken the radar centres on you for the rest of the game.
   The bed counts as broken when its chunk is loaded and the bed block is gone (one in an unloaded chunk counts as
@@ -334,9 +351,29 @@ Last updated: 2026-11-14.
   For the next game, every real player the hacks leave out is logged once per world with the reason and the name's
   colour codes written as "&" ("[Extras] Hacks: left out &7Steve (no team prefix)"), so the log shows what White
   names really look like if this was not it. Built, not yet seen in game.
+- Upgrade Display team size waits for the sidebar (2026-11-15, built, 124 tests pass, not yet seen in game): you
+  reported doubles games shown with the 3s/4s prices. Hypixel fills the sidebar's team lines in over a few moments
+  when a game starts, and the first look with two to four team lines decided "3s/4s" for the whole game. Now
+  `ModeDetector.Settler` waits 3 seconds after the first team line and uses the most lines seen; five or more
+  settle it at once, since only solo and doubles have that many. Until then the lobby's "Mode:" line still sets the
+  prices, or none show. 2 tests.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.
+- Bed Wars crash fix (2026-11-15, built, 120 tests pass, not yet seen in game): the game crashed on 2026-11-15 at
+  20:39 with a NullPointerException in AxolotlClient's `displayHardcoreHearts` (InGameHudMixin), right at a game
+  start (names still scrambled). Cause, in AxolotlClient: `BedwarsGame.onStart` sets you (`me`) only if your own tab
+  list entry already has a team prefix at that moment, and never looks again; the Hardcore Hearts option then calls
+  `getSelf().isBed()` on null every frame. `mixin/BedwarsGameSelfMixin` looks for you every tick until found (UUID,
+  then name), makes `getSelf()` return a stand-in with its bed (normal hearts) while you are not found, and keeps the
+  top bar text (your kills, deaths, beds) from crashing the same way. The add-on's own code reads the real field, so
+  the stand-in never counts as a teammate there. Both cases write one line to latest.log ("[Extras] Bed Wars self
+  fix: ..."), so a test can see that the fix stepped in.
+- Test install (2026-11-16, 00:25): main (with #6 and #10) plus pull requests #8, #9, #11, #12 and #13, and a
+  test-only hook that forgets you right after AxolotlClient's game start (the state that crashed Hardcore Hearts; the
+  hook is not in any commit). An earlier try (#8 and #9 only) was a Lucky Blocks game, where AxolotlClient saw no game
+  start, so it tested nothing. The jar before it is in mods-backup as
+  axolotl-extras-0.1.0.before-test-pr8-9-11-12-13.jar.
 
 ## In progress
 
