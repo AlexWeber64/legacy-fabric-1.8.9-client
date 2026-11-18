@@ -377,6 +377,16 @@ Last updated: 2026-11-15.
   `ModeDetector.Settler` waits 3 seconds after the first team line and uses the most lines seen; five or more
   settle it at once, since only solo and doubles have that many. Until then the lobby's "Mode:" line still sets the
   prices, or none show. 2 tests.
+- Upgrade Display reads levels, not counts (2026-11-16, built, 128 tests pass, not yet seen in game): you reported
+  that an upgrade from a Lucky Block, or one bought before you reconnected, was missing. Lucky Blocks writes "Name
+  unlocked Reinforced Armor II" instead of "purchased" (seen in your log), and a reconnect clears the list. Now
+  "unlocked" lines count too, and the level comes from the Roman numeral in the line ("Reinforced Armor III" is 3,
+  never lowered) instead of adding one per line. Every two seconds the display also looks at your gear: the lowest
+  Protection on your four armor pieces raises Reinforced Armor (one enchanted piece from a Lucky Block does not
+  count), and Sharpness on every sword you carry turns on Sharpened Swords. Each raise is logged ("[Extras] Upgrade
+  Display: Reinforced Armor N read from your armor"). Lucky Blocks' "A Slow trap has been placed for your team!" is
+  listed as a trap. Maniac Miner, forges and Heal Pool cannot be read from items, so after a reconnect they come
+  back only with the next chat line. 4 tests with lines from the log.
 - Deployed to the play clone 1.8.9-lunarlike on 2026-11-13 (ore switches, Invisibility Alert, Hidden Player Trail,
   the NPC filter fix), not yet seen in game; the previous jar (radar) is in mods-backup as
   axolotl-extras-0.1.0.before-invis.jar.

@@ -6,8 +6,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Remembers which Bed Wars team upgrades and traps your team bought, from the "Name purchased Thing" chat lines.
- * Pure logic, no Minecraft classes.
+ * Remembers which Bed Wars team upgrades and traps your team has, from the "Name purchased Thing" chat lines and the
+ * "Name unlocked Thing" lines Lucky Blocks writes for an upgrade from a block. Levels are read from the line ("Reinforced
+ * Armor II" is level 2), so a missed line does not shift the count, and the armor and sword enchantments can raise them
+ * (see {@link #seeArmorProtection} and {@link #seeSharpSwords}). Pure logic, no Minecraft classes.
  *
  * <p>Costs of the next tier come from a list of Hypixel's diamond prices and the Cushioned Boots prices, both given by the
  * player. When the team size is not known (mode null) no price is shown.
@@ -30,7 +32,12 @@ public final class UpgradeTracker {
 		}
 	}
 
-	private static final Pattern PURCHASE = Pattern.compile("^[A-Za-z0-9_]{3,16} purchased (.+?)\\s*$");
+	/** "Steve purchased Reinforced Armor II", or "Steve unlocked Reinforced Armor II" (Lucky Blocks); AxolotlClient's chat
+	 * clock ("2:05 ") may come first. */
+	private static final Pattern PURCHASE = Pattern.compile("^(?:\\d+:\\d\\d )?[A-Za-z0-9_]{3,16} (?:purchased|unlocked) (.+?)\\s*$");
+	/** Lucky Blocks: "A Slow trap has been placed for your team!" */
+	private static final Pattern PLACED_TRAP = Pattern.compile("^(?:\\d+:\\d\\d )?An? (.+?) trap has been placed for your team!$");
+	private static final Pattern LEVEL = Pattern.compile(" (I|II|III|IV|V)$");
 	private static final Pattern TRAP = Pattern.compile("^(.+?) Trap!?$");
 	private static final String[] FORGES = {"Iron Forge", "Golden Forge", "Emerald Forge", "Molten Forge"};
 
@@ -74,6 +81,11 @@ public final class UpgradeTracker {
 			}
 			return false;
 		}
+		Matcher placed = PLACED_TRAP.matcher(line);
+		if (placed.matches()) {
+			traps.add(placed.group(1) + " Trap");
+			return true;
+		}
 		Matcher purchase = PURCHASE.matcher(line);
 		if (!purchase.matches()) {
 			return false;
@@ -87,11 +99,11 @@ public final class UpgradeTracker {
 		if (item.equals("Sharpened Swords")) {
 			sharpness = true;
 		} else if (item.startsWith("Reinforced Armor")) {
-			armor++;
+			armor = nextLevel(item, armor);
 		} else if (item.startsWith("Maniac Miner")) {
-			miner++;
+			miner = nextLevel(item, miner);
 		} else if (item.startsWith("Cushioned Boots")) {
-			boots++;
+			boots = nextLevel(item, boots);
 		} else if (item.equals("Heal Pool")) {
 			healPool = true;
 		} else if (item.equals("Dragon Buff")) {
@@ -103,6 +115,56 @@ public final class UpgradeTracker {
 			}
 			forge = Math.max(forge, tier);
 		}
+		return true;
+	}
+
+	/**
+	 * The level after this line: the Roman numeral at its end ("Reinforced Armor III" is 3), never lower than the level
+	 * already known; without a numeral, one more than before.
+	 */
+	public static int nextLevel(String item, int current) {
+		Matcher level = LEVEL.matcher(item);
+		if (!level.find()) {
+			return current + 1;
+		}
+		return Math.max(current, roman(level.group(1)));
+	}
+
+	private static int roman(String numeral) {
+		switch (numeral) {
+			case "I": return 1;
+			case "II": return 2;
+			case "III": return 3;
+			case "IV": return 4;
+			default: return 5;
+		}
+	}
+
+	/**
+	 * The lowest Protection level on your four armor pieces. Reinforced Armor puts Protection on all of them, so this is
+	 * at least the team's level (a single enchanted piece from a Lucky Block does not count). Only raises the level.
+	 *
+	 * @return true when the level went up
+	 */
+	public boolean seeArmorProtection(int lowestProtection) {
+		int level = Math.min(lowestProtection, ARMOR_SMALL.length);
+		if (level > armor) {
+			armor = level;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Called when every sword you carry has Sharpness (at least one sword): Sharpened Swords enchants them all.
+	 *
+	 * @return true when Sharpened Swords was not known yet
+	 */
+	public boolean seeSharpSwords() {
+		if (sharpness) {
+			return false;
+		}
+		sharpness = true;
 		return true;
 	}
 
