@@ -14,6 +14,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.alexweber64.axolotlextras.ExtrasModule;
 import io.github.alexweber64.axolotlextras.bedwars.ResourceMath;
 import io.github.alexweber64.axolotlextras.ui.RoundedRect;
+import io.github.axolotlclient.AxolotlClient;
 import io.github.axolotlclient.AxolotlClientConfig.options.IntegerOption;
 import io.github.axolotlclient.modules.hud.util.ItemUtil;
 import net.minecraft.block.Blocks;
@@ -101,6 +102,9 @@ public final class HackRenderer {
 	 * dead yourself; a new world clears it.
 	 */
 	private static boolean prefixesInUse;
+	/** For debugging: players already logged as left out in this world (name and reason), so each is logged once. */
+	private static final Set<String> LEFT_OUT_LOGGED = new HashSet<>();
+	private static final int LEFT_OUT_LOG_LIMIT = 60;
 	/** Your team from your own prefix, kept while your name is gray (dead or respawning), or {@link TeamGuess#UNKNOWN}. */
 	private static int prefixTeam = TeamGuess.UNKNOWN;
 	/** No rush alerts this long after the start spot is taken: everyone still stands on their own island. */
@@ -136,6 +140,7 @@ public final class HackRenderer {
 		gameRunning = false;
 		prefixesInUse = false;
 		prefixTeam = TeamGuess.UNKNOWN;
+		LEFT_OUT_LOGGED.clear();
 		generatorLabels = Collections.emptyList();
 		waypointLabels = Collections.emptyList();
 		captured = false;
@@ -716,6 +721,7 @@ public final class HackRenderer {
 				continue;
 			}
 			if (client.getNetworkHandler() != null && client.getNetworkHandler().getPlayerListEntry(player.getUuid()) == null) {
+				logLeftOut(player, "not in the tab list");
 				continue;
 			}
 			// A hidden name tag marks an NPC, but not on an invisible player: servers hide invisible players' name tags with
@@ -723,6 +729,7 @@ public final class HackRenderer {
 			// "[NPC]" checks.
 			AbstractTeam team = player.getScoreboardTeam();
 			if (team != null && team.getNameTagVisibilityRule() == AbstractTeam.VisibilityRule.NEVER && !player.isInvisible()) {
+				logLeftOut(player, "hidden name tag");
 				continue;
 			}
 			String name = player.getName().asFormattedString();
@@ -732,11 +739,26 @@ public final class HackRenderer {
 			// A spectator (or an eliminated player) flies around invisible with a plain gray name and no team prefix; it
 			// is not in the game, so no hack counts it (it used to set off the Rush Alert as a "Gray" enemy).
 			if (prefixesInUse && TeamGuess.fromTeamPrefix(name) == TeamGuess.UNKNOWN) {
+				logLeftOut(player, "no team prefix");
 				continue;
 			}
 			out.add(player);
 		}
 		return out;
+	}
+
+	/**
+	 * For debugging (white team players were never shown, 2026-11-16): logs a real player the hacks leave out, once per
+	 * name and reason in each world, with the name's colour codes written as {@code &} so they can be read in latest.log.
+	 */
+	private static void logLeftOut(PlayerEntity player, String reason) {
+		if (!gameRunning || LEFT_OUT_LOGGED.size() >= LEFT_OUT_LOG_LIMIT) {
+			return;
+		}
+		String name = player.getName().asFormattedString();
+		if (LEFT_OUT_LOGGED.add(name + "|" + reason)) {
+			AxolotlClient.LOGGER.info("[Extras] Hacks: left out " + name.replace('§', '&') + " (" + reason + ")");
+		}
 	}
 
 	/** A teammate: only once the game runs (in the lobby nobody is), by scoreboard team or by team prefix (or colour). */
