@@ -196,6 +196,9 @@ class HacksTest {
 		assertEquals(0, TeamGuess.fromTeamPrefix("§c§lR §cSteve"));
 		assertEquals(1, TeamGuess.fromTeamPrefix("§9§lB §r§9WalterSpalter"));
 		assertEquals(7, TeamGuess.fromTeamPrefix("§8§lS §8Alex"));
+		assertEquals(5, TeamGuess.fromTeamPrefix("§f§lW §r§fSteve"));
+		assertEquals(5, TeamGuess.fromTeamPrefix("§lW §rSteve"));
+		assertEquals(5, TeamGuess.fromTeamPrefix("W Steve"));
 		// Spectators and eliminated players: plain gray, no letter.
 		assertEquals(TeamGuess.UNKNOWN, TeamGuess.fromTeamPrefix("§7nufikfufik"));
 		// Lobby names start with a rank.
