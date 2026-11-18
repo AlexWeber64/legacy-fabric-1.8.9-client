@@ -525,6 +525,10 @@ High performance (or Best performance) power plan. There is no discrete GPU to s
 
 ## Risks and notes
 
+- Hypixel does not send other players' item stack sizes or armor enchantments (your test, 2026-11-18). A held
+  item always arrives as one item and armor has no Protection, so Enemy Armor can never show either on Hypixel (its
+  "P" number never appears there). Pull requests #18 (Protection as the count) and #19 (held item count) were closed
+  for this; their branches are kept, to reopen if a server that sends them turns up.
 - Ignore Server Blocks removes a safeguard that AxolotlClient ships on purpose. Whether Hypixel or another server allows
   Freelook, Toggle Sneak or the others is the server's rule, not something the client can settle. I could not read
   Hypixel's official page (403), so I did not confirm it. Switch the option off to get the old behaviour back.
