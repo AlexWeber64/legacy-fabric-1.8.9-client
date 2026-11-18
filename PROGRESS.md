@@ -394,6 +394,17 @@ Last updated: 2026-11-15.
   hook is not in any commit). An earlier try (#8 and #9 only) was a Lucky Blocks game, where AxolotlClient saw no game
   start, so it tested nothing. The jar before it is in mods-backup as
   axolotl-extras-0.1.0.before-test-pr8-9-11-12-13.jar.
+- Build Height Indicator (2026-11-17, built, 124 tests pass, not yet seen in game): your request. Wool, and red and
+  blue stained clay (The Bridge; 1.8.9 has no concrete, The Bridge uses clay), on the highest buildable layer are
+  drawn at 60% brightness. `bedwars/BuildHeight` (5 tests) reads the map from the waiting lobby sidebar ("Map: X")
+  and looks it up in `build_heights.txt` (183 Bed Wars maps from the list Hytils Reborn uses, copied 2026-11-17;
+  limits of 0 in that list are left out); The Bridge is recognised from "Cross the bridge to score goals." (seen in
+  a real log) and uses Hytils' value 100, so Y 99. The darkened layer is the limit minus one, as in Hytils.
+  `mixin/BuildHeightMixin` darkens each face as the chunk mesh is built (both lighting paths), and the world is
+  rebuilt once when the layer becomes known. latest.log gets "[Extras] Build Height: darkening layer Y=..." and the
+  table size at startup. Untested: whether the map line is still read before the game starts, whether the waiting
+  lobby and the game share one world (a world change forgets the map), and that the darkened layer is really the top
+  one.
 
 ## In progress
 
