@@ -319,7 +319,7 @@ Last updated: 2026-11-15.
   Size, and it saves only its position (no own on/off switch, no scale, so the two menus cannot disagree). The radar
   is now drawn by that entry with the other HUD modules, no longer from the hack labels pass. Radar Corner and the two
   offsets are gone; the default spot is the top right, where the radar sat before.
-- Dreams game start (2026-11-15, built, 127 tests pass, not yet seen in game): a Lucky Blocks game showed that
+- Dreams game start (2026-11-15, built, 127 tests pass, tested in game 2026-11-18): a Lucky Blocks game showed that
   AxolotlClient and the add-on only start a Bed Wars game on "Protect your bed and destroy the enemy beds.", which
   that mode does not print, so AxolotlClient's Bed Wars module and everything built on it (stats, KDR, Chat Stats
   At Start, Hardcore Hearts) stayed off. Every start in the logs (43 normal games and 1 Lucky Blocks game) opens with
@@ -334,6 +334,9 @@ Last updated: 2026-11-15.
     Resource Counter, the hacks and the Upgrade Display. Now the title alone does not decide: the next line that is
     not blank does (a description starts the game; a line with " - ", "Killer", "Winner" or "Draw" ends it). The start
     is reported on that line, in the same tick. 1 test with the end lines from your log.
+  - Tested in game (2026-11-18): you confirmed the FKDR report no longer comes at the end of a game. The logs show
+    six starts on 2026-11-17 and 2026-11-18 (four normal games, two Lucky Blocks), each with one report, and the
+    end of the 17:21 game (its "1st Killer" summary at 17:27:46) seen as no start.
 - Clearer names (2026-11-15): ESP and the radar each have a "Show Invisible" and a "Show Teammates" switch, which
   looked like duplicates. They are now "ESP: Show Invisible", "ESP: Show Teammates" (ESP, tracers and nametags) and
   "Radar: Show Invisible", "Radar: Show Teammates" (the radar only), and each tooltip points to the other switch.
